@@ -29,7 +29,7 @@ Benötigt werden Modell, Firmware, App-Name, gewählter Anbieter, Serverregion, 
 
 ## Automatisierte Prüfung
 
-Die reguläre Suite liegt in `.github/tests`, die Tests mit echten Home-Assistant-Klassen in `.github/ha_tests`. Die zentrale Compatibility-Pipeline verwendet je Core-Version eine eigene Python- und Testumgebung. Lokal bestehen 93 Tests unter Core 2023.6.0 (Python 3.10) und 2026.10.4 (Python 3.14), einschließlich des Anlegens der Entitäten aller sieben Plattformen. Auch 2023.7.3 wurde geprüft. Die Mindestversion ist 2023.6.0. Beim zusätzlichen Test unter 2023.3.0 fehlte das importierbare Modul `homeassistant.components.time`; dieser Stand wird deshalb nicht als vollständig unterstützt ausgewiesen. Diese Tests verwenden echte Core-Klassen; die gerätebezogene Ende-zu-Ende-Prüfung bleibt separat offen.
+Die reguläre Suite liegt in `.github/tests`, die Tests mit echten Home-Assistant-Klassen in `.github/ha_tests`. Die zentrale Compatibility-Pipeline verwendet je Core-Version eine eigene Python- und Testumgebung. Lokal bestehen 94 Tests unter Core 2023.6.0 (Python 3.10) und 2026.10.4 (Python 3.14), einschließlich des Anlegens der Entitäten aller sieben Plattformen. Auch 2023.7.3 wurde geprüft. Die Mindestversion ist 2023.6.0. Beim zusätzlichen Test unter 2023.3.0 fehlte das importierbare Modul `homeassistant.components.time`; dieser Stand wird deshalb nicht als vollständig unterstützt ausgewiesen. Diese Tests verwenden echte Core-Klassen; die gerätebezogene Ende-zu-Ende-Prüfung bleibt separat offen.
 
 ```powershell
 python -m pytest -c .github/dev/pyproject.toml --rootdir . .github/tests .github/ha_tests

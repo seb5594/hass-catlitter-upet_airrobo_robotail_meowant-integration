@@ -508,3 +508,28 @@ async def test_old_state_is_refreshed_before_a_movement(coordinator):
     with patch.object(c.hass, "async_add_executor_job", side_effect=reply):
         await c.async_ensure_fresh_state("SN")
     assert c._state_waiters == {}
+
+
+async def test_pause_is_immediate_and_resume_is_blocked_by_scale_presence(coordinator):
+    c = coordinator
+    c.transport.connected = True
+    c.transport.connected_since = NOW
+    c._last_mqtt_update_at_by_serial["SN"] = NOW
+    c.data = {
+        "devices": {
+            "SN": {"mqtt_state": {"w_state_app_name": "RUNNING", "w_mode_app_name": "CLEANING", "toilet_state": 1}}
+        }
+    }
+    pause = UbpetMqttCommandButton(
+        c, c.entry.entry_id, "SN", next(d for d in MQTT_BUTTONS if d.service_id == "pause_clean_up")
+    )
+    pause.hass = c.hass
+    c.client.send_mqtt_service = MagicMock(return_value={})
+    with patch.object(c, "async_ensure_fresh_state", new_callable=AsyncMock) as preflight:
+        await pause.async_press()
+        preflight.assert_not_called()
+    c.data["devices"]["SN"]["mqtt_state"]["w_state_app_name"] = "PAUSED"
+    resume = UbpetMqttCommandButton(
+        c, c.entry.entry_id, "SN", next(d for d in MQTT_BUTTONS if d.service_id == "resume_clean_up")
+    )
+    assert not resume.available

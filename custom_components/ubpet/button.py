@@ -22,6 +22,7 @@ _LOGGER = logging.getLogger(__name__)
 REST_REQUEST_SERVICE = "__rest_request"
 RESET_WASTE_BIN_SERVICE = "__reset_waste_bin"
 DIAGNOSTIC_SERVICES = {"request_state", REST_REQUEST_SERVICE}
+MOVEMENT_SERVICES = {"start_clean_up", "start_flatten", "start_rise", "start_drop", "resume_clean_up", "resume_flatten"}
 
 
 @dataclass(frozen=description_is_frozen(ButtonEntityDescription), kw_only=True)
@@ -186,8 +187,11 @@ class UbpetMqttCommandButton(DeviceAvailability, CoordinatorEntity[UbpetDataUpda
         if state is None or last_update is None or connected_since is None or last_update < connected_since:
             return False
         live = (item or {}).get("mqtt_state", {})
-        if service_id in {"start_clean_up", "start_flatten", "start_rise", "start_drop"} and (
+        if service_id in MOVEMENT_SERVICES and (
             live.get("cat_inside")
+            or live.get("toilet_state") == 1
+            or live.get("weigh_sensor") == 1
+            or live.get("motor_state") in (1, 2, 3, 4)
             or live.get("foreign_state") == 1
             or live.get("lid_state") == 1
             or live.get("box_state") == 1
@@ -223,7 +227,7 @@ class UbpetMqttCommandButton(DeviceAvailability, CoordinatorEntity[UbpetDataUpda
                 await self.hass.async_add_executor_job(method, self._serial)
                 self.coordinator.schedule_refresh(15)
             else:
-                if service not in DIAGNOSTIC_SERVICES:
+                if service in MOVEMENT_SERVICES:
                     await self.coordinator.async_ensure_fresh_state(self._serial)
                     if not self.available:
                         raise HomeAssistantError("Device state changed; movement was not sent")
