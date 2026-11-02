@@ -1,19 +1,20 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
 import importlib.util
 import json
 import logging
-from pathlib import Path
 import random
 import sys
 import threading
 import time
-from typing import Any
 import urllib.error
 import urllib.parse
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 try:
     from .mqtt import mqtt_endpoint, publish_service
@@ -48,10 +49,11 @@ class UbpetApiError(RuntimeError):
         self.status = status
         self.payload = payload
         code = payload.get("code") if isinstance(payload, dict) else None
-        message = None
-        if isinstance(payload, dict):
-            message = payload.get("message") or payload.get("msg")
-        super().__init__(f"UPET API error status={status} code={code} message={message}")
+        super().__init__(f"Cat litter API error status={status} code={code}")
+
+
+class UbpetAuthenticationError(UbpetApiError):
+    """Credentials were definitively rejected; retries would risk account lockout."""
 
 
 @dataclass(slots=True)
@@ -97,14 +99,26 @@ class UbpetClient:
         self.signer = UbtV2Signer(app_key)
         self.auth: UbpetAuth | None = None
         self._auth_lock = threading.Lock()
+        self._dashboard_cache = {}
+        self._unsupported_until = {}
+        self.records_per_fetch = 100
+        self.mqtt_sender = None
+        self.auth_paused_until = 0.0
+        self._auth_failure = None
 
     def ensure_login(self) -> UbpetAuth:
+        if self._auth_failure is not None:
+            raise self._auth_failure
+        if time.monotonic() < self.auth_paused_until:
+            raise UbpetApiError(409, {"code": "session_in_use"})
         if auth := self._usable_auth():
             return auth
         with self._auth_lock:
+            if self._auth_failure is not None:
+                raise self._auth_failure
             if auth := self._usable_auth():
                 return auth
-            _LOGGER.info("UPET auth token is missing or expiring, logging in")
+            _LOGGER.debug("UPET auth token is missing or expiring, logging in")
             return self._login_unlocked()
 
     def _usable_auth(self) -> UbpetAuth | None:
@@ -122,7 +136,7 @@ class UbpetClient:
         last_error: UbpetApiError | None = None
         for account_type in _account_type_candidates(self.account):
             try:
-                _LOGGER.info(
+                _LOGGER.debug(
                     "Trying UPET login with endpoint=%s areaCode=%s accountType=%s",
                     self.base_url,
                     self.area_code,
@@ -130,24 +144,35 @@ class UbpetClient:
                 )
                 return self._login_with_account_type(account_type)
             except UbpetApiError as err:
-                _LOGGER.warning(
+                _LOGGER.debug(
                     "UPET login failed with endpoint=%s areaCode=%s accountType=%s: %s",
                     self.base_url,
                     self.area_code,
                     account_type,
                     err,
                 )
+                code = err.payload.get("code") if isinstance(err.payload, dict) else None
+                if code in {2002, 2006, 2014, 2342} or err.status in {401, 403}:
+                    self._auth_failure = UbpetAuthenticationError(err.status, err.payload)
+                    raise self._auth_failure from err
+                if code not in {1009, 2004, 2010, 2011, 2019, 2042}:
+                    raise
                 last_error = err
         if last_error is not None:
-            raise last_error
+            self._auth_failure = UbpetAuthenticationError(last_error.status, last_error.payload)
+            raise self._auth_failure from last_error
         raise RuntimeError("no account type candidates")
 
     def _refresh_after_unauthorized(self, rejected_token: str) -> UbpetAuth:
+        if time.monotonic() < self.auth_paused_until:
+            raise UbpetApiError(409, {"code": "session_in_use"})
         with self._auth_lock:
+            if self._auth_failure is not None:
+                raise self._auth_failure
             current_auth = self._usable_auth()
             if current_auth is not None and current_auth.token != rejected_token:
                 return current_auth
-            _LOGGER.info("UPET auth token was rejected, logging in again")
+            _LOGGER.debug("UPET auth token was rejected, logging in again")
             self.auth = None
             return self._login_unlocked()
 
@@ -170,7 +195,7 @@ class UbpetClient:
             expires_at_ms=token_data.get("expireAt"),
             user_id=user_data.get("userId") if isinstance(user_data, dict) else None,
         )
-        _LOGGER.info("UPET login succeeded with accountType=%s", account_type)
+        _LOGGER.debug("UPET login succeeded with accountType=%s", account_type)
         return self.auth
 
     def get_devices(self) -> list[dict[str, Any]]:
@@ -225,6 +250,8 @@ class UbpetClient:
         return _require_list(data)
 
     def send_mqtt_service(self, serial_number: str, service_id: str) -> dict[str, Any]:
+        if self.mqtt_sender is not None:
+            return self.mqtt_sender(serial_number, service_id)
         credentials = self.get_im_credentials()
         contact = _find_im_contact(self.get_im_friends(), serial_number)
         publish_credentials, publish_sources = _mqtt_publish_credentials(credentials)
@@ -268,18 +295,19 @@ class UbpetClient:
             "messageType": message_type,
         }
         data = self._request("POST", "/catbox-server/web/box/record/new", payload=payload, auth=True)
-        records = data.get("data", {}).get("records") if isinstance(data, dict) else None
+        body = data.get("data") if isinstance(data, dict) else None
+        records = body.get("records") if isinstance(body, dict) else None
         if not isinstance(records, list):
             raise UbpetApiError(200, data)
         return [record for record in records if isinstance(record, dict)]
 
-    def set_auto_clean_delay(self, serial_number: str, minutes: int) -> None:
-        if minutes < 1:
+    def set_auto_clean_delay(self, serial_number: str, minutes: int, enabled: bool = True) -> None:
+        if not 1 <= minutes <= 60:
             raise ValueError("auto clean delay must be at least 1 minute")
         payload = {
             "serialNumber": serial_number,
             "functionType": 2,
-            "controlSwitch": 1,
+            "controlSwitch": int(enabled),
             "optionInt": minutes * 60,
         }
         self._request("PUT", "/catbox-server/box/config/switch/update", payload=payload, auth=True)
@@ -346,27 +374,105 @@ class UbpetClient:
         }
         self._request("PUT", "/catbox-server/box/config/timePeriod/update", payload=payload, auth=True)
 
+    def set_function_switch(self, serial_number, function_type, enabled):
+        if function_type not in (0, 6, 7):
+            raise ValueError("Unsupported switch function")
+        self._request(
+            "PUT",
+            "/catbox-server/box/config/switch/update",
+            payload={
+                "serialNumber": serial_number,
+                "functionType": function_type,
+                "controlSwitch": int(enabled),
+                "optionInt": 1,
+            },
+            auth=True,
+        )
+
+    def set_box_full_alert(self, serial_number, uses):
+        if not isinstance(uses, int) or uses < 1:
+            raise ValueError("Invalid waste bin threshold")
+        self._request(
+            "PUT",
+            "/catbox-server/box/config/box-full-alert",
+            payload={"serialNumber": serial_number, "boxFullAlertTimes": uses},
+            auth=True,
+        )
+
+    def reset_deodorant(self, serial_number: str) -> None:
+        self._request(
+            "POST", "/catbox-server/app/deodorant-block/replaced", payload={"serialNumber": serial_number}, auth=True
+        )
+
+    def get_capabilities(self, serial_number: str) -> dict[str, Any]:
+        response = self._request(
+            "GET", f"/catbox-server/box/config/device/capabilities?sn={_quote(serial_number)}", auth=True
+        )
+        data = response.get("data") if isinstance(response, dict) else None
+        if not isinstance(data, (dict, list)):
+            raise UbpetApiError(200, {"code": "invalid_capabilities"})
+        return {"values": data}
+
+    def _optional(self, key, func, *args, default=None):
+        if self._unsupported_until.get(key, 0) > time.monotonic():
+            return self._dashboard_cache.get(key, default), False
+        try:
+            value = func(*args)
+        except UbpetApiError as err:
+            if err.status in (401, 403, 409):
+                raise
+            if err.status in (404, 405):
+                self._unsupported_until[key] = time.monotonic() + 3600
+            return self._dashboard_cache.get(key, default), False
+        except (OSError, RuntimeError):
+            return self._dashboard_cache.get(key, default), False
+        self._dashboard_cache[key] = value
+        return value, True
+
     def get_dashboard(self) -> dict[str, Any]:
         self.ensure_login()
         devices = self.get_devices()
-        _LOGGER.info("UPET device list returned %s device(s)", len(devices))
-        by_serial: dict[str, dict[str, Any]] = {}
-        for device in devices:
-            serial = device.get("serialNumber")
-            if not serial:
-                continue
-            by_serial[serial] = {
-                "device": device,
-                "config": _safe_dict_call(self.get_all_config, serial),
-                "box_use_times": _safe_dict_call(self.get_box_use_times, serial),
-                "deodorant": _safe_dict_call(self.get_deodorant_status, serial),
-                "online": _safe_dict_call(self.get_device_online, serial),
-                "cat_records": _safe_list_call(self.get_box_records, serial, 0, 1),
-                "device_records": _safe_list_call(self.get_box_records, serial, 1, 1),
-            }
+        by_serial = {}
+        futures = []
+        # Bound simultaneous requests per account; slow optional endpoints do not
+        # serialize six timeouts per box or consume HA's whole executor pool.
+        with ThreadPoolExecutor(max_workers=4, thread_name_prefix="catlitter-api") as pool:
+            cats_future = pool.submit(self._optional, "cats", self.get_cats, default=[])
+            for device in devices:
+                serial = device.get("serialNumber")
+                if not serial:
+                    continue
+                item = {"device": device, "fresh": {}}
+                by_serial[serial] = item
+                for key, func, args, default in (
+                    ("config", self.get_all_config, (serial,), {}),
+                    ("box_use_times", self.get_box_use_times, (serial,), {}),
+                    ("deodorant", self.get_deodorant_status, (serial,), {}),
+                    ("online", self.get_device_online, (serial,), {}),
+                    ("cat_records", self.get_box_records, (serial, 0, self.records_per_fetch), []),
+                    ("device_records", self.get_box_records, (serial, 1, self.records_per_fetch), []),
+                ):
+                    futures.append(
+                        (item, key, pool.submit(self._optional, (serial, key), func, *args, default=default))
+                    )
+                cap_key = (serial, "capabilities")
+                if cap_key in self._dashboard_cache:
+                    item["capabilities"] = self._dashboard_cache[cap_key]
+                else:
+                    futures.append(
+                        (
+                            item,
+                            "capabilities",
+                            pool.submit(self._optional, cap_key, self.get_capabilities, serial, default=None),
+                        )
+                    )
+            for item, key, future in futures:
+                item[key], item["fresh"][key] = future.result()
+            cats, cats_fresh = cats_future.result()
         return {
             "devices": by_serial,
-            "cats": _safe_list_call(self.get_cats),
+            "cats": cats,
+            "cats_fresh": cats_fresh,
             "user_id": self.auth.user_id if self.auth else None,
         }
 
@@ -377,7 +483,7 @@ class UbpetClient:
         except UbpetApiError as err:
             if not auth or err.status != 401 or auth_token is None:
                 raise
-            _LOGGER.warning("UPET HTTP %s %s returned 401; refreshing authentication once", method, path)
+            _LOGGER.debug("UPET HTTP %s %s returned 401; refreshing authentication once", method, path)
             refreshed_auth = self._refresh_after_unauthorized(auth_token)
             return self._request_once(method, path, payload=payload, auth_token=refreshed_auth.token)
 
@@ -427,7 +533,7 @@ class UbpetClient:
                 data = _decode_response(err.read())
             finally:
                 err.close()
-            _LOGGER.warning("UPET HTTP %s %s failed with status=%s", method, path, err.code)
+            _LOGGER.debug("UPET HTTP %s %s failed with status=%s", method, path, err.code)
             raise UbpetApiError(err.code, data) from err
 
 

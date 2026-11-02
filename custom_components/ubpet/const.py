@@ -10,8 +10,14 @@ DEFAULT_SCAN_INTERVAL = timedelta(minutes=3)
 try:
     from .secrets import (
         APP_ID as DEFAULT_APP_ID,
+    )
+    from .secrets import (
         APP_KEY as DEFAULT_APP_KEY,
+    )
+    from .secrets import (
         BASE_URL as DEFAULT_BASE_URL,
+    )
+    from .secrets import (
         PRODUCT as DEFAULT_PRODUCT,
     )
 except ImportError:
@@ -33,11 +39,61 @@ RUSSIA_BASE_URL = "https://apis-ru.airrobo-home.com"
 
 # Countries returned by the UPET 2.1.14 region map for the European app.
 SUPPORTED_COUNTRIES = (
-    "AL", "AD", "AT", "BY", "BH", "BE", "BA", "BG", "HR", "CY", "CZ",
-    "DK", "EE", "FO", "FI", "FR", "GE", "DE", "GI", "GR", "HU", "IS",
-    "IE", "IT", "KW", "XK", "LV", "LI", "LT", "LU", "MT", "MD", "MC",
-    "ME", "NL", "MK", "NO", "PT", "PL", "QA", "RO", "RU", "SE", "CH",
-    "SA", "SM", "RS", "SK", "SI", "ES", "TR", "UA", "GB", "AE", "VA",
+    "AL",
+    "AD",
+    "AT",
+    "BY",
+    "BH",
+    "BE",
+    "BA",
+    "BG",
+    "HR",
+    "CY",
+    "CZ",
+    "DK",
+    "EE",
+    "FO",
+    "FI",
+    "FR",
+    "GE",
+    "DE",
+    "GI",
+    "GR",
+    "HU",
+    "IS",
+    "IE",
+    "IT",
+    "KW",
+    "XK",
+    "LV",
+    "LI",
+    "LT",
+    "LU",
+    "MT",
+    "MD",
+    "MC",
+    "ME",
+    "NL",
+    "MK",
+    "NO",
+    "PT",
+    "PL",
+    "QA",
+    "RO",
+    "RU",
+    "SE",
+    "CH",
+    "SA",
+    "SM",
+    "RS",
+    "SK",
+    "SI",
+    "ES",
+    "TR",
+    "UA",
+    "GB",
+    "AE",
+    "VA",
 )
 
 
@@ -51,7 +107,7 @@ PLATFORMS = [
     Platform.BINARY_SENSOR,
     Platform.NUMBER,
     Platform.SWITCH,
-    Platform.TIME,
+    getattr(Platform, "TIME", "time"),
     Platform.SELECT,
     Platform.BUTTON,
 ]

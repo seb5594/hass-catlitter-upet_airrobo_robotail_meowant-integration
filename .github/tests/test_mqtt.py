@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import importlib.util
-from pathlib import Path
 import sys
 import unittest
+from pathlib import Path
 from unittest import mock
 
-
-MQTT_PATH = Path(__file__).resolve().parents[1] / "custom_components" / "ubpet" / "mqtt.py"
+MQTT_PATH = Path(__file__).resolve().parents[2] / "custom_components" / "ubpet" / "mqtt.py"
 spec = importlib.util.spec_from_file_location("ubpet_mqtt", MQTT_PATH)
 mqtt = importlib.util.module_from_spec(spec)
 assert spec.loader is not None

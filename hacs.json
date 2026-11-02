@@ -1,4 +1,6 @@
 {
-  "name": "UPET / Airrobo Cat Litter Box",
-  "homeassistant": "2024.6.0"
+  "name": "Cat Litter Hub – UPET / UBPet / AIRROBO / Robotail / Meowant",
+  "homeassistant": "2023.6.0",
+  "zip_release": true,
+  "filename": "ubpet.zip"
 }

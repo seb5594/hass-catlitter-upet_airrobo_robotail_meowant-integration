@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any, Callable
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription, SensorStateClass
@@ -9,15 +9,19 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, UnitOfMass, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from .compat import DeviceInfo, description_is_frozen, serial_info
 from .const import DOMAIN
 from .coordinator import UbpetDataUpdateCoordinator
+from .entities import CatAvailability, DeviceAvailability, keep_or_supported, setup_discovery
+from .history import remaining_uses, timestamp
+
+UTC = timezone.utc
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(frozen=description_is_frozen(SensorEntityDescription), kw_only=True)
 class UbpetSensorDescription(SensorEntityDescription):
     value_fn: Callable[[dict[str, Any]], Any]
 
@@ -142,6 +146,7 @@ DEVICE_SENSORS: tuple[UbpetSensorDescription, ...] = (
     ),
     UbpetSensorDescription(
         key="last_rest_update",
+        entity_registry_enabled_default=False,
         name="Last REST update",
         icon="mdi:cloud-check-outline",
         translation_key="last_rest_update",
@@ -151,6 +156,7 @@ DEVICE_SENSORS: tuple[UbpetSensorDescription, ...] = (
     ),
     UbpetSensorDescription(
         key="last_mqtt_update",
+        entity_registry_enabled_default=False,
         name="Last MQTT update",
         icon="mdi:message-check-outline",
         translation_key="last_mqtt_update",
@@ -173,7 +179,7 @@ CAT_SENSORS: tuple[UbpetSensorDescription, ...] = (
     ),
     UbpetSensorDescription(
         key="cat_visits",
-        name="Visits",
+        name="Visits (legacy)",
         icon="mdi:cat",
         translation_key="cat_visits",
         state_class=SensorStateClass.MEASUREMENT,
@@ -181,7 +187,7 @@ CAT_SENSORS: tuple[UbpetSensorDescription, ...] = (
     ),
     UbpetSensorDescription(
         key="cat_cost_time",
-        name="Usage duration",
+        name="Average usage duration (legacy)",
         icon="mdi:timer-outline",
         translation_key="cat_cost_time",
         native_unit_of_measurement=UnitOfTime.SECONDS,
@@ -192,23 +198,173 @@ CAT_SENSORS: tuple[UbpetSensorDescription, ...] = (
 )
 
 
+# Keep the multi-region fork's keys so existing entity registry entries survive.
+CAT_SENSORS += tuple(
+    UbpetSensorDescription(
+        key=key,
+        name=name,
+        translation_key=key,
+        icon=icon,
+        native_unit_of_measurement=unit,
+        device_class=kind,
+        state_class=state,
+        value_fn=lambda cat, field=field: cat.get("visit_analytics", {}).get(field),
+    )
+    for key, name, field, unit, kind, state, icon in (
+        (
+            "cat_last_visit_duration",
+            "Last visit duration",
+            "last_visit_duration_seconds",
+            "s",
+            SensorDeviceClass.DURATION,
+            SensorStateClass.MEASUREMENT,
+            "mdi:timer-outline",
+        ),
+        (
+            "cat_pee_visits_24h",
+            "Pee in 24 hours (estimated)",
+            "pee_visits_24h",
+            "visits",
+            None,
+            SensorStateClass.MEASUREMENT,
+            "mdi:water-outline",
+        ),
+        (
+            "cat_poo_visits_24h",
+            "Poo in 24 hours (estimated)",
+            "poo_visits_24h",
+            "visits",
+            None,
+            SensorStateClass.MEASUREMENT,
+            "mdi:emoticon-poop",
+        ),
+        (
+            "cat_last_pee",
+            "Last pee (estimated)",
+            "last_pee",
+            None,
+            SensorDeviceClass.TIMESTAMP,
+            None,
+            "mdi:clock-outline",
+        ),
+        (
+            "cat_last_poo",
+            "Last poo (estimated)",
+            "last_poo",
+            None,
+            SensorDeviceClass.TIMESTAMP,
+            None,
+            "mdi:clock-outline",
+        ),
+        ("cat_last_visit", "Last visit", "last_visit", None, SensorDeviceClass.TIMESTAMP, None, "mdi:cat"),
+        (
+            "cat_visits_24h",
+            "Visits in 24 hours",
+            "visits_24h",
+            "visits",
+            None,
+            SensorStateClass.MEASUREMENT,
+            "mdi:counter",
+        ),
+        (
+            "cat_duration_24h",
+            "Time in box in 24 hours",
+            "duration_24h",
+            "s",
+            SensorDeviceClass.DURATION,
+            SensorStateClass.MEASUREMENT,
+            "mdi:timer-outline",
+        ),
+        (
+            "cat_average_duration_24h",
+            "Average visit duration in 24 hours",
+            "average_duration_24h",
+            "s",
+            SensorDeviceClass.DURATION,
+            SensorStateClass.MEASUREMENT,
+            "mdi:timer-outline",
+        ),
+        (
+            "cat_maximum_duration_24h",
+            "Longest visit in 24 hours",
+            "maximum_duration_24h",
+            "s",
+            SensorDeviceClass.DURATION,
+            SensorStateClass.MEASUREMENT,
+            "mdi:timer-outline",
+        ),
+        (
+            "cat_weight_change",
+            "Weight change since previous visit",
+            "weight_change",
+            "kg",
+            None,
+            SensorStateClass.MEASUREMENT,
+            "mdi:scale",
+        ),
+    )
+)
+DEVICE_SENSORS += (
+    UbpetSensorDescription(
+        key="remaining_bin_uses",
+        name="Uses until bin capacity",
+        translation_key="remaining_bin_uses",
+        icon="mdi:delete-clock",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=remaining_uses,
+    ),
+    UbpetSensorDescription(
+        key="last_visit",
+        name="Last visit",
+        translation_key="last_visit",
+        icon="mdi:cat",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=lambda item: timestamp((item.get("last_visit") or {}).get("at")),
+    ),
+    UbpetSensorDescription(
+        key="mqtt_pet_position",
+        name="Pet position",
+        translation_key="mqtt_pet_position",
+        icon="mdi:cat",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda item: (
+            ("Inside litter box" if item.get("mqtt_state", {}).get("cat_inside") else "Away from litter box")
+            if item.get("mqtt_state", {}).get("cat_inside") is not None
+            else None
+        ),
+    ),
+)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     coordinator: UbpetDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-    entities: list[SensorEntity] = []
-    for serial in coordinator.data.get("devices", {}):
-        entities.extend(UbpetDeviceSensor(coordinator, entry.entry_id, serial, description) for description in DEVICE_SENSORS)
-    for cat in coordinator.data.get("cats", []):
-        cat_id = cat.get("catInfoId")
-        if cat_id is None:
-            continue
-        entities.extend(UbpetCatSensor(coordinator, entry.entry_id, str(cat_id), description) for description in CAT_SENSORS)
-    async_add_entities(entities)
+
+    def build():
+        entities: list[SensorEntity] = []
+        for serial in coordinator.data.get("devices", {}):
+            entities.extend(
+                UbpetDeviceSensor(coordinator, entry.entry_id, serial, description)
+                for description in DEVICE_SENSORS
+                if keep_or_supported(coordinator, serial, description.key, "sensor")
+            )
+        for cat in coordinator.data.get("cats", []):
+            cat_id = cat.get("catInfoId")
+            if cat_id is None:
+                continue
+            entities.extend(
+                UbpetCatSensor(coordinator, entry.entry_id, str(cat_id), description) for description in CAT_SENSORS
+            )
+        return entities
+
+    setup_discovery(coordinator, entry, async_add_entities, build)
 
 
-class UbpetDeviceSensor(CoordinatorEntity[UbpetDataUpdateCoordinator], SensorEntity):
+class UbpetDeviceSensor(DeviceAvailability, CoordinatorEntity[UbpetDataUpdateCoordinator], SensorEntity):
     entity_description: UbpetSensorDescription
 
-    def __init__(self, coordinator: UbpetDataUpdateCoordinator, entry_id: str, serial: str, description: UbpetSensorDescription) -> None:
+    def __init__(
+        self, coordinator: UbpetDataUpdateCoordinator, entry_id: str, serial: str, description: UbpetSensorDescription
+    ) -> None:
         super().__init__(coordinator)
         self._serial = serial
         self.entity_description = description
@@ -220,9 +376,9 @@ class UbpetDeviceSensor(CoordinatorEntity[UbpetDataUpdateCoordinator], SensorEnt
         device = item.get("device", {})
         return DeviceInfo(
             identifiers={(DOMAIN, self._serial)},
-            manufacturer="Airrobo / UBT",
+            manufacturer=self.coordinator.provider_label,
             name=device.get("deviceName") or self._serial,
-            serial_number=self._serial,
+            **serial_info(self._serial),
         )
 
     @property
@@ -254,7 +410,15 @@ class UbpetDeviceSensor(CoordinatorEntity[UbpetDataUpdateCoordinator], SensorEnt
             }
         if self.entity_description.key.startswith("mqtt_"):
             mqtt_state = item.get("mqtt_state")
-            return mqtt_state if isinstance(mqtt_state, dict) else {}
+            return (
+                {
+                    key: value
+                    for key, value in mqtt_state.items()
+                    if key in {"w_mode", "w_state", "w_cause", "w_state_app_raw_name"}
+                }
+                if isinstance(mqtt_state, dict)
+                else {}
+            )
         if self.entity_description.key in {
             "last_rest_update",
             "last_mqtt_update",
@@ -264,10 +428,12 @@ class UbpetDeviceSensor(CoordinatorEntity[UbpetDataUpdateCoordinator], SensorEnt
         return {}
 
 
-class UbpetCatSensor(CoordinatorEntity[UbpetDataUpdateCoordinator], SensorEntity):
+class UbpetCatSensor(CatAvailability, CoordinatorEntity[UbpetDataUpdateCoordinator], SensorEntity):
     entity_description: UbpetSensorDescription
 
-    def __init__(self, coordinator: UbpetDataUpdateCoordinator, entry_id: str, cat_id: str, description: UbpetSensorDescription) -> None:
+    def __init__(
+        self, coordinator: UbpetDataUpdateCoordinator, entry_id: str, cat_id: str, description: UbpetSensorDescription
+    ) -> None:
         super().__init__(coordinator)
         self._cat_id = cat_id
         self.entity_description = description
@@ -277,8 +443,8 @@ class UbpetCatSensor(CoordinatorEntity[UbpetDataUpdateCoordinator], SensorEntity
     def device_info(self) -> DeviceInfo:
         cat = self._cat_data or {}
         return DeviceInfo(
-            identifiers={(DOMAIN, f"cat_{self._cat_id}")},
-            manufacturer="Airrobo / UBT",
+            identifiers={(DOMAIN, self.coordinator.cat_identifier(self._cat_id))},
+            manufacturer=self.coordinator.provider_label,
             name=cat.get("nickname") or f"Cat {self._cat_id}",
         )
 
@@ -298,6 +464,22 @@ class UbpetCatSensor(CoordinatorEntity[UbpetDataUpdateCoordinator], SensorEntity
             "cat_info_id": cat.get("catInfoId"),
             "nickname": cat.get("nickname"),
             "picture": cat.get("icon"),
+            "history_source": "observed_vendor_records",
+            "history_complete_24h": all(
+                stream.get("complete_24h", False)
+                for key, stream in self.coordinator.history.state["streams"].items()
+                if key.endswith(":cat_records")
+            )
+            and bool(self.coordinator.history.state["streams"]),
+            **(
+                {
+                    "classification": "duration_estimate",
+                    "threshold_seconds": self.coordinator.cat_poo_duration_threshold(self._cat_id),
+                }
+                if self.entity_description.key
+                in {"cat_last_pee", "cat_last_poo", "cat_pee_visits_24h", "cat_poo_visits_24h"}
+                else {}
+            ),
         }
 
     @property
@@ -310,11 +492,7 @@ class UbpetCatSensor(CoordinatorEntity[UbpetDataUpdateCoordinator], SensorEntity
 
 def _firmware_version(config: dict[str, Any]) -> str | None:
     versions = sorted(
-        {
-            part.get("firmwareVersion")
-            for part in config.get("boxFunctionVOList", [])
-            if part.get("firmwareVersion")
-        }
+        {part.get("firmwareVersion") for part in (config.get("boxFunctionVOList") or []) if part.get("firmwareVersion")}
     )
     return ", ".join(versions) if versions else None
 
@@ -398,7 +576,7 @@ def _empty_waste_bin_reminder_days(config: dict[str, Any]) -> str | None:
 
 
 def _empty_waste_bin_reminder_config(config: dict[str, Any]) -> dict[str, Any] | None:
-    for item in config.get("notifyConfigList", []):
+    for item in config.get("notifyConfigList") or []:
         if isinstance(item, dict) and item.get("type") == 4 and item.get("notifyConfigId") is not None:
             return item
     return None

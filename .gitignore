@@ -23,3 +23,7 @@ venv/
 # Home Assistant local runtime
 .storage/
 home-assistant.log*
+
+.research/
+dist/
+.ha-venv/

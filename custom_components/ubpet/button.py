@@ -1,28 +1,31 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
 from typing import Any
 
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from .compat import DeviceInfo, description_is_frozen, serial_info
 from .const import DOMAIN
 from .coordinator import UbpetDataUpdateCoordinator
+from .entities import DeviceAvailability, setup_discovery
 
 _LOGGER = logging.getLogger(__name__)
 
 REST_REQUEST_SERVICE = "__rest_request"
 RESET_WASTE_BIN_SERVICE = "__reset_waste_bin"
 DIAGNOSTIC_SERVICES = {"request_state", REST_REQUEST_SERVICE}
+MOVEMENT_SERVICES = {"start_clean_up", "start_flatten", "start_rise", "start_drop", "resume_clean_up", "resume_flatten"}
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(frozen=description_is_frozen(ButtonEntityDescription), kw_only=True)
 class UbpetMqttButtonDescription(ButtonEntityDescription):
     service_id: str
 
@@ -96,6 +99,7 @@ MQTT_BUTTONS: tuple[UbpetMqttButtonDescription, ...] = (
     ),
     UbpetMqttButtonDescription(
         key="mqtt_start_rise",
+        entity_registry_enabled_default=False,
         name="Raise litter rake",
         icon="mdi:arrow-up-bold",
         translation_key="mqtt_start_rise",
@@ -103,6 +107,7 @@ MQTT_BUTTONS: tuple[UbpetMqttButtonDescription, ...] = (
     ),
     UbpetMqttButtonDescription(
         key="mqtt_start_drop",
+        entity_registry_enabled_default=False,
         name="Lower litter rake",
         icon="mdi:arrow-down-bold",
         translation_key="mqtt_start_drop",
@@ -111,17 +116,33 @@ MQTT_BUTTONS: tuple[UbpetMqttButtonDescription, ...] = (
 )
 
 
+MQTT_BUTTONS += (
+    UbpetMqttButtonDescription(
+        key="reset_deodorant",
+        name="Reset deodorant",
+        translation_key="reset_deodorant",
+        icon="mdi:air-filter",
+        entity_category=EntityCategory.CONFIG,
+        service_id="__reset_deodorant",
+    ),
+)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     coordinator: UbpetDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-    entities: list[UbpetMqttCommandButton] = []
-    for serial in coordinator.data.get("devices", {}):
-        for description in MQTT_BUTTONS:
-            entity = UbpetMqttCommandButton(coordinator, entry.entry_id, serial, description)
-            entities.append(entity)
-    async_add_entities(entities)
+
+    def build():
+        entities: list[UbpetMqttCommandButton] = []
+        for serial in coordinator.data.get("devices", {}):
+            for description in MQTT_BUTTONS:
+                entity = UbpetMqttCommandButton(coordinator, entry.entry_id, serial, description)
+                entities.append(entity)
+        return entities
+
+    setup_discovery(coordinator, entry, async_add_entities, build)
 
 
-class UbpetMqttCommandButton(CoordinatorEntity[UbpetDataUpdateCoordinator], ButtonEntity):
+class UbpetMqttCommandButton(DeviceAvailability, CoordinatorEntity[UbpetDataUpdateCoordinator], ButtonEntity):
     entity_description: UbpetMqttButtonDescription
 
     def __init__(
@@ -142,9 +163,9 @@ class UbpetMqttCommandButton(CoordinatorEntity[UbpetDataUpdateCoordinator], Butt
         device = item.get("device", {})
         return DeviceInfo(
             identifiers={(DOMAIN, self._serial)},
-            manufacturer="Airrobo / UBT",
+            manufacturer=self.coordinator.provider_label,
             name=device.get("deviceName") or self._serial,
-            serial_number=self._serial,
+            **serial_info(self._serial),
         )
 
     @property
@@ -152,12 +173,29 @@ class UbpetMqttCommandButton(CoordinatorEntity[UbpetDataUpdateCoordinator], Butt
         if not super().available:
             return False
         service_id = self.entity_description.service_id
-        if service_id in DIAGNOSTIC_SERVICES or service_id == RESET_WASTE_BIN_SERVICE:
+        if service_id == REST_REQUEST_SERVICE or service_id in {RESET_WASTE_BIN_SERVICE, "__reset_deodorant"}:
+            return True
+        if not self.coordinator.transport.connected:
+            return False
+        if service_id == "request_state":
             return True
         item = self.coordinator.data.get("devices", {}).get(self._serial)
         mode = _mqtt_work_mode(item)
         state = _mqtt_work_state(item)
-        if state is None:
+        last_update = self.coordinator.last_mqtt_update_at(self._serial)
+        connected_since = self.coordinator.transport.connected_since
+        if state is None or last_update is None or connected_since is None or last_update < connected_since:
+            return False
+        live = (item or {}).get("mqtt_state", {})
+        if service_id in MOVEMENT_SERVICES and (
+            live.get("cat_inside")
+            or live.get("toilet_state") == 1
+            or live.get("weigh_sensor") == 1
+            or live.get("motor_state") in (1, 2, 3, 4)
+            or live.get("foreign_state") == 1
+            or live.get("lid_state") == 1
+            or live.get("box_state") == 1
+        ):
             return False
         if service_id == "start_drop":
             return mode == "RAKING_UP" and state == "PAUSED"
@@ -174,38 +212,29 @@ class UbpetMqttCommandButton(CoordinatorEntity[UbpetDataUpdateCoordinator], Butt
         return True
 
     async def async_press(self) -> None:
-        if self.entity_description.service_id == REST_REQUEST_SERVICE:
-            await self.coordinator.async_request_refresh()
-            return
-        if self.entity_description.service_id == RESET_WASTE_BIN_SERVICE:
-            await self.hass.async_add_executor_job(self.coordinator.client.reset_box_use_times, self._serial)
-            _LOGGER.info("Reset UPET waste-bin counter for serial=%s", self._serial)
-            await self.coordinator.async_request_refresh()
-            return
-        if self.entity_description.service_id not in DIAGNOSTIC_SERVICES:
-            optimistic_state = _optimistic_mqtt_state_for_service(self.entity_description.service_id)
-            if optimistic_state:
-                self.coordinator.set_mqtt_work_state(self._serial, optimistic_state)
-        result = await self.hass.async_add_executor_job(
-            self.coordinator.client.send_mqtt_service,
-            self._serial,
-            self.entity_description.service_id,
-        )
-        _LOGGER.info(
-            "Sent UPET MQTT service=%s serial=%s seq=%s cid=%s received=%s",
-            self.entity_description.service_id,
-            self._serial,
-            result.get("seq") if isinstance(result, dict) else None,
-            result.get("cid") if isinstance(result, dict) else None,
-            result.get("received_count") if isinstance(result, dict) else None,
-        )
-        if isinstance(result, dict):
-            result.setdefault("service_id", self.entity_description.service_id)
-        self.coordinator.store_mqtt_result(self._serial, result)
-        if self.entity_description.service_id == "request_state":
-            self.coordinator.start_mqtt_state_poll(self._serial)
-        elif self.entity_description.service_id not in DIAGNOSTIC_SERVICES:
-            self.coordinator.start_mqtt_state_poll(self._serial, fast=True)
+        if not self.available:
+            raise HomeAssistantError("This command is currently unavailable")
+        service = self.entity_description.service_id
+        try:
+            if service == REST_REQUEST_SERVICE:
+                await self.coordinator.async_request_refresh()
+            elif service in {RESET_WASTE_BIN_SERVICE, "__reset_deodorant"}:
+                method = (
+                    self.coordinator.client.reset_box_use_times
+                    if service == RESET_WASTE_BIN_SERVICE
+                    else self.coordinator.client.reset_deodorant
+                )
+                await self.hass.async_add_executor_job(method, self._serial)
+                self.coordinator.schedule_refresh(15)
+            else:
+                if service in MOVEMENT_SERVICES:
+                    await self.coordinator.async_ensure_fresh_state(self._serial)
+                    if not self.available:
+                        raise HomeAssistantError("Device state changed; movement was not sent")
+                await self.hass.async_add_executor_job(self.coordinator.client.send_mqtt_service, self._serial, service)
+                self.coordinator.schedule_refresh()
+        except (OSError, RuntimeError) as err:
+            raise HomeAssistantError("Vendor command failed; see connection diagnostics") from err
 
 
 def _mqtt_work_state(item: dict[str, Any] | None) -> str | None:
@@ -226,30 +255,3 @@ def _mqtt_work_mode(item: dict[str, Any] | None) -> str | None:
         return None
     mode = mqtt_state.get("w_mode_app_name")
     return mode if isinstance(mode, str) else None
-
-
-def _optimistic_mqtt_state_for_service(service_id: str) -> dict[str, Any]:
-    mode_by_service = {
-        "start_clean_up": "CLEANING",
-        "pause_clean_up": "CLEANING",
-        "resume_clean_up": "CLEANING",
-        "start_flatten": "SMOOTHING",
-        "pause_flatten": "SMOOTHING",
-        "resume_flatten": "SMOOTHING",
-        "start_rise": "RAKING_UP",
-        "start_drop": "RESETTING",
-    }
-    mode = mode_by_service.get(service_id)
-    if mode is None:
-        return {}
-    state_by_service = {
-        "pause_clean_up": "PAUSED",
-        "resume_clean_up": "RUNNING",
-        "pause_flatten": "PAUSED",
-        "resume_flatten": "RUNNING",
-    }
-    return {
-        "mqtt_service": service_id,
-        "w_mode_app_name": mode,
-        "w_state_app_name": state_by_service.get(service_id, "RUNNING"),
-    }

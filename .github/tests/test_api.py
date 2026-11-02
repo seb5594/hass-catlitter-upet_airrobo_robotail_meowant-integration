@@ -3,13 +3,12 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
-from pathlib import Path
 import sys
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
-
-API_PATH = Path(__file__).resolve().parents[1] / "custom_components" / "ubpet" / "api.py"
+API_PATH = Path(__file__).resolve().parents[2] / "custom_components" / "ubpet" / "api.py"
 spec = importlib.util.spec_from_file_location("ubpet_api", API_PATH)
 api = importlib.util.module_from_spec(spec)
 assert spec.loader is not None
@@ -730,7 +729,10 @@ class ApiUnitTests(unittest.TestCase):
 
     def test_signer_matches_recovered_algorithm_with_fixed_time_and_nonce(self):
         signer = api.UbtV2Signer("app-key")
-        with patch.object(api.time, "time", return_value=1234567890), patch.object(api.random, "choice", return_value="A"):
+        with (
+            patch.object(api.time, "time", return_value=1234567890),
+            patch.object(api.random, "choice", return_value="A"),
+        ):
             signature = signer.sign(device_id="device-id")
 
         digest = hashlib.md5("1234567890app-keyAAAAAAAAAAdevice-id".encode("utf-8")).hexdigest()
@@ -745,6 +747,8 @@ class ApiUnitTests(unittest.TestCase):
         client.get_deodorant_status = lambda serial: (_ for _ in ()).throw(api.UbpetApiError(500, {"code": 1}))
         client.get_device_online = lambda serial: {"online": True}
         client.get_cats = lambda: [{"catInfoId": 5, "nickname": "Cat"}]
+        client.get_box_records = lambda *args: []
+        client.get_capabilities = lambda *args: {"values": []}
 
         data = client.get_dashboard()
 
@@ -776,11 +780,14 @@ def load_diagnostics_module():
     sys.modules.setdefault("homeassistant.config_entries", config_entries_module)
     sys.modules.setdefault("homeassistant.core", core_module)
 
+    package = types.ModuleType("ubpet_diagnostics_test")
+    package.__path__ = [str(API_PATH.parent)]
+    sys.modules["ubpet_diagnostics_test"] = package
     const_module = types.ModuleType("ubpet_diagnostics_test.const")
     const_module.DOMAIN = "ubpet"
     sys.modules["ubpet_diagnostics_test.const"] = const_module
 
-    path = Path(__file__).resolve().parents[1] / "custom_components" / "ubpet" / "diagnostics.py"
+    path = Path(__file__).resolve().parents[2] / "custom_components" / "ubpet" / "diagnostics.py"
     diag_spec = importlib.util.spec_from_file_location("ubpet_diagnostics_test.diagnostics", path)
     diagnostics = importlib.util.module_from_spec(diag_spec)
     assert diag_spec.loader is not None
@@ -790,7 +797,7 @@ def load_diagnostics_module():
 
 
 class DiagnosticsUnitTests(unittest.TestCase):
-    def test_redact_removes_credentials_but_keeps_wifi_and_config_values(self):
+    def test_redact_removes_credentials_and_identifiers_but_keeps_config_values(self):
         diagnostics = load_diagnostics_module()
 
         payload = {
@@ -810,7 +817,7 @@ class DiagnosticsUnitTests(unittest.TestCase):
         self.assertEqual(redacted["account"], diagnostics.REDACTED)
         self.assertEqual(redacted["password"], diagnostics.REDACTED)
         self.assertEqual(redacted["device_id"], diagnostics.REDACTED)
-        self.assertEqual(redacted["config"]["wifiName"], "My_IoT")
+        self.assertEqual(redacted["config"]["wifiName"], diagnostics.REDACTED)
         self.assertEqual(redacted["config"]["gmtTimeZone"], "GMT+03:00")
-        self.assertEqual(redacted["cats"][0]["nickname"], "Cat")
+        self.assertEqual(redacted["cats"][0]["nickname"], diagnostics.REDACTED)
         self.assertEqual(redacted["cats"][0]["icon"], diagnostics.REDACTED)

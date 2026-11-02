@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from base64 import b85decode
 import hashlib
 import json
 import zlib
+from base64 import b85decode
 
 # Bundled app defaults for the recovered mobile API flow. This keeps the raw
 # values out of the repository while preserving out-of-the-box setup.
@@ -35,7 +35,7 @@ def _bytes(count: int) -> bytes:
 
 def _defaults() -> dict[str, str]:
     encoded = b85decode(_BUNDLE.encode("ascii"))
-    packed = bytes(value ^ key for value, key in zip(encoded, _bytes(len(encoded))))
+    packed = bytes(value ^ key for value, key in zip(encoded, _bytes(len(encoded)), strict=True))
     data = json.loads(zlib.decompress(packed).decode("utf-8"))
     return {str(key): str(value) for key, value in data.items()}
 
