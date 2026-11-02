@@ -1,0 +1,22 @@
+{
+  "upet": {
+    "app_id": "970010026",
+    "app_key": "a32fac3c8c9043b7b6a8246ae2e0d0aa",
+    "product": "97001"
+  },
+  "robotail": {
+    "app_id": "970010096",
+    "app_key": "lfq984p8agauv4p1s9x27ryu8a5bhsrv",
+    "product": "97001"
+  },
+  "meowant": {
+    "app_id": "970010016",
+    "app_key": "7b5cde0a41bf4588983e7e1685492b29",
+    "product": "97001"
+  },
+  "airpet": {
+    "app_id": "970010016",
+    "app_key": "7b5cde0a41bf4588983e7e1685492b29",
+    "product": "97001"
+  }
+}

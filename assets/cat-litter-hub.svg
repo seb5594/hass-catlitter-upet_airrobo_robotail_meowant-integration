@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Cat Litter Hub">
+ <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#11b8a6"/><stop offset="1" stop-color="#226ce8"/></linearGradient></defs>
+ <rect x="8" y="8" width="240" height="240" rx="62" fill="url(#g)"/>
+ <path d="M66 123V63l40 29a78 78 0 0 1 44 0l40-29v60" fill="none" stroke="white" stroke-width="15" stroke-linejoin="round" stroke-linecap="round"/>
+ <path d="M52 137h152l-14 43a26 26 0 0 1-25 18H91a26 26 0 0 1-25-18Z" fill="none" stroke="white" stroke-width="14" stroke-linejoin="round"/>
+ <path d="M89 163c14 12 25 12 39 0s25-12 39 0" fill="none" stroke="#b7fff1" stroke-width="9" stroke-linecap="round"/>
+ <circle cx="105" cy="119" r="7" fill="white"/><circle cx="151" cy="119" r="7" fill="white"/>
+</svg>

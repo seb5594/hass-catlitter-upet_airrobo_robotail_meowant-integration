@@ -8,16 +8,18 @@ from typing import Any
 from homeassistant.components.time import TimeEntity, TimeEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from .compat import DeviceInfo, description_is_frozen, serial_info
 from .const import DOMAIN
 from .coordinator import UbpetDataUpdateCoordinator
+from .entities import DeviceAvailability, setup_discovery, supported
+from .writes import async_write
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(frozen=description_is_frozen(TimeEntityDescription), kw_only=True)
 class UbpetTimeDescription(TimeEntityDescription):
     config_list_key: str
     function_type: int
@@ -70,18 +72,22 @@ TIME_ENTITIES: tuple[UbpetTimeDescription, ...] = (
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     coordinator: UbpetDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-    entities: list[TimeEntity] = []
-    for serial, item in coordinator.data.get("devices", {}).items():
-        config = item.get("config", {})
-        if _empty_waste_bin_reminder_config(config):
-            entities.append(UbpetEmptyWasteBinReminderTime(coordinator, entry.entry_id, serial))
-        for description in TIME_ENTITIES:
-            if _first_period_config(config, description.config_list_key):
-                entities.append(UbpetPeriodTime(coordinator, entry.entry_id, serial, description))
-    async_add_entities(entities)
+
+    def build():
+        entities: list[TimeEntity] = []
+        for serial, item in coordinator.data.get("devices", {}).items():
+            config = item.get("config", {})
+            if _empty_waste_bin_reminder_config(config):
+                entities.append(UbpetEmptyWasteBinReminderTime(coordinator, entry.entry_id, serial))
+            for description in TIME_ENTITIES:
+                if _first_period_config(config, description.config_list_key) and supported(description.key, item):
+                    entities.append(UbpetPeriodTime(coordinator, entry.entry_id, serial, description))
+        return entities
+
+    setup_discovery(coordinator, entry, async_add_entities, build)
 
 
-class UbpetPeriodTime(CoordinatorEntity[UbpetDataUpdateCoordinator], TimeEntity):
+class UbpetPeriodTime(DeviceAvailability, CoordinatorEntity[UbpetDataUpdateCoordinator], TimeEntity):
     entity_description: UbpetTimeDescription
 
     def __init__(
@@ -102,9 +108,9 @@ class UbpetPeriodTime(CoordinatorEntity[UbpetDataUpdateCoordinator], TimeEntity)
         device = item.get("device", {})
         return DeviceInfo(
             identifiers={(DOMAIN, self._serial)},
-            manufacturer="Airrobo / UBT",
+            manufacturer=self.coordinator.provider_label,
             name=device.get("deviceName") or self._serial,
-            serial_number=self._serial,
+            **serial_info(self._serial),
         )
 
     @property
@@ -138,7 +144,8 @@ class UbpetPeriodTime(CoordinatorEntity[UbpetDataUpdateCoordinator], TimeEntity)
             end_hour = value.hour
             end_minute = value.minute
 
-        await self.hass.async_add_executor_job(
+        await async_write(
+            self.hass,
             partial(
                 self.coordinator.client.set_time_period,
                 self._serial,
@@ -149,9 +156,9 @@ class UbpetPeriodTime(CoordinatorEntity[UbpetDataUpdateCoordinator], TimeEntity)
                 start_minute=start_minute,
                 end_hour=end_hour,
                 end_minute=end_minute,
-            )
+            ),
         )
-        await self.coordinator.async_request_refresh()
+        self.coordinator.schedule_refresh(15)
 
     @property
     def _period_config(self) -> dict[str, Any] | None:
@@ -170,7 +177,7 @@ EMPTY_WASTE_BIN_REMINDER_TIME = TimeEntityDescription(
 )
 
 
-class UbpetEmptyWasteBinReminderTime(CoordinatorEntity[UbpetDataUpdateCoordinator], TimeEntity):
+class UbpetEmptyWasteBinReminderTime(DeviceAvailability, CoordinatorEntity[UbpetDataUpdateCoordinator], TimeEntity):
     entity_description = EMPTY_WASTE_BIN_REMINDER_TIME
 
     def __init__(self, coordinator: UbpetDataUpdateCoordinator, entry_id: str, serial: str) -> None:
@@ -184,9 +191,9 @@ class UbpetEmptyWasteBinReminderTime(CoordinatorEntity[UbpetDataUpdateCoordinato
         device = item.get("device", {})
         return DeviceInfo(
             identifiers={(DOMAIN, self._serial)},
-            manufacturer="Airrobo / UBT",
+            manufacturer=self.coordinator.provider_label,
             name=device.get("deviceName") or self._serial,
-            serial_number=self._serial,
+            **serial_info(self._serial),
         )
 
     @property
@@ -203,7 +210,8 @@ class UbpetEmptyWasteBinReminderTime(CoordinatorEntity[UbpetDataUpdateCoordinato
         config = self._reminder_config
         if not config:
             return
-        await self.hass.async_add_executor_job(
+        await async_write(
+            self.hass,
             partial(
                 self.coordinator.client.set_time_point,
                 self._serial,
@@ -213,9 +221,9 @@ class UbpetEmptyWasteBinReminderTime(CoordinatorEntity[UbpetDataUpdateCoordinato
                 time_hour=value.hour,
                 time_minute=value.minute,
                 option_int=config.get("period", 0),
-            )
+            ),
         )
-        await self.coordinator.async_request_refresh()
+        self.coordinator.schedule_refresh(15)
 
     @property
     def _reminder_config(self) -> dict[str, Any] | None:
@@ -233,7 +241,7 @@ def _first_period_config(config: dict[str, Any], key: str) -> dict[str, Any] | N
 
 
 def _empty_waste_bin_reminder_config(config: dict[str, Any]) -> dict[str, Any] | None:
-    for item in config.get("notifyConfigList", []):
+    for item in config.get("notifyConfigList") or []:
         if isinstance(item, dict) and item.get("type") == 4 and item.get("notifyConfigId") is not None:
             return item
     return None

@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import importlib.util
-from pathlib import Path
 import sys
 import types
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
-
-CONST_PATH = Path(__file__).resolve().parents[1] / "custom_components" / "ubpet" / "const.py"
+CONST_PATH = Path(__file__).resolve().parents[2] / "custom_components" / "ubpet" / "const.py"
 
 
 class _Platform:

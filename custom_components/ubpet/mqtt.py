@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import random
 import socket
 import ssl
 import time
+from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlparse
 
@@ -403,14 +403,18 @@ def mqtt_host_from_base_url(base_url: str) -> str:
     return base_url.replace("https://", "").replace("http://", "").strip("/")
 
 
-def mqtt_endpoint(base_url: str, credentials: dict[str, Any], default_port: int = DEFAULT_MQTT_PORT) -> tuple[str, int, str]:
+def mqtt_endpoint(
+    base_url: str, credentials: dict[str, Any], default_port: int = DEFAULT_MQTT_PORT
+) -> tuple[str, int, str]:
     # The Android command path builds MQTT host from the regional API base URL.
     # IM login may return a url field on newer servers, but the app's MqttInfoBean
     # does not use it for the litterbox command connection.
     return mqtt_host_from_base_url(base_url), default_port, "base_url"
 
 
-def mqtt_connect_payload(*, client_id: str, username: str, password: str, keepalive: int = DEFAULT_MQTT_KEEPALIVE) -> bytes:
+def mqtt_connect_payload(
+    *, client_id: str, username: str, password: str, keepalive: int = DEFAULT_MQTT_KEEPALIVE
+) -> bytes:
     variable_header = b"".join(
         [
             mqtt_utf8("MQTT"),
@@ -570,7 +574,9 @@ def _first_optional_text(payload: dict[str, Any], *keys: str) -> str | None:
     return None
 
 
-def collect_mqtt_messages(conn: Any, *, timeout: float, listen_seconds: float, phase: str = "listen") -> list[dict[str, Any]]:
+def collect_mqtt_messages(
+    conn: Any, *, timeout: float, listen_seconds: float, phase: str = "listen"
+) -> list[dict[str, Any]]:
     if listen_seconds <= 0:
         return []
     deadline = time.monotonic() + listen_seconds
@@ -659,7 +665,11 @@ def summarize_any(payload: bytes) -> dict[str, Any]:
     type_url = first_proto_string(fields, 1)
     value = first_proto_value(fields, 2, 2)
     summary: dict[str, Any] = {"type_url": type_url}
-    if type_url == ANY_RECEIPT_NOTIFICATION_TYPE_URL and isinstance(value, bytes):
+    if type_url == "type.googleapis.com/rosa.im.protobuf.OnlineStatusNotification" and isinstance(value, bytes):
+        status_fields = decode_proto_fields(value)
+        summary["online_status"] = first_proto_string(status_fields, 1)
+        summary["status_uid"] = first_proto_string(status_fields, 2)
+    elif type_url == ANY_RECEIPT_NOTIFICATION_TYPE_URL and isinstance(value, bytes):
         receipt_fields = decode_proto_fields(value)
         summary["receipt_status"] = first_proto_string(receipt_fields, 1)
         summary["receipt_cause"] = first_proto_string(receipt_fields, 2)
@@ -688,6 +698,8 @@ def summarize_risp_frame(frame: bytes) -> dict[str, Any]:
     header_end = header_start + header_len
     if header_end >= len(frame):
         raise ValueError("truncated RISP frame")
+    if frame[header_end] != crc8_app(frame[header_start:header_end]):
+        raise ValueError("RISP header checksum mismatch")
     header_fields = decode_proto_fields(frame[header_start:header_end])
     values: dict[str, Any] = {}
     for field in header_fields:
@@ -695,7 +707,11 @@ def summarize_risp_frame(frame: bytes) -> dict[str, Any]:
             values[RISP_HEADER_FIELD_NAMES.get(field["field"], f"field_{field['field']}")] = field["value"]
     data_len = int(values.get("dataLen", 0) or 0)
     body_start = header_end + 1
+    if len(frame) < body_start + data_len + (1 if data_len else 0):
+        raise ValueError("Truncated RISP body")
     body = frame[body_start : body_start + data_len]
+    if data_len and frame[body_start + data_len] != crc8_app(body):
+        raise ValueError("RISP body checksum mismatch")
     summary = {
         "risp_cmd": values.get("cmd"),
         "risp_seq": values.get("seq"),
@@ -707,7 +723,7 @@ def summarize_risp_frame(frame: bytes) -> dict[str, Any]:
         op_fields = decode_proto_fields(body) if body else []
         summary["op_mode"] = first_proto_value(op_fields, 1, 0)
         summary["op_state"] = first_proto_value(op_fields, 2, 0)
-    elif values.get("cmd") == RISP_CMD_ALL_STATE_RESPONSE:
+    elif values.get("cmd") in (RISP_CMD_ALL_STATE_RESPONSE, 0x400):
         summary.update(summarize_all_state_body(body))
     return summary
 
@@ -719,6 +735,8 @@ def summarize_all_state_body(body: bytes) -> dict[str, Any]:
         name = ALL_STATE_FIELD_NAMES.get(field["field"])
         if name and field["wire_type"] == 0:
             summary[name] = field["value"]
+    for name in ALL_STATE_FIELD_NAMES.values():
+        summary.setdefault(name, 0)
     w_mode = summary.setdefault("w_mode", 0)
     w_state = summary.setdefault("w_state", 0)
     if isinstance(w_mode, int):
@@ -727,6 +745,9 @@ def summarize_all_state_body(body: bytes) -> dict[str, Any]:
     if isinstance(w_state, int):
         summary["w_state_name"] = WORK_STATE_NAMES.get(w_state, f"unknown_{w_state}")
         summary["w_state_app_name"] = WORK_STATE_APP_NAMES.get(w_state, f"UNKNOWN_{w_state}")
+        summary["w_state_app_raw_name"] = summary["w_state_app_name"]
+        if w_mode == 0 and w_state == 1:
+            summary["w_state_app_name"] = "PENDING"
     return summary
 
 

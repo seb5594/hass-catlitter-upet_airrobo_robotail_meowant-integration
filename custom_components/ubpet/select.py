@@ -7,13 +7,15 @@ from typing import Any
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from .compat import DeviceInfo, serial_info
 from .const import DOMAIN
 from .coordinator import UbpetDataUpdateCoordinator
+from .entities import DeviceAvailability, setup_discovery
+from .writes import async_write
 
 WEEKDAYS: tuple[tuple[int, str], ...] = (
     (1, "Monday"),
@@ -50,14 +52,20 @@ EMPTY_WASTE_BIN_REMINDER_DAYS = SelectEntityDescription(
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     coordinator: UbpetDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-    entities: list[SelectEntity] = []
-    for serial, item in coordinator.data.get("devices", {}).items():
-        if _empty_waste_bin_reminder_config(item.get("config", {})):
-            entities.append(UbpetEmptyWasteBinReminderDaysSelect(coordinator, entry.entry_id, serial))
-    async_add_entities(entities)
+
+    def build():
+        entities: list[SelectEntity] = []
+        for serial, item in coordinator.data.get("devices", {}).items():
+            if _empty_waste_bin_reminder_config(item.get("config", {})):
+                entities.append(UbpetEmptyWasteBinReminderDaysSelect(coordinator, entry.entry_id, serial))
+        return entities
+
+    setup_discovery(coordinator, entry, async_add_entities, build)
 
 
-class UbpetEmptyWasteBinReminderDaysSelect(CoordinatorEntity[UbpetDataUpdateCoordinator], SelectEntity):
+class UbpetEmptyWasteBinReminderDaysSelect(
+    DeviceAvailability, CoordinatorEntity[UbpetDataUpdateCoordinator], SelectEntity
+):
     entity_description = EMPTY_WASTE_BIN_REMINDER_DAYS
     _attr_options = list(VALUES_BY_OPTION)
 
@@ -72,9 +80,9 @@ class UbpetEmptyWasteBinReminderDaysSelect(CoordinatorEntity[UbpetDataUpdateCoor
         device = item.get("device", {})
         return DeviceInfo(
             identifiers={(DOMAIN, self._serial)},
-            manufacturer="Airrobo / UBT",
+            manufacturer=self.coordinator.provider_label,
             name=device.get("deviceName") or self._serial,
-            serial_number=self._serial,
+            **serial_info(self._serial),
         )
 
     @property
@@ -92,7 +100,8 @@ class UbpetEmptyWasteBinReminderDaysSelect(CoordinatorEntity[UbpetDataUpdateCoor
         period = VALUES_BY_OPTION.get(option)
         if period is None:
             return
-        await self.hass.async_add_executor_job(
+        await async_write(
+            self.hass,
             partial(
                 self.coordinator.client.set_time_point,
                 self._serial,
@@ -102,9 +111,9 @@ class UbpetEmptyWasteBinReminderDaysSelect(CoordinatorEntity[UbpetDataUpdateCoor
                 time_hour=config.get("timeHour", 0),
                 time_minute=config.get("timeMinute", 0),
                 option_int=period,
-            )
+            ),
         )
-        await self.coordinator.async_request_refresh()
+        self.coordinator.schedule_refresh(15)
 
     @property
     def _reminder_config(self) -> dict[str, Any] | None:
@@ -130,7 +139,7 @@ def _period_value(config: dict[str, Any]) -> int:
 
 
 def _empty_waste_bin_reminder_config(config: dict[str, Any]) -> dict[str, Any] | None:
-    for item in config.get("notifyConfigList", []):
+    for item in config.get("notifyConfigList") or []:
         if isinstance(item, dict) and item.get("type") == 4 and item.get("notifyConfigId") is not None:
             return item
     return None

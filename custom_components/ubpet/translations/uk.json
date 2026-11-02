@@ -2,27 +2,34 @@
   "config": {
     "step": {
       "user": {
-        "title": "UPET / Airrobo котячий туалет",
-        "description": "Виберіть країну, указану в застосунку UPET/Airrobo, і введіть дані облікового запису.",
+        "title": "Cat Litter Hub",
+        "description": "Choose the app used to create your account. The brand printed on the box can differ.",
         "data": {
-          "country": "Країна",
-          "username": "Обліковий запис",
-          "password": "Пароль",
-          "app_key": "Ключ застосунку",
-          "base_url": "Базова URL-адреса",
-          "app_id": "ID застосунку",
-          "product": "Продукт"
+          "provider": "Account provider / app"
+        }
+      },
+      "account": {
+        "title": "{provider}: account and server",
+        "description": "Select the account region and the country selected in the app. Home Assistant only suggests a region; it does not change the account region automatically. Meowant uses the NA/global server even for accounts in other countries.",
+        "data": {
+          "region": "Account server region",
+          "country": "Account country (app)",
+          "username": "Account",
+          "password": "Password"
         }
       }
     },
     "error": {
-      "auth_failed": "Помилка автентифікації. Перевірте обліковий запис і пароль.",
-      "cannot_connect": "Не вдалося підключитися до API UPET.",
-      "unknown": "Неочікувана помилка. Перевірте журнали Home Assistant.",
-      "missing_required": "Країна, обліковий запис і пароль обов'язкові."
+      "invalid_input": "Enter a valid country, account and password.",
+      "invalid_auth": "Login rejected. Check the app/provider, account region, country and password.",
+      "cannot_connect": "The vendor could not be reached. Try again later.",
+      "missing_devices": "The new settings do not return all previously connected boxes. Check the account region.",
+      "account_changed": "Create another configuration entry for a different account."
     },
     "abort": {
-      "already_configured": "Цей обліковий запис уже налаштовано."
+      "already_configured": "This cloud account is already configured.",
+      "reauth_successful": "Account credentials updated.",
+      "reconfigure_successful": "Account settings updated."
     }
   },
   "entity": {
@@ -83,6 +90,48 @@
       },
       "last_mqtt_update": {
         "name": "Останнє MQTT оновлення"
+      },
+      "remaining_bin_uses": {
+        "name": "Uses until bin capacity"
+      },
+      "last_visit": {
+        "name": "Last visit"
+      },
+      "mqtt_pet_position": {
+        "name": "Pet position"
+      },
+      "cat_last_visit_duration": {
+        "name": "Last visit duration"
+      },
+      "cat_pee_visits_24h": {
+        "name": "Pee in 24 hours (estimated)"
+      },
+      "cat_poo_visits_24h": {
+        "name": "Poo in 24 hours (estimated)"
+      },
+      "cat_last_pee": {
+        "name": "Last pee (estimated)"
+      },
+      "cat_last_poo": {
+        "name": "Last poo (estimated)"
+      },
+      "cat_last_visit": {
+        "name": "Last visit"
+      },
+      "cat_visits_24h": {
+        "name": "Visits in 24 hours"
+      },
+      "cat_duration_24h": {
+        "name": "Time in box in 24 hours"
+      },
+      "cat_average_duration_24h": {
+        "name": "Average visit duration in 24 hours"
+      },
+      "cat_maximum_duration_24h": {
+        "name": "Longest visit in 24 hours"
+      },
+      "cat_weight_change": {
+        "name": "Weight change since previous visit"
       }
     },
     "binary_sensor": {
@@ -100,11 +149,53 @@
       },
       "control_board_switch": {
         "name": "Блокування від дітей"
+      },
+      "cat_inside": {
+        "name": "Cat inside"
+      },
+      "cat_nearby": {
+        "name": "Cat nearby"
+      },
+      "cover_open": {
+        "name": "Cover open"
+      },
+      "drum_not_in_place": {
+        "name": "Drum not in place"
+      },
+      "drum_stuck": {
+        "name": "Drum stuck"
+      },
+      "scale_fault": {
+        "name": "Scale fault"
+      },
+      "camera_fault": {
+        "name": "Camera fault"
+      },
+      "light": {
+        "name": "Light"
+      },
+      "firmware_updating": {
+        "name": "Firmware updating"
+      },
+      "mqtt_connected": {
+        "name": "MQTT connected"
+      },
+      "waste_bin_full": {
+        "name": "Waste bin threshold reached"
+      },
+      "history_truncated": {
+        "name": "History fetch limit reached"
       }
     },
     "number": {
       "auto_clean_delay": {
         "name": "Затримка автоочищення"
+      },
+      "cat_poo_duration_threshold": {
+        "name": "Poo duration threshold (estimate)"
+      },
+      "box_full_alert_threshold": {
+        "name": "Waste bin full after"
       }
     },
     "switch": {
@@ -122,6 +213,15 @@
       },
       "auto_clean": {
         "name": "Автоочищення"
+      },
+      "child_lock": {
+        "name": "Child lock"
+      },
+      "shake_mode": {
+        "name": "Shake mode"
+      },
+      "box_full_alert": {
+        "name": "Waste bin full alert"
       }
     },
     "time": {
@@ -179,6 +279,34 @@
       },
       "mqtt_start_drop": {
         "name": "Опустити граблі"
+      },
+      "reset_deodorant": {
+        "name": "Reset deodorant"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Cloud updates",
+        "description": "One persistent MQTT connection per account. REST periodically refreshes settings and visits.",
+        "data": {
+          "scan_interval": "REST interval (seconds, 60–3600)",
+          "records_per_fetch": "Records per box and stream (20–200)",
+          "mqtt_enabled": "Enable MQTT push and commands"
+        }
+      }
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "eu": "Europe (EU)",
+        "na": "North America / global Meowant backend",
+        "asia": "Asia (Japan / South Korea)",
+        "ru": "Russia",
+        "global": "Global",
+        "cn": "China"
       }
     }
   }

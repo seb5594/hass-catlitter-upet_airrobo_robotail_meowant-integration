@@ -1,50 +1,23 @@
+"""Download sanitized, useful support data without account and pet identifiers."""
+
 from __future__ import annotations
 
-from typing import Any
-
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-
 from .const import DOMAIN
+from .privacy import redact
 
 REDACTED = "REDACTED"
-REDACT_KEYS = {
-    "account",
-    "authorization",
-    "device_id",
-    "deviceId",
-    "icon",
-    "password",
-    "refreshToken",
-    "token",
-    "userEmail",
-    "userImage",
-    "userName",
-    "userPhone",
-}
+_redact = redact
 
 
-async def async_get_config_entry_diagnostics(hass: HomeAssistant, entry: ConfigEntry) -> dict[str, Any]:
+async def async_get_config_entry_diagnostics(hass, entry):
     coordinator = hass.data[DOMAIN][entry.entry_id]
+    data = coordinator.data or {}
+    # Serial numbers can also occur as dictionary keys; turn that mapping into a list.
+    safe_data = {**data, "devices": list(data.get("devices", {}).values())}
     return {
-        "entry": _redact(
-            {
-                "title": entry.title,
-                "data": dict(entry.data),
-                "options": dict(entry.options),
-            }
-        ),
+        "entry": redact({"data": dict(entry.data), "options": dict(entry.options)}),
         "last_update_success": coordinator.last_update_success,
-        "data": _redact(coordinator.data or {}),
+        "mqtt_connected": coordinator.transport.connected,
+        "session_backoff": coordinator.transport.yielding,
+        "data": redact(safe_data),
     }
-
-
-def _redact(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {
-            key: REDACTED if key in REDACT_KEYS else _redact(item)
-            for key, item in value.items()
-        }
-    if isinstance(value, list):
-        return [_redact(item) for item in value]
-    return value

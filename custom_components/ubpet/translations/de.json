@@ -1,0 +1,313 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cat Litter Hub",
+        "description": "Wähle die App, in der dein Konto angelegt wurde. Die Marke auf dem Katzenklo kann davon abweichen.",
+        "data": {
+          "provider": "Kontoanbieter / App"
+        }
+      },
+      "account": {
+        "title": "{provider}: Konto und Server",
+        "description": "Wähle die Kontoregion und das in der App gewählte Land. Home Assistant schlägt die Region nur vor. Meowant nutzt auch für andere Länder den NA/globalen Server.",
+        "data": {
+          "region": "Serverregion des Kontos",
+          "country": "Kontoland (aus der App)",
+          "username": "Konto",
+          "password": "Passwort"
+        }
+      }
+    },
+    "error": {
+      "invalid_input": "Bitte ein gültiges Land, Konto und Passwort angeben.",
+      "invalid_auth": "Anmeldung abgelehnt. App/Anbieter, Kontoregion, Land und Passwort prüfen.",
+      "cannot_connect": "Der Anbieter ist nicht erreichbar. Bitte später erneut versuchen.",
+      "missing_devices": "Mit diesen Einstellungen fehlen bisher verbundene Katzenklos. Bitte die Kontoregion prüfen.",
+      "account_changed": "Für ein anderes Konto bitte einen weiteren Konfigurationseintrag anlegen."
+    },
+    "abort": {
+      "already_configured": "Dieses Cloudkonto ist bereits eingerichtet.",
+      "reauth_successful": "Zugangsdaten aktualisiert.",
+      "reconfigure_successful": "Kontoeinstellungen aktualisiert."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "box_status": {
+        "name": "Betriebsstatus"
+      },
+      "box_use_times": {
+        "name": "Nutzungen seit Behälterreset"
+      },
+      "waste_bin_level": {
+        "name": "Abfallbehälter-Füllstand"
+      },
+      "waste_bin_last_reset": {
+        "name": "Letzter Behälterreset"
+      },
+      "box_full_max": {
+        "name": "Behälterkapazität (Nutzungen)"
+      },
+      "box_full_alert": {
+        "name": "Warnschwelle des Abfallbehälters"
+      },
+      "deodorant_remaining_days": {
+        "name": "Geruchsblock: verbleibende Tage"
+      },
+      "cat_weight": {
+        "name": "Gewicht"
+      },
+      "cat_visits": {
+        "name": "Besuche (Legacy)"
+      },
+      "cat_cost_time": {
+        "name": "Durchschnittliche Besuchsdauer (Legacy)"
+      },
+      "firmware_version": {
+        "name": "Firmware-Version"
+      },
+      "auto_clean_delay_current": {
+        "name": "Reinigungsverzögerung"
+      },
+      "wifi_name": {
+        "name": "WLAN-Name"
+      },
+      "empty_waste_bin_reminder_days": {
+        "name": "Erinnerung zum Behälterleeren: Wochentage"
+      },
+      "mqtt_work_mode": {
+        "name": "MQTT-Betriebsmodus"
+      },
+      "mqtt_work_state": {
+        "name": "MQTT-Betriebszustand"
+      },
+      "mqtt_work_cause": {
+        "name": "MQTT-Statusursache"
+      },
+      "last_rest_update": {
+        "name": "Letzte REST-Aktualisierung"
+      },
+      "last_mqtt_update": {
+        "name": "Letzte MQTT-Aktualisierung"
+      },
+      "remaining_bin_uses": {
+        "name": "Verbleibende Nutzungen bis Behälterkapazität"
+      },
+      "last_visit": {
+        "name": "Letzter Besuch"
+      },
+      "mqtt_pet_position": {
+        "name": "Position der Katze"
+      },
+      "cat_last_visit_duration": {
+        "name": "Letzte Besuchsdauer"
+      },
+      "cat_pee_visits_24h": {
+        "name": "Urinbesuche in 24 Stunden (geschätzt)"
+      },
+      "cat_poo_visits_24h": {
+        "name": "Kotbesuche in 24 Stunden (geschätzt)"
+      },
+      "cat_last_pee": {
+        "name": "Letzter Urinbesuch (geschätzt)"
+      },
+      "cat_last_poo": {
+        "name": "Letzter Kotbesuch (geschätzt)"
+      },
+      "cat_last_visit": {
+        "name": "Letzter Besuch"
+      },
+      "cat_visits_24h": {
+        "name": "Besuche in 24 Stunden"
+      },
+      "cat_duration_24h": {
+        "name": "Aufenthaltsdauer in 24 Stunden"
+      },
+      "cat_average_duration_24h": {
+        "name": "Durchschnittliche Besuchsdauer in 24 Stunden"
+      },
+      "cat_maximum_duration_24h": {
+        "name": "Längster Besuch in 24 Stunden"
+      },
+      "cat_weight_change": {
+        "name": "Gewichtsänderung seit vorherigem Besuch"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "Online"
+      },
+      "deodorant_expired": {
+        "name": "Geruchsblock abgelaufen"
+      },
+      "sensor_switch": {
+        "name": "Sensor aktiviert"
+      },
+      "camera_switch": {
+        "name": "Kamera aktiviert"
+      },
+      "control_board_switch": {
+        "name": "Kindersicherung"
+      },
+      "cat_inside": {
+        "name": "Katze im Katzenklo"
+      },
+      "cat_nearby": {
+        "name": "Katze in der Nähe"
+      },
+      "cover_open": {
+        "name": "Abdeckung offen"
+      },
+      "drum_not_in_place": {
+        "name": "Trommel nicht eingesetzt"
+      },
+      "drum_stuck": {
+        "name": "Trommel blockiert"
+      },
+      "scale_fault": {
+        "name": "Waagenfehler"
+      },
+      "camera_fault": {
+        "name": "Kamerafehler"
+      },
+      "light": {
+        "name": "Licht"
+      },
+      "firmware_updating": {
+        "name": "Firmware-Aktualisierung läuft"
+      },
+      "mqtt_connected": {
+        "name": "MQTT verbunden"
+      },
+      "waste_bin_full": {
+        "name": "Abfallbehälter: Warnschwelle erreicht"
+      },
+      "history_truncated": {
+        "name": "Verlauf: Abruflimit erreicht"
+      }
+    },
+    "number": {
+      "auto_clean_delay": {
+        "name": "Reinigungsverzögerung"
+      },
+      "cat_poo_duration_threshold": {
+        "name": "Dauerschwelle für Kotbesuche (Schätzung)"
+      },
+      "box_full_alert_threshold": {
+        "name": "Abfallbehälter voll nach"
+      }
+    },
+    "switch": {
+      "deodorant_alert": {
+        "name": "Geruchsblock-Warnung"
+      },
+      "do_not_disturb": {
+        "name": "Nicht stören"
+      },
+      "light_schedule": {
+        "name": "Lichtzeitplan"
+      },
+      "empty_waste_bin_reminder": {
+        "name": "Erinnerung zum Behälterleeren"
+      },
+      "auto_clean": {
+        "name": "Automatische Reinigung"
+      },
+      "child_lock": {
+        "name": "Kindersicherung"
+      },
+      "shake_mode": {
+        "name": "Schüttelmodus"
+      },
+      "box_full_alert": {
+        "name": "Warnung bei vollem Abfallbehälter"
+      }
+    },
+    "time": {
+      "do_not_disturb_start": {
+        "name": "Nicht stören: Beginn"
+      },
+      "do_not_disturb_end": {
+        "name": "Nicht stören: Ende"
+      },
+      "light_schedule_start": {
+        "name": "Lichtzeitplan: Beginn"
+      },
+      "light_schedule_end": {
+        "name": "Lichtzeitplan: Ende"
+      },
+      "empty_waste_bin_reminder_time": {
+        "name": "Erinnerung zum Behälterleeren: Uhrzeit"
+      }
+    },
+    "select": {
+      "empty_waste_bin_reminder_days_select": {
+        "name": "Erinnerung zum Behälterleeren: Wochentage"
+      }
+    },
+    "button": {
+      "rest_request": {
+        "name": "REST-Daten aktualisieren"
+      },
+      "mqtt_request_state": {
+        "name": "Gerätestatus anfordern"
+      },
+      "reset_waste_bin": {
+        "name": "Abfallbehälter zurücksetzen"
+      },
+      "mqtt_start_clean_up": {
+        "name": "Reinigung starten"
+      },
+      "mqtt_pause_clean_up": {
+        "name": "Reinigung pausieren"
+      },
+      "mqtt_resume_clean_up": {
+        "name": "Reinigung fortsetzen"
+      },
+      "mqtt_start_flatten": {
+        "name": "Streu glätten"
+      },
+      "mqtt_pause_flatten": {
+        "name": "Glätten pausieren"
+      },
+      "mqtt_resume_flatten": {
+        "name": "Glätten fortsetzen"
+      },
+      "mqtt_start_rise": {
+        "name": "Streurechen anheben"
+      },
+      "mqtt_start_drop": {
+        "name": "Streurechen absenken"
+      },
+      "reset_deodorant": {
+        "name": "Geruchsblock zurücksetzen"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Cloud-Aktualisierung",
+        "description": "Eine dauerhafte MQTT-Verbindung je Konto. REST lädt regelmäßig Einstellungen und Besuche nach.",
+        "data": {
+          "scan_interval": "REST-Intervall (Sekunden, 60–3600)",
+          "records_per_fetch": "Datensätze je Katzenklo und Verlauf (20–200)",
+          "mqtt_enabled": "MQTT-Push und Befehle aktivieren"
+        }
+      }
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "eu": "Europa (EU)",
+        "na": "Nordamerika / globaler Meowant-Server",
+        "asia": "Asien (Japan / Südkorea)",
+        "ru": "Russland",
+        "global": "Global",
+        "cn": "China"
+      }
+    }
+  }
+}
