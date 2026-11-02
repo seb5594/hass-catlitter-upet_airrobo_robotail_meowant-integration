@@ -18,10 +18,10 @@ Die zentrale Engine misst Tests und ZIP-Größe und aktualisiert den generierten
 Die Versionsquelle ist `custom_components/ubpet/manifest.json`. Das Schema wird als gültiges Calendar Versioning erkannt und von der vorhandenen ZIP-/Release-Engine unterstützt.
 
 ```powershell
-# Nächsten freien Tagesbuild aus Manifest und lokalen Git-Tags bestimmen:
+# Select the next available day build from the manifest and local Git tags:
 python tools/version.py
 
-# Einen bestimmten Build vorbereiten:
+# Prepare a specific build:
 python tools/version.py --date 2026-11-02 --build 2
 ```
 

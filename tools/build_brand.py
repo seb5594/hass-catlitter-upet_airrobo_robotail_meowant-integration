@@ -1,4 +1,4 @@
-"""Brand-PNGs aus der editierbaren SVG-Quelle erzeugen: pip install resvg-py."""
+"""Render integration brand PNGs from the editable SVG; requires resvg-py."""
 
 from pathlib import Path
 

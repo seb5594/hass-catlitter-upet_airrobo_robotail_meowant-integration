@@ -1,4 +1,4 @@
-"""Projektregeln: konsistente Metadaten, Übersetzungen und Python-Stil."""
+"""Check project metadata, translation parity, and Python style."""
 
 import importlib.util
 import json
@@ -24,7 +24,7 @@ def keys(value, prefix=""):
 
 
 assert keys(english) == keys(german), "Deutsche Übersetzungen sind unvollständig"
-# Die Engine ruft Projektprüfungen vor dem Installieren der Dev-Anforderungen auf.
+# The engine runs project checks before installing development requirements.
 if importlib.util.find_spec("ruff") is None:
     subprocess.run([sys.executable, "-m", "pip", "install", "--disable-pip-version-check", "ruff==0.17.3"], check=True)
 subprocess.run(

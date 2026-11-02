@@ -1,4 +1,4 @@
-"""Nächsten Berliner Tagesbuild bestimmen; nur die Versionsquelle ändern."""
+"""Select the next Berlin calendar-day build and update the version source."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
-parser = argparse.ArgumentParser(description=__doc__)
+parser = argparse.ArgumentParser(description="Nächsten Tagesbuild in Europe/Berlin vorbereiten.")
 parser.add_argument("--date", help="Kalendertag JJJJ-MM-TT; Standard: Europe/Berlin")
 parser.add_argument("--build", type=int, help="Explizite Tages-Buildnummer ab 1")
 args = parser.parse_args()
