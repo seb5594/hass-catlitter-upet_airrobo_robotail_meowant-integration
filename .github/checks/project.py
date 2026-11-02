@@ -1,7 +1,7 @@
 """Projektregeln: konsistente Metadaten, Übersetzungen und Python-Stil."""
 
-import json
 import importlib.util
+import json
 import re
 import subprocess
 import sys
