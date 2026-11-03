@@ -156,11 +156,12 @@ async def test_cards_are_served_and_loaded_once(hass):
 
     from custom_components.ubpet_cat_litter_hub.frontend import CARDS_FILE, CARDS_URL, async_register_cards
 
-    hass.http = MagicMock(async_register_static_paths=AsyncMock())
+    # Home Assistant before 2024.7 serves static files through the synchronous call instead.
+    hass.http = MagicMock(async_register_static_paths=AsyncMock(), register_static_path=MagicMock())
     with patch("homeassistant.components.frontend.add_extra_js_url") as add_url:
         await async_register_cards(hass)
         await async_register_cards(hass)  # a second config entry must not register again
     add_url.assert_called_once()
     assert add_url.call_args.args[1].startswith(f"{CARDS_URL}?v=")
-    hass.http.async_register_static_paths.assert_awaited_once()
+    assert hass.http.async_register_static_paths.await_count + hass.http.register_static_path.call_count == 1
     assert CARDS_FILE.is_file()
