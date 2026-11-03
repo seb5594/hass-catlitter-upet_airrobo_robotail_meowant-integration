@@ -15,7 +15,7 @@ Die zentrale Engine misst Tests und ZIP-Größe und aktualisiert den generierten
 
 `2026.11.02.1` bedeutet: erster Build am 2. November 2026. Danach folgen `.2`, `.3` usw. Am nächsten Kalendertag beginnt die Tageszählung wieder bei `.1`. Maßgeblich ist **Europe/Berlin**. Der Release-Tag lautet beispielsweise `v2026.11.02.1`.
 
-Die Versionsquelle ist `custom_components/ubpet/manifest.json`. Das Schema wird als gültiges Calendar Versioning erkannt und von der vorhandenen ZIP-/Release-Engine unterstützt.
+Die Versionsquelle ist `custom_components/ubpet_cat_litter_hub/manifest.json`. Das Schema wird als gültiges Calendar Versioning erkannt und von der vorhandenen ZIP-/Release-Engine unterstützt.
 
 ```powershell
 # Select the next available day build from the manifest and local Git tags:
@@ -35,6 +35,6 @@ python .engine/.scripts/project.py validate
 python .engine/.scripts/project.py package
 ```
 
-Die Engine wird vorher außerhalb des veröffentlichten Komponentenordners ausgecheckt. `dist/ubpet.zip` enthält ausschließlich den Inhalt von `custom_components/ubpet`, ohne `.research`, Tests, Zugangsdaten aus Home Assistant oder virtuelle Umgebungen. Die Engine setzt feste ZIP-Zeitstempel und prüft das Archiv vor der Ausgabe einer SHA-256-Prüfsumme.
+Die Engine wird vorher außerhalb des veröffentlichten Komponentenordners ausgecheckt. `dist/ubpet_cat_litter_hub.zip` enthält ausschließlich den Inhalt von `custom_components/ubpet_cat_litter_hub`, ohne `.research`, Tests, Zugangsdaten aus Home Assistant oder virtuelle Umgebungen. Die Engine setzt feste ZIP-Zeitstempel und prüft das Archiv vor der Ausgabe einer SHA-256-Prüfsumme.
 
 Der offene Upstream-Lizenzstatus wird dokumentiert; die Engine überspringt den für den HACS-Standardkatalog vorgesehenen Lizenztest, solange keine Lizenzdatei vorhanden ist. Es wird keine fremde Lizenz fingiert.

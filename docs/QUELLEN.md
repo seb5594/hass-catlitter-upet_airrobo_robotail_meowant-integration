@@ -155,17 +155,37 @@ Aktive Meowant-Anpassung: Anbieterprofile, dauerhafte MQTT-Sitzung, Fähigkeiten
 
 Erfasste Issues: 0; Pull Requests: 0.
 
-### [seb5594/hass-catlitter-upet_airrobo_robotail_meowant-integration](https://github.com/seb5594/hass-catlitter-upet_airrobo_robotail_meowant-integration)
+### [seb5594/hass-ubpet_cat_litter_hub-integration](https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration)
 
-Ziel-Fork; Repository während der Arbeit in hass-catlitter-upet_airrobo_robotail_meowant-integration umbenannt.
+Ziel-Fork. Das Repository hieß zwischenzeitlich anders und trägt jetzt den Namen hass-ubpet_cat_litter_hub-integration.
 
-- `main` → [`3b8af41ddb13`](https://github.com/seb5594/hass-catlitter-upet_airrobo_robotail_meowant-integration/commit/3b8af41ddb13104bb3e2a0249ca226a8bb6b993f)
+- `main` → [`3b8af41ddb13`](https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration/commit/3b8af41ddb13104bb3e2a0249ca226a8bb6b993f)
 
 Erfasste Issues: 0; Pull Requests: 0.
 
 ## Was daraus umgesetzt wurde
 
 Gemeinsamer REST-/RISP-Kern, eigene Anbieterprofile, ausdrückliche Kontoregion, mehrere Einträge, eine MQTT-Sitzung je Konto, Login-Backoff, persistente Besuchsereignisse, zusätzliche faktische Sensoren und Erhalt der bisherigen Schätzsensoren. Vorhandene API-Daten und Kontoverbindungen werden nicht wegen eines vorübergehend fehlenden optionalen Endpunkts überschrieben.
+
+## Auswertung der Issues und Pull Requests
+
+Stand 3. November 2026, gelesen über die GitHub-Suche (Titel und Beschreibung; Kommentare nur, wo vorhanden).
+
+| Quelle | Befund | Umsetzung |
+| --- | --- | --- |
+| CrazzyBerg #6 | Login mit `code=2002` („Benutzer oder Passwort falsch“), `areaCode` leer | `areaCode` wird immer aus dem gewählten Land gesetzt; die Fehlermeldung nennt die Region als Ursache |
+| CrazzyBerg #3, PR #4 | Bedienelemente dauerhaft grau, weil Modus `IDLE` mit Zustand `RUNNING` gemeldet wird | Freigabe berücksichtigt den Modus statt nur den Zustand |
+| CrazzyBerg PR #4, #5 | Nordamerika-Profil, Meowant-Profil, SC-01 im Leerlauf | als Anbieter-/Regionsprofile in `providers.json` |
+| CrazzyBerg PR #7, lorenzomigliorero | `POST …/deodorant-block/replaced` | Knopf „Geruchsblock zurücksetzen“ |
+| CrazzyBerg #8 | Robotail C42, Lizenzfrage | Lizenzstatus bleibt offen (README) |
+| bojanrajkovic #4 | Zeitpläne in `taskConfigList` | Sensor „Geplante Reinigungen“ (Anzahl aktiver, Zeiten als Attribut); Bearbeiten bewusst nicht umgesetzt (variable Listenlänge) |
+| bojanrajkovic #6 | Ereignisnummern 3, 21, 31 bekannt; Warnungscodes unbekannt | `event_name` nur für 3, 21, 31 |
+| bojanrajkovic #9 | Behälterzähler bleibt 0 | „Reinigungen seit Behälterreset“ aus den Geräteprotokollen |
+| bojanrajkovic #10 | Geruchsblock zählt eventuell nicht herunter | offen, Hardwarebeobachtung nötig |
+| bojanrajkovic #2 | Gesundheitsalarm je Katze (`/web/cat/health/config`), schaltet Handy-Pushs | nicht umgesetzt: ändert Benachrichtigungen des Besitzers |
+| bojanrajkovic #3, #5 | Firmware-Update-Entität, Kamerabild über zweite MQTT-Sitzung | nicht umgesetzt: kein belegter Nutzen, Risiko für die Sitzung |
+| bojanrajkovic #7 | Tages-/Wochen-/Jahresbericht je Katze | nicht umgesetzt: Semantik von Woche/Jahr ungeklärt |
+| Meowant-Fork | `foreign_object_detection`, `cleans_today`, `visits_today`, `last_used_by` | als Schalter bzw. Sensoren übernommen |
 
 ## Was noch Belege oder Hardwaretests braucht
 
