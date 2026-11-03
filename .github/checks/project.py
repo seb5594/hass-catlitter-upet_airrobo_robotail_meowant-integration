@@ -60,4 +60,4 @@ subprocess.run(
     check=True,
     cwd=ROOT,
 )
-print("Metadaten, Übersetzungen und Stil geprüft")
+print("Metadata, translations and style checked")

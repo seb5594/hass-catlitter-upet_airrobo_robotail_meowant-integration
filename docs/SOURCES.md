@@ -1,18 +1,18 @@
-# Quellen und offene Erkenntnisse
+# Sources and open findings
 
-Stand: 2. November 2026. Erfasst wurden das Original, alle zehn von der öffentlichen Fork-API gelieferten direkten Forks und der zusätzliche PnnnG-Unterfork: insgesamt zwölf Repositories. Die GitHub-Oberfläche zählt das Netzwerk einschließlich Unterfork als elf Forks. Private, gelöschte oder nicht auffindbare historische Forks sind damit nicht erfasst.
+As of 2 November 2026. Covered were the original, all ten direct forks returned by the public fork API and the additional PnnnG sub-fork: twelve repositories in total. The GitHub UI counts the network including the sub-fork as eleven forks. Private, deleted or otherwise unfindable historical forks are therefore not covered.
 
-Alle veröffentlichten Remote-Branches wurden mit SHA inventarisiert und gegen den Originalstand verglichen. Issues und Pull Requests wurden über state=all gelesen; vorhandene Issue-Kommentare wurden zusätzlich abgerufen. Unveröffentlichte lokale Branches anderer Entwickler sind nicht zugänglich.
+All published remote branches were inventoried with their SHA and compared against the original state. Issues and pull requests were read with state=all; existing issue comments were fetched as well. Unpublished local branches of other developers are not accessible.
 
-## Ergebnis nach Repository
+## Result by repository
 
 ### [CrazzyBerg/upet-hass](https://github.com/CrazzyBerg/upet-hass)
 
-Ausgangsbasis; Loginprobleme, ausgegraute Befehle, NA- und Meowant-PRs sowie offener Lizenzwunsch in Issue #8.
+Starting point; login problems, greyed-out commands, NA and Meowant pull requests and the open license request in issue #8.
 
 - `main` → [`3b8af41ddb13`](https://github.com/CrazzyBerg/upet-hass/commit/3b8af41ddb13104bb3e2a0249ca226a8bb6b993f)
 
-Erfasste Issues: 5; Pull Requests: 3.
+Issues recorded: 5; pull requests: 3.
 
 - [#8: Robotail C42 extensions: contribution offer and license/redistribution question](https://github.com/CrazzyBerg/upet-hass/issues/8)
 - [#7: Add deodorant-block reset button](https://github.com/CrazzyBerg/upet-hass/issues/7)
@@ -25,45 +25,45 @@ Erfasste Issues: 5; Pull Requests: 3.
 
 ### [Jster42/upet-hass](https://github.com/Jster42/upet-hass)
 
-feature/meowant-support: Meowant-Tenant, Kontoland und Modellunterschiede. Rechenfunktionen nicht aus dem Anbieternamen für jedes Modell ableiten.
+feature/meowant-support: Meowant tenant, account country and model differences. Do not derive rake functions from the provider name for every model.
 
 - `feature/meowant-support` → [`0934de95f57f`](https://github.com/Jster42/upet-hass/commit/0934de95f57f5a2d653082a4e56dfc139f4ee23f)
 - `main` → [`3b8af41ddb13`](https://github.com/Jster42/upet-hass/commit/3b8af41ddb13104bb3e2a0249ca226a8bb6b993f)
 
-Erfasste Issues: 0; Pull Requests: 0.
+Issues recorded: 0; pull requests: 0.
 
 ### [KennebecRiver66/upet-hass-multi-region](https://github.com/KennebecRiver66/upet-hass-multi-region)
 
-Unterfork von PnnnG: explizite NA-/Asien-Regionen und zusätzliche ubtrobot.com-Hosts. Alternative Hosts sind als experimentell eingeordnet.
+Sub-fork of PnnnG: explicit NA/Asia regions and additional ubtrobot.com hosts. Alternative hosts are classified as experimental.
 
 - `feat/airpet-ubtrobot-hosts` → [`6ced8ba0cc84`](https://github.com/KennebecRiver66/upet-hass-multi-region/commit/6ced8ba0cc84a198e2a7e0e0538a56cf72f06593)
 - `main` → [`97695d2232ff`](https://github.com/KennebecRiver66/upet-hass-multi-region/commit/97695d2232ff714498a7adf5cccbac9193a61efe)
 
-Erfasste Issues: 0; Pull Requests: 2.
+Issues recorded: 0; pull requests: 2.
 
 - [#2: Add AIR PET / AIRROBO backend hosts on ubtrobot.com](https://github.com/KennebecRiver66/upet-hass-multi-region/issues/2)
 - [#1: Add North America and Asia regions, with explicit region selection](https://github.com/KennebecRiver66/upet-hass-multi-region/issues/1)
 
 ### [PnnnG/upet-hass-multi-region](https://github.com/PnnnG/upet-hass-multi-region)
 
-Flacher/umhüllter Login, regionabhängiges areaCode, persistente Besuchsanalysen, Pet-Position und Schutzbedingungen bei Bewegung.
+Flat/wrapped login, region-dependent areaCode, persistent visit analytics, pet position and safety conditions for movement.
 
 - `main` → [`722d3d5fa6e6`](https://github.com/PnnnG/upet-hass-multi-region/commit/722d3d5fa6e6f972dff2482d5152869d86619120)
 
-Erfasste Issues: 0; Pull Requests: 0.
+Issues recorded: 0; pull requests: 0.
 
 ### [aderusha/upet-hass](https://github.com/aderusha/upet-hass)
 
-Früherer Meowant-Profilansatz auf feature/meowant-support; gemeinsam mit Jster42 und pfgcoder verglichen.
+Earlier Meowant profile approach on feature/meowant-support; compared together with Jster42 and pfgcoder.
 
 - `feature/meowant-support` → [`9d0ac9879207`](https://github.com/aderusha/upet-hass/commit/9d0ac9879207f0d3d15b1a6ac329ff322ccb0fc2)
 - `main` → [`3b8af41ddb13`](https://github.com/aderusha/upet-hass/commit/3b8af41ddb13104bb3e2a0249ca226a8bb6b993f)
 
-Erfasste Issues: 0; Pull Requests: 0.
+Issues recorded: 0; pull requests: 0.
 
 ### [bojanrajkovic/upet-hass](https://github.com/bojanrajkovic/upet-hass)
 
-main enthält noch die Ausgangsbasis. Die relevanten Neuerungen liegen in den vielen stack/*-, mqtt-push-, visit-log- und box-diagnostics-Branches. Push, Sitzungskonflikte, Besuchsereignisse, Präsenz/Wartung, Modellfähigkeiten und Konfigurationsbefunde geprüft.
+main still contains the starting point. The relevant additions are in the many stack/*, mqtt-push, visit-log and box-diagnostics branches. Push, session conflicts, visit events, presence/maintenance, model capabilities and configuration findings were reviewed.
 
 - `box-diagnostics` → [`bdc045db538b`](https://github.com/bojanrajkovic/upet-hass/commit/bdc045db538b18a4001e0b90d3f662bfb29d506c)
 - `fork-maintenance` → [`e69dbe0872e0`](https://github.com/bojanrajkovic/upet-hass/commit/e69dbe0872e092b3ddabe7dff6fa581e78d5ae26)
@@ -86,7 +86,7 @@ main enthält noch die Ausgangsbasis. Die relevanten Neuerungen liegen in den vi
 - `us-region` → [`ad6e2513a368`](https://github.com/bojanrajkovic/upet-hass/commit/ad6e2513a36883bd535be9531146174e31f7fd7c)
 - `visit-log` → [`2957a80ca4fd`](https://github.com/bojanrajkovic/upet-hass/commit/2957a80ca4fdd8a915820f34f95f14ac5b65f7cf)
 
-Erfasste Issues: 8; Pull Requests: 16.
+Issues recorded: 8; pull requests: 16.
 
 - [#25: Show visits on the cat's device page](https://github.com/bojanrajkovic/upet-hass/issues/25)
 - [#24: Only create entities for hardware the box has](https://github.com/bojanrajkovic/upet-hass/issues/24)
@@ -115,90 +115,90 @@ Erfasste Issues: 8; Pull Requests: 16.
 
 ### [dantaeyoung/upet-hass](https://github.com/dantaeyoung/upet-hass)
 
-Älterer Stand 1.0.2; keine zusätzlichen Remote-Branches oder Issues in der API-Auflistung.
+Older state 1.0.2; no additional remote branches or issues in the API listing.
 
 - `main` → [`9a812ac271f4`](https://github.com/dantaeyoung/upet-hass/commit/9a812ac271f4d1f606e2ba8760c168c715fec3c1)
 
-Erfasste Issues: 0; Pull Requests: 0.
+Issues recorded: 0; pull requests: 0.
 
 ### [hermeneanc/robotail-hass](https://github.com/hermeneanc/robotail-hass)
 
-Eigenes Robotail-App-Profil auf gleicher Protokollfamilie; der andere App-Namensraum ist für sichtbare Geräte entscheidend. Repository nennt C32/C42, nicht einen bestätigten C31.
+Own Robotail app profile on the same protocol family; the different app namespace is decisive for which devices are visible. The repository names C32/C42, not a confirmed C31.
 
 - `main` → [`57a2d0933045`](https://github.com/hermeneanc/robotail-hass/commit/57a2d0933045a3c5b40f4842a3d95cc81eb5550d)
 
-Erfasste Issues: 0; Pull Requests: 0.
+Issues recorded: 0; pull requests: 0.
 
 ### [lorenzomigliorero/upet-hass](https://github.com/lorenzomigliorero/upet-hass)
 
-add-deodorant-reset-button: bestätigter POST auf deodorant-block/replaced; als eigener Konfigurationsknopf umgesetzt.
+add-deodorant-reset-button: confirmed POST to deodorant-block/replaced; implemented as a separate config button.
 
 - `add-deodorant-reset-button` → [`890356ad4652`](https://github.com/lorenzomigliorero/upet-hass/commit/890356ad46522b2a5b93511f785dfd2660911263)
 - `main` → [`3b8af41ddb13`](https://github.com/lorenzomigliorero/upet-hass/commit/3b8af41ddb13104bb3e2a0249ca226a8bb6b993f)
 
-Erfasste Issues: 0; Pull Requests: 0.
+Issues recorded: 0; pull requests: 0.
 
 ### [mrozekma/upet-hass](https://github.com/mrozekma/upet-hass)
 
-main älter als die Ausgangsbasis; regions-Branch mit EU-/NA-Daten und Idle-Zustandsbefunden. BLOCKED darf bei der Idle-Normalisierung nicht verschwinden.
+main is older than the starting point; regions branch with EU/NA data and idle-state findings. BLOCKED must not disappear during idle normalisation.
 
 - `main` → [`9a812ac271f4`](https://github.com/mrozekma/upet-hass/commit/9a812ac271f4d1f606e2ba8760c168c715fec3c1)
 - `regions` → [`687b1e9da552`](https://github.com/mrozekma/upet-hass/commit/687b1e9da55250de63d4bc73692e92d9835e4ba0)
 
-Erfasste Issues: 0; Pull Requests: 0.
+Issues recorded: 0; pull requests: 0.
 
 ### [pfgcoder/meowant-hass](https://github.com/pfgcoder/meowant-hass)
 
-Aktive Meowant-Anpassung: Anbieterprofile, dauerhafte MQTT-Sitzung, Fähigkeiten, Fehlerfälle bei null-Antworten und Einstellungen; Besitzerrechte und Passwortfehler beachten.
+Active Meowant adaptation: provider profiles, persistent MQTT session, capabilities, error cases for null responses and settings; mind owner permissions and password errors.
 
 - `main` → [`8c66e172fc16`](https://github.com/pfgcoder/meowant-hass/commit/8c66e172fc166c1c186c65b27c95b5de230b6f67)
 
-Erfasste Issues: 0; Pull Requests: 0.
+Issues recorded: 0; pull requests: 0.
 
 ### [seb5594/hass-ubpet_cat_litter_hub-integration](https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration)
 
-Ziel-Fork. Das Repository hieß zwischenzeitlich anders und trägt jetzt den Namen hass-ubpet_cat_litter_hub-integration.
+Target fork. The repository was named differently for a while and is now called hass-ubpet_cat_litter_hub-integration.
 
 - `main` → [`3b8af41ddb13`](https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration/commit/3b8af41ddb13104bb3e2a0249ca226a8bb6b993f)
 
-Erfasste Issues: 0; Pull Requests: 0.
+Issues recorded: 0; pull requests: 0.
 
-## Was daraus umgesetzt wurde
+## What was implemented from this
 
-Gemeinsamer REST-/RISP-Kern, eigene Anbieterprofile, ausdrückliche Kontoregion, mehrere Einträge, eine MQTT-Sitzung je Konto, Login-Backoff, persistente Besuchsereignisse, zusätzliche faktische Sensoren und Erhalt der bisherigen Schätzsensoren. Vorhandene API-Daten und Kontoverbindungen werden nicht wegen eines vorübergehend fehlenden optionalen Endpunkts überschrieben.
+Shared REST/RISP core, separate provider profiles, explicit account region, multiple entries, one MQTT session per account, login backoff, persistent visit events, additional factual sensors and preservation of the earlier estimate sensors. Existing API data and account connections are not overwritten because an optional endpoint is temporarily missing.
 
-## Auswertung der Issues und Pull Requests
+## Review of issues and pull requests
 
-Stand 3. November 2026, gelesen über die GitHub-Suche (Titel und Beschreibung; Kommentare nur, wo vorhanden).
+As of 3 November 2026, read through GitHub search (title and description; comments only where present).
 
-| Quelle | Befund | Umsetzung |
+| Source | Finding | Implementation |
 | --- | --- | --- |
-| CrazzyBerg #6 | Login mit `code=2002` („Benutzer oder Passwort falsch“), `areaCode` leer | `areaCode` wird immer aus dem gewählten Land gesetzt; die Fehlermeldung nennt die Region als Ursache |
-| CrazzyBerg #3, PR #4 | Bedienelemente dauerhaft grau, weil Modus `IDLE` mit Zustand `RUNNING` gemeldet wird | Freigabe berücksichtigt den Modus statt nur den Zustand |
-| CrazzyBerg PR #4, #5 | Nordamerika-Profil, Meowant-Profil, SC-01 im Leerlauf | als Anbieter-/Regionsprofile in `providers.json` |
-| CrazzyBerg PR #7, lorenzomigliorero | `POST …/deodorant-block/replaced` | Knopf „Geruchsblock zurücksetzen“ |
-| CrazzyBerg #8 | Robotail C42, Lizenzfrage | Lizenzstatus bleibt offen (README) |
-| bojanrajkovic #4 | Zeitpläne in `taskConfigList` | Sensor „Geplante Reinigungen“ (Anzahl aktiver, Zeiten als Attribut); Bearbeiten bewusst nicht umgesetzt (variable Listenlänge) |
-| bojanrajkovic #6 | Ereignisnummern 3, 21, 31 bekannt; Warnungscodes unbekannt | `event_name` nur für 3, 21, 31 |
-| bojanrajkovic #9 | Behälterzähler bleibt 0 | „Reinigungen seit Behälterreset“ aus den Geräteprotokollen |
-| bojanrajkovic #10 | Geruchsblock zählt eventuell nicht herunter | offen, Hardwarebeobachtung nötig |
-| bojanrajkovic #2 | Gesundheitsalarm je Katze (`/web/cat/health/config`), schaltet Handy-Pushs | nicht umgesetzt: ändert Benachrichtigungen des Besitzers |
-| bojanrajkovic #3, #5 | Firmware-Update-Entität, Kamerabild über zweite MQTT-Sitzung | nicht umgesetzt: kein belegter Nutzen, Risiko für die Sitzung |
-| bojanrajkovic #7 | Tages-/Wochen-/Jahresbericht je Katze | nicht umgesetzt: Semantik von Woche/Jahr ungeklärt |
-| Meowant-Fork | `foreign_object_detection`, `cleans_today`, `visits_today`, `last_used_by` | als Schalter bzw. Sensoren übernommen |
+| CrazzyBerg #6 | Login with `code=2002` ("wrong user or password"), `areaCode` empty | `areaCode` is always set from the chosen country; the error message names the region as a possible cause |
+| CrazzyBerg #3, PR #4 | Controls permanently greyed out because mode `IDLE` is reported with state `RUNNING` | Availability takes the mode into account instead of the state alone |
+| CrazzyBerg PR #4, #5 | North America profile, Meowant profile, SC-01 idle | as provider/region profiles in `providers.json` |
+| CrazzyBerg PR #7, lorenzomigliorero | `POST …/deodorant-block/replaced` | "Reset deodorant" button |
+| CrazzyBerg #8 | Robotail C42, license question | license status stays open (README) |
+| bojanrajkovic #4 | Schedules in `taskConfigList` | "Scheduled cleans" sensor (number of active ones, times as attribute); editing deliberately not implemented (variable list length) |
+| bojanrajkovic #6 | Event numbers 3, 21, 31 known; warning codes unknown | `event_name` only for 3, 21, 31 |
+| bojanrajkovic #9 | Bin counter stays 0 | "Cleans since waste bin reset" from the device records |
+| bojanrajkovic #10 | Odour block may not count down | open, needs hardware observation |
+| bojanrajkovic #2 | Health alert per cat (`/web/cat/health/config`), toggles phone pushes | not implemented: changes the owner's notifications |
+| bojanrajkovic #3, #5 | Firmware update entity, camera image over a second MQTT session | not implemented: no proven benefit, risk for the session |
+| bojanrajkovic #7 | Daily/weekly/yearly report per cat | not implemented: semantics of week/year unclear |
+| Meowant fork | `foreign_object_detection`, `cleans_today`, `visits_today`, `last_used_by` | adopted as switch and sensors |
 
-## Was noch Belege oder Hardwaretests braucht
+## What still needs evidence or hardware tests
 
-- Robotail C31 ist bisher nur eine Vermutung zum Nachbargerät. Der Robotail-Quellfork nennt C32/C42. Modell anhand von Typenschild/App bestätigen.
-- Nicht jede Marke ist nachweislich eine Submarke derselben Firma. Die Software fasst Protokollkompatibilität zusammen, keine unbelegte Eigentümerstruktur.
-- Kamera-/Bildübertragung und Firmwareupdate-Protokoll sind Ansatzpunkte in bojanrajkovics Issues #3/#5; Bildfähigkeit und parallele Sitzung sind nicht allgemein belegt. Keine OTA-Installationsbefehle ergänzt.
-- Warnereignisnummern wie 31 oder 52 sind nicht für alle Firmwares bestätigt. Unbekannte Codes bleiben numerisch statt mit erfundenen Ursachen benannt zu werden.
-- Tages-/Wochen-/Jahresberichte und Gesundheitsmeldungen sind im Quellmaterial beschrieben. Durchschnittssemantik, Zeitfenster und mögliche Auswirkungen auf Handybenachrichtigungen sind teilweise offen.
-- Kamerafähigkeit und Zustandsfelder müssen an C20/Robotail geprüft werden. Ein dauerhaftes cameraSwitch-Feld allein ist kein Beweis für vorhandene Kamerahardware.
-- Mehr Verlauf als das konfigurierbare Abruflimit benötigt bestätigte Pagination. Ein begrenzter Abruf wird deshalb als begrenzt ausgewiesen; ein vollständiger Langzeitausfall-Backfill wird nicht behauptet.
-- Besuche tauchen als `ubpet_visit`/`ubpet_box_event` auf dem Ereignisbus auf. Eine eigene Logbook-Darstellung und erweiterte Geräte-Trigger sind noch nicht ergänzt.
-- Der Originalcode und die recherchierten Forks enthalten keine Lizenzdatei. Upstream-Issue #8 fragt eine Freigabe an; es liegt im untersuchten Snapshot keine Antwort vor.
+- Robotail C31 is only a guess about the neighbour's device. The Robotail source fork names C32/C42. Confirm the model on the label or in the app.
+- Not every brand is demonstrably a sub-brand of the same company. The software combines protocol compatibility, not an unproven ownership structure.
+- Camera/image transfer and the firmware update protocol are starting points in bojanrajkovic's issues #3/#5; image capability and a parallel session are not generally proven. No OTA install commands were added.
+- Warning event numbers such as 31 or 52 are not confirmed for all firmwares. Unknown codes stay numeric instead of being given invented causes.
+- Daily/weekly/yearly reports and health alerts are described in the source material. Averaging semantics, time windows and possible effects on phone notifications are partly open.
+- Camera capability and state fields have to be checked on the C20/Robotail. A permanently present cameraSwitch field alone is no proof of camera hardware.
+- More history than the configurable fetch limit needs confirmed pagination. A limited fetch is therefore reported as limited; a complete long-outage backfill is not claimed.
+- Visits appear as `ubpet_visit`/`ubpet_box_event` on the event bus. A dedicated logbook presentation and extended device triggers have not been added yet.
+- The original code and the researched forks contain no license file. Upstream issue #8 asks for permission; no answer exists in the examined snapshot.
 
-## Markenbezug
+## Brand relationship
 
-[UBPet](https://www.ubpet.com/pages/about-us) und [AIRROBO](https://air-robo.com/pages/about-airrobo) nennen UBTECH als Markeninhaber. Die alte [airrobo-home-Seite](https://www.airrobo-home.com/) verweist auf UBPet. Robotail und Meowant werden hier aufgrund der belegten technischen Profile genannt; eine übergeordnete Markeninhaberschaft wird daraus nicht abgeleitet.
+[UBPet](https://www.ubpet.com/pages/about-us) and [AIRROBO](https://air-robo.com/pages/about-airrobo) name UBTECH as trademark owner. The old [airrobo-home site](https://www.airrobo-home.com/) points to UBPet. Robotail and Meowant are named here because of their documented technical profiles; no higher-level trademark ownership is derived from that.

@@ -20,95 +20,97 @@
 </p>
 <!-- header:end -->
 
-Eine Home-Assistant-Integration für smarte Katzenklos, die dieselbe Cloud-API nutzen: **UPET, UBPet, AIR PET, AIRROBO, Robotail und Meowant**. Mehrere Konten, Anbieter und Kontoregionen laufen nebeneinander in einer Integration, jedes mit eigener Verbindung.
+<p align="center"><b>English</b> · <a href="README.de.md">Deutsch</a></p>
 
-**Stand: 2026.11.03.1 · Hardwaretest mit dieser Version noch offen.** Die Software wird automatisiert geprüft (Unit-Tests, Tests mit echten Home-Assistant-Klassen, Übernahme alter Einträge mit echten Registries). Eine passende API allein beweist aber nicht, dass jedes Modell jede Funktion unterstützt; was am C20 und an Robotail noch zu prüfen ist, steht in [TESTEN.md](docs/TESTEN.md).
+A Home Assistant integration for smart cat litter boxes that share the UBPet / AIRROBO cloud API: **UPET, UBPet, AIR PET, AIRROBO, Robotail and Meowant**. Several accounts, providers and account regions run side by side in one integration, each with its own connection.
 
-## Was die Integration kann
+**Status: 2026.11.03.1 · hardware test with this version still open.** The software is checked automatically (unit tests, tests with real Home Assistant classes, adoption of old entries with real registries). A matching API alone does not prove that every model supports every function; what still has to be verified on the C20 and on Robotail is listed in [TESTING.md](docs/TESTING.md).
 
-- **Anbieter und Region je Konto.** Die Region ist eine ausdrückliche Auswahl. Home-Assistant-Land und Zeitzone liefern nur die Vorauswahl und zeigen im Formular, woraus sie abgeleitet wurde (`EU · DE`, `NA · America/Chicago`).
-- **Eine dauerhafte, verschlüsselte MQTT-Verbindung je Konto** für Statusmeldungen und Befehle; kein eigener Broker nötig. REST-Abgleich alle drei Minuten (60–3600 s einstellbar), zusätzlich nach Besuchs- und Konfigurationsmeldungen, höchstens vier parallele Abrufe je Konto.
-- **Status und Diagnose:** Betriebsstatus, Gewicht, Abfallbehälter, Geruchsblock, Firmware, Online, Abdeckung, Trommel, Waage, Kamera, Licht, Anwesenheit der Katze. Hardwareabhängige Entitäten entstehen nur, wenn das Gerät sie meldet.
-- **Besuchsverlauf** mit dauerhaft gespeicherter Deduplizierung und bis zu 10.000 Besuchen je Katze. Daraus abgeleitet: Besuche und Aufenthaltsdauer in 24 Stunden, **Besuche und Reinigungen heute**, letzte Reinigung, **Reinigungen seit Behälterreset** (ein Ersatz, falls der Zähler des Herstellers stehen bleibt), zuletzt benutzende Katze, Gewicht beim letzten Besuch und Gewichtsänderung.
-- **Steuerung:** automatische Reinigung samt Verzögerung, Kindersicherung, Schüttelmodus, Fremdkörpererkennung, Behälterwarnung, Nicht-stören- und Lichtzeitplan, Leerungserinnerung (Uhrzeit, Voreinstellungen und einzelne Wochentage). Behälter und Geruchsblock zurücksetzen. Reinigung, Glätten und Streurechen sind nur freigegeben, wenn das Gerät es zulässt; ein Gerät, das im Leerlauf „läuft“ meldet, bleibt bedienbar.
-- **Geplante Reinigungen** als Sensor (Anzahl aktiver, Zeiten als Attribut).
-- **Ereignisse** `ubpet_visit`, `ubpet_box_event` und `ubpet_presence` für Automationen; bekannte Ereignisnummern tragen einen lesbaren `event_name`.
-- **Neue Geräte und Katzen** werden im Betrieb entdeckt. Katzen mit gleicher Cloud-ID in verschiedenen Konten bleiben getrennt.
-- **Sprachen:** Oberfläche, Entitätsnamen, Zustände und Fehlermeldungen folgen automatisch der Home-Assistant-Sprache: Deutsch, Englisch, Französisch, Spanisch, Italienisch, Niederländisch, Polnisch, Portugiesisch (PT/BR), Russisch, Ukrainisch, Tschechisch, Schwedisch, Dänisch, Norwegisch, Finnisch, Türkisch, Japanisch, Koreanisch, Chinesisch (vereinfacht/traditionell). Fehlt eine Sprache, erscheint Englisch.
-- **Diagnosedaten** zum Herunterladen, bei denen Zugangsdaten, Geräte- und Haustierkennungen geschwärzt sind.
+## What it does
 
-**Urin/Kot sind Schätzungen anhand der Besuchsdauer.** Die Entitäten und die einstellbare Dauerschwelle bleiben erhalten, heißen aber ausdrücklich „geschätzt“; die API bestätigt keine Ausscheidungsart.
+- **Provider and region per account.** The region is an explicit choice. The Home Assistant country and time zone only provide the pre-selection and show what it was derived from (`EU · DE`, `NA · America/Chicago`).
+- **One persistent, encrypted MQTT connection per account** for status messages and commands; no local broker needed. REST sync every three minutes (60–3600 s configurable), plus after visit and configuration messages, with at most four parallel requests per account.
+- **Status and diagnostics:** box status, weight, waste bin, odour block, firmware, online, cover, drum, scale, camera, light, cat presence. Hardware-dependent entities are only created if the device reports them.
+- **Visit history** with durably stored deduplication and up to 10,000 visits per cat. Derived from it: visits and time in the box over 24 hours, **visits and cleans today**, last clean, **cleans since bin reset** (a substitute if the vendor counter gets stuck), cat that used the box last, weight at the last visit and weight change.
+- **Control:** automatic cleaning including delay, child lock, shake mode, foreign object detection, bin warning, do-not-disturb and light schedule, empty-bin reminder (time, presets and individual weekdays). Reset the bin and the odour block. Cleaning, smoothing and rake are only enabled when the device allows it; a box that reports "running" while idle stays operable.
+- **Scheduled cleans** as a sensor (number of active ones, times as attribute).
+- **Events** `ubpet_visit`, `ubpet_box_event` and `ubpet_presence` for automations; known event numbers carry a readable `event_name`.
+- **New devices and cats** are discovered while running. Cats with the same cloud ID in different accounts stay separate.
+- **Languages:** UI, entity names, states and error messages follow the Home Assistant language automatically: German, English, French, Spanish, Italian, Dutch, Polish, Portuguese (PT/BR), Russian, Ukrainian, Czech, Swedish, Danish, Norwegian, Finnish, Turkish, Japanese, Korean, Chinese (simplified/traditional). If a language is missing, English is shown.
+- **Downloadable diagnostics** with credentials, device and pet identifiers redacted.
+
+**Urine/stool are estimates based on the visit duration.** The entities and the adjustable duration threshold are kept but explicitly labelled "estimated"; the API does not confirm a kind of excretion.
 
 ## Installation
 
-Home Assistant Core **ab 2023.6.0**, siehe [hacs.json](hacs.json). Den Stand der tatsächlich geprüften Versionen beschreibt [TESTEN.md](docs/TESTEN.md).
+Home Assistant Core **2023.6.0 or newer**, see [hacs.json](hacs.json). The state of the versions actually tested is described in [TESTING.md](docs/TESTING.md).
 
-1. In HACS unter **Benutzerdefinierte Repositories** `https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration` als **Integration** hinzufügen.
-2. **Cat Litter Hub** installieren und Home Assistant neu starten.
-3. Unter **Einstellungen → Geräte & Dienste → Integration hinzufügen** nach **Cat Litter Hub** suchen (auch die Marken UPET, UBPet, AIRROBO, Robotail und Meowant finden den Eintrag).
+1. In HACS, add `https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration` under **Custom repositories** as an **Integration**.
+2. Install **Cat Litter Hub** and restart Home Assistant.
+3. Under **Settings → Devices & services → Add integration**, search for **Cat Litter Hub** (the brands UPET, UBPet, AIRROBO, Robotail and Meowant find the entry as well).
 
-### Umstieg von der UPET-Integration oder einem Fork
+### Switching from the UPET integration or a fork
 
-Die Domain heißt jetzt `ubpet_cat_litter_hub`. Dadurch kann die Integration neben dem Original (CrazzyBerg) und den Forks installiert sein, ohne dass sich beide in die Quere kommen. Bestehende Einträge der alten Domain `ubpet` lassen sich übernehmen, **mit** Entity-IDs, Geräten, Besuchsverlauf, Dauerschwellen und Optionen:
+The domain is now `ubpet_cat_litter_hub`. This lets the integration be installed next to the original (CrazzyBerg) and the forks without the two getting in each other's way. Existing entries of the old `ubpet` domain can be adopted, **keeping** entity IDs, devices, visit history, duration thresholds and options:
 
-1. Home-Assistant-Sicherung erstellen.
-2. Den Ordner `custom_components/ubpet` entfernen (die alte Integration darf nicht mehr laufen), Cat Litter Hub installieren, Home Assistant neu starten.
-3. **Integration hinzufügen → Cat Litter Hub → Bestehende UPET-Einrichtung übernehmen.** Das für jeden alten Eintrag wiederholen. Der geleerte alte Eintrag verschwindet danach selbst.
+1. Create a Home Assistant backup.
+2. Remove the folder `custom_components/ubpet` (the old integration must no longer run), install Cat Litter Hub, restart Home Assistant.
+3. **Add integration → Cat Litter Hub → Adopt the existing UPET setup.** Repeat for every old entry. The emptied old entry disappears by itself afterwards.
 
-Die frühere eigenständige `robotail`-Domain wird nicht automatisch umgeschrieben; dafür einen neuen Cat-Litter-Hub-Eintrag mit dem Anbieter **Robotail** anlegen. Achtung: Betriebsstatus und Katzenposition liefern jetzt Schlüssel (`standby`, `running`, `paused`; `inside`, `away`) statt englischer Texte, damit sie übersetzt werden können. Automationen, die auf die alten Texte prüfen, bitte anpassen.
+The former standalone `robotail` domain is not rewritten automatically; create a new Cat Litter Hub entry with the provider **Robotail** instead. Note: box status and cat position now return keys (`standby`, `running`, `paused`; `inside`, `away`) instead of English texts so that they can be translated. Please adjust automations that compare against the old texts.
 
-## Konto einrichten
+## Setting up an account
 
-1. Die **App des Kontos** auswählen. Der Aufdruck auf dem Katzenklo ist dafür nicht ausschlaggebend.
-2. Die **Serverregion des Kontos** und das bei der Registrierung verwendete Land angeben. Die Vorauswahl ist ein Vorschlag, maßgeblich ist die Region in der App.
-3. Konto und Passwort eingeben. Das Passwort wird unverändert übernommen und für den proprietären Login intern gehasht.
-4. Für einen weiteren Anbieter oder ein weiteres Konto erneut **Eintrag hinzufügen** wählen.
+1. Select the **app of the account**. The print on the litter box is not decisive.
+2. Enter the **server region of the account** and the country used at registration. The pre-selection is a suggestion; the region in the app is what counts.
+3. Enter account and password. The password is taken over unchanged and hashed internally for the proprietary login.
+4. For another provider or account, choose **Add entry** again.
 
-| Auswahl | Backend | Einordnung |
+| Choice | Backend | Notes |
 | --- | --- | --- |
-| UPET / UBPet | EU, Nordamerika, Japan/Korea, Russland | Regionale Endpunkte; Nordamerika hat eine andere App-Kennung |
-| AIR PET / AIRROBO | Dieselben regionalen Airrobo-Endpunkte | Eigenes App-Profil; nicht automatisch aus der Hardwaremarke ableiten |
-| Robotail | Regionaler Airrobo-Endpunkt mit Robotail-App-Kennung | EU im Quellfork beschrieben; andere Regionen ohne Hardwarebestätigung |
-| Meowant | `apis.airrobo-home.com` | Fester NA/globaler Backend-Host; Kontoland trotzdem angeben |
-| AIR PET auf `ubtrobot.com` | EU, Nordamerika, global, China | Experimentell: bekannte alternative Hosts, noch keine allgemeine Kontobestätigung |
+| UPET / UBPet | EU, North America, Japan/Korea, Russia | Regional endpoints; North America has a different app ID |
+| AIR PET / AIRROBO | Same regional Airrobo endpoints | Own app profile; do not derive it from the hardware brand |
+| Robotail | Regional Airrobo endpoint with the Robotail app ID | EU described in the source fork; other regions without hardware confirmation |
+| Meowant | `apis.airrobo-home.com` | Fixed NA/global backend host; still enter the account country |
+| AIR PET on `ubtrobot.com` | EU, North America, global, China | Experimental: known alternative hosts, no general account confirmation yet |
 
-Die Integration probiert Zugangsdaten **nicht automatisch an verschiedenen Servern** aus: Eine falsche Region liefert dieselbe Antwort wie ein falsches Passwort, und jeder Fehlversuch zählt. Scheitert die Anmeldung, zuerst App, Kontoregion und Kontoland vergleichen. Nach eindeutiger Passwortablehnung werden weitere automatische Anmeldeversuche für diesen Client gestoppt.
+The integration **does not try credentials on different servers automatically**: a wrong region gives the same answer as a wrong password, and every failed attempt counts. If the login fails, first compare app, account region and account country. After a clear password rejection, further automatic login attempts of that client are stopped.
 
-Der Hersteller erlaubt teilweise nur eine Sitzung pro Konto. Bei einer Verdrängung durch eine andere Anmeldung tritt die Integration mit wachsender Wartezeit zurück und pausiert auch REST-Anmeldungen. Ein separates, vom Besitzer freigegebenes Konto kann helfen; einige Einstellungen verlangen trotzdem Besitzerrechte.
+The vendor partly allows only one session per account. When another login takes the session over, the integration backs off with a growing delay and also pauses REST logins. A separate account shared by the owner can help; some settings still require owner rights.
 
-## Datenqualität und Ressourcen
+## Data quality and resources
 
-24-Stunden- und Tageswerte beziehen sich auf die importierten Herstellerdatensätze. Das Attribut `history_complete_24h` und der Diagnosesensor **Verlauf: Abruflimit erreicht** zeigen mögliche Lücken. Ein langer Ausfall mit mehr Datensätzen als dem Abruflimit lässt sich ohne bestätigte Pagination nicht vollständig rekonstruieren. Historische Importdaten werden nicht nachträglich in den Recorder geschrieben. „Heute“ folgt der Home-Assistant-Zeitzone.
+24-hour and daily values refer to the imported vendor records. The attribute `history_complete_24h` and the diagnostic sensor **History fetch limit reached** show possible gaps. A long outage with more records than the fetch limit cannot be reconstructed completely without confirmed pagination. Historical import data is not written retroactively into the recorder. "Today" follows the Home Assistant time zone.
 
-Die Optionen steuern REST-Intervall (60–3600 Sekunden), Abruflimit (20–200 Datensätze je Gerät und Verlauf) und MQTT. Mit deaktiviertem MQTT bleiben REST-Sensoren verfügbar; Gerätebefehle sind dann nicht verfügbar.
+The options control the REST interval (60–3600 seconds), the fetch limit (20–200 records per device and stream) and MQTT. With MQTT disabled, REST sensors stay available; device commands are then unavailable.
 
-Fehler optionaler Endpunkte ersetzen vorhandene Werte nicht durch Nullwerte. Nicht vorhandene HTTP-Endpunkte werden eine Stunde lang nicht erneut angefragt. Routinemeldungen stehen auf Debug; Verbindungsprobleme werden einmal beim Zustandswechsel gemeldet. Häufig wechselnde Zeitstempel-Diagnosesensoren sind bei neuen Installationen standardmäßig deaktiviert.
+Failures of optional endpoints do not replace existing values with zeros. Missing HTTP endpoints are not requested again for an hour. Routine messages are logged at debug level; connection problems are reported once per state change. Frequently changing timestamp diagnostic sensors are disabled by default on new installations.
 
-## Entwicklung und Quellen
+## Development and sources
 
-- [Gerätetest für C20 und Robotail](docs/TESTEN.md)
-- [Aufbau, neue Marken und Übersetzungen](docs/ENTWICKLUNG.md)
-- [Forks, Branches, Issues und offene Erkenntnisse](docs/QUELLEN.md)
-- [Versionsschema und Workflow](docs/WORKFLOW.md)
-- [Änderungen](CHANGELOG.md)
+- [Device test for C20 and Robotail](docs/TESTING.md)
+- [Architecture, new brands and translations](docs/DEVELOPMENT.md)
+- [Forks, branches, issues and open findings](docs/SOURCES.md)
+- [Version scheme and workflow](docs/WORKFLOW.md)
+- [Changelog](CHANGELOG.md)
 
-Ausgangspunkt ist [CrazzyBerg/upet-hass](https://github.com/CrazzyBerg/upet-hass). Wichtige Protokoll- und Fehlerbefunde stammen aus [PnnnG](https://github.com/PnnnG/upet-hass-multi-region), [Robotail](https://github.com/hermeneanc/robotail-hass), [pfgcoder](https://github.com/pfgcoder/meowant-hass), [bojanrajkovic](https://github.com/bojanrajkovic/upet-hass) sowie den weiteren in der Quellenübersicht aufgeführten Forks.
+The starting point is [CrazzyBerg/upet-hass](https://github.com/CrazzyBerg/upet-hass). Important protocol and bug findings come from [PnnnG](https://github.com/PnnnG/upet-hass-multi-region), [Robotail](https://github.com/hermeneanc/robotail-hass), [pfgcoder](https://github.com/pfgcoder/meowant-hass), [bojanrajkovic](https://github.com/bojanrajkovic/upet-hass) and the other forks listed in the sources overview.
 
-## Name und Auffindbarkeit
+## Name and discoverability
 
-**Cat Litter Hub** ist der unabhängige Integrationsname, `ubpet_cat_litter_hub` die technische Domain. UBPet ist die Marke von UBTECH, die den Wortstamm „upet/ubpet“ trägt; AIRROBO (`airrobo-home.com`) ist die gemeinsame Plattform, auf der auch die Hersteller anderer Marken laufen. Deshalb steht „ubpet“ im Repository-Namen, die weiteren Marken stehen in Beschreibung, Topics, HACS-Name und dieser README. Eine Eigentümerbeziehung zu Robotail oder Meowant wird daraus nicht abgeleitet. Quellen: [UBPet](https://www.ubpet.com/pages/about-us), [AIRROBO](https://air-robo.com/pages/about-airrobo).
+**Cat Litter Hub** is the independent integration name, `ubpet_cat_litter_hub` the technical domain. UBPet is UBTECH's brand that carries the "upet/ubpet" word stem; AIRROBO (`airrobo-home.com`) is the shared platform that the manufacturers of other brands run on as well. That is why "ubpet" is in the repository name, while the other brands are in the description, topics, HACS name and this README. No ownership relation to Robotail or Meowant is derived from that. Sources: [UBPet](https://www.ubpet.com/pages/about-us), [AIRROBO](https://air-robo.com/pages/about-airrobo).
 
-Empfohlene GitHub-Beschreibung:
+Recommended GitHub description:
 
-> Home Assistant / HACS integration for UPET, UBPet, AIRROBO, Robotail and Meowant smart cat litter boxes. Multi-account, multi-region, 20 languages, MQTT push and visit statistics.
+> Home Assistant / HACS integration for smart cat litter boxes that use the UBPet / AIRROBO cloud: UPET, UBPet, AIR PET, AIRROBO, Robotail and Meowant. Multi-account, multi-region, 20 languages, MQTT push and visit statistics.
 
-Empfohlene Topics:
+Recommended topics:
 
 `home-assistant` · `hacs` · `custom-integration` · `cat-litter` · `litter-box` · `smart-litter-box` · `ubpet` · `upet` · `airrobo` · `air-pet` · `robotail` · `meowant` · `mqtt` · `multi-account` · `multi-region`
 
-## Herkunft und Lizenzstatus
+## Origin and license status
 
-Das Original und die untersuchten Forks enthalten zum Recherchezeitpunkt keine Lizenzdatei. [Upstream-Issue #8](https://github.com/CrazzyBerg/upet-hass/issues/8) fragt die Weitergabe ausdrücklich an. Dieses Projekt weist dem fremden Code deshalb keine erfundene Lizenz zu. Für eine allgemeine Veröffentlichung und eine Aufnahme in den HACS-Standardkatalog ist der Lizenzstatus mit den Rechteinhabern zu klären. Die bisherige Upstream-Historie und Quellenhinweise bleiben erhalten.
+The original and the examined forks contained no license file at the time of research. [Upstream issue #8](https://github.com/CrazzyBerg/upet-hass/issues/8) explicitly asks about redistribution. This project therefore does not assign an invented license to the third-party code. For a general release and for inclusion in the HACS default catalog, the license status has to be clarified with the rights holders. The upstream history and source references are preserved.
 
 <!-- support:begin (generated, shared text) -->
 ## Say thanks
