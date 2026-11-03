@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026.11.03.2
+
+- **Dashboard cards**, registered automatically: `ubpet-litter-box-card` (status, cat presence, waste bin, info chips, actions, statistics) and `ubpet-cat-card` (weight and visit statistics). Sections, chips, actions and statistics are selectable and orderable in a visual editor.
+- Devices now carry the model `Litter box` or `Cat`, which the card editor uses to offer only matching devices.
+
 ## 2026.11.03.1
 
 - **New domain `ubpet_cat_litter_hub`** (folder `custom_components/ubpet_cat_litter_hub`). Entries of the old `ubpet` domain can be adopted once from the menu when adding the integration, including entity IDs, devices, visit history, thresholds and options. Create a backup first and remove the old folder.

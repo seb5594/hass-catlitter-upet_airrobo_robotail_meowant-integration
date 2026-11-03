@@ -23,6 +23,10 @@ def entry_namespace(entry) -> str:
     return entry.data.get(CONF_LEGACY_ENTRY_ID) or entry.entry_id
 
 
+# Device models; the Lovelace cards filter their device pickers by these exact values.
+MODEL_BOX = "Litter box"
+MODEL_CAT = "Cat"
+
 # Options.
 OPT_SCAN_INTERVAL = "scan_interval"
 OPT_RECORDS_PER_FETCH = "records_per_fetch"

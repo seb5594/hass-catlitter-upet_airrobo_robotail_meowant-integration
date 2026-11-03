@@ -1,6 +1,10 @@
 {
   "domain": "ubpet_cat_litter_hub",
   "name": "Cat Litter Hub – UPET / UBPet / AIRROBO / Robotail / Meowant",
+  "after_dependencies": [
+    "frontend",
+    "http"
+  ],
   "codeowners": [
     "@seb5594"
   ],
@@ -12,5 +16,5 @@
   "requirements": [
     "paho-mqtt==2.1.0"
   ],
-  "version": "2026.11.03.1"
+  "version": "2026.11.03.2"
 }

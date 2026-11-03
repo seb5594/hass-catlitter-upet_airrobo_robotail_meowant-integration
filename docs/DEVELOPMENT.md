@@ -26,6 +26,10 @@
 
 Everything the vendor API does not provide itself is calculated in `history.py` from observed records and stored durably: visits and cleans today (local day of the Home Assistant time zone), cleans since the bin reset, last clean, cat that used the box last, and weight at the last visit. Cleans are `eventType` 31; according to [bojanrajkovic/upet-hass#6](https://github.com/bojanrajkovic/upet-hass/issues/6) this is inferred from timing and not confirmed for every firmware. Known event numbers (3, 21, 31) get the name `event_name` on the event bus; unknown ones stay numeric.
 
+## Dashboard cards
+
+`frontend/ubpet-cards.js` holds both cards as plain custom elements without a build step. `frontend.py` serves the file at `/ubpet_cat_litter_hub/ubpet-cards.js` and loads it in every frontend session through `add_extra_js_url` (version in the query string for cache busting), once per Home Assistant run. Cards never use entity IDs: they index `hass.entities` by device and `"<domain>:<translation_key>"`, so a new entity only needs a translation key to be usable. `.github/tests/test_cards.py` verifies that every key the script references exists in `strings.json`. Card texts that Home Assistant cannot translate itself (editor labels) are in the `TEXTS` table; entity names, states and units come from Home Assistant.
+
 ## Languages
 
 All visible texts live in `strings.json` (English, the source) and `translations/<language>.json`. State values are keys (`standby`, `inside`, `weekdays` …), not texts, and are translated through `state`. Error messages go through `exceptions` (`translated_error` in `compat.py`; older core versions fall back to English). The language follows the Home Assistant user language automatically; if a translation is missing, English is shown. `python .github/checks/project.py` checks every language file for identical keys, non-empty texts and identical placeholders.

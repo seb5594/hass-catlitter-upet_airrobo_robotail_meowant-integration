@@ -63,6 +63,30 @@ Die Integration probiert Zugangsdaten **nicht automatisch an verschiedenen Serve
 
 Der Hersteller erlaubt teilweise nur eine Sitzung pro Konto. Bei einer Verdrängung durch eine andere Anmeldung tritt die Integration mit wachsender Wartezeit zurück und pausiert auch REST-Anmeldungen. Ein separates, vom Besitzer freigegebenes Konto kann helfen; einige Einstellungen verlangen trotzdem Besitzerrechte.
 
+## Dashboard-Karten
+
+Zwei Karten werden beim Laden der Integration automatisch registriert; es muss keine Ressource eingetragen und keine Datei kopiert werden. Sie erscheinen in der Kartenauswahl als **Cat Litter Hub – Litter box** und **Cat Litter Hub – Cat** und haben einen visuellen Editor. Die Entitäten werden über das Gerät gefunden, Umbenennen bricht keine Karte, und alle Texte folgen der eigenen Sprache.
+
+```yaml
+type: custom:ubpet-litter-box-card
+device_id: <Katzenklo-Gerät>        # im Editor wählbar
+name: Katzenklo                     # optional
+image: /local/katzenklo.png         # optional: Bild
+sections: [status, presence, bin, chips, actions, stats]   # Reihenfolge und Sichtbarkeit
+chips: [online, deodorant, child_lock, auto_clean_delay, problems]
+actions: [clean, flatten, reset_bin, request_state]
+stats: [cleans_today, last_clean, last_used_by]
+```
+
+```yaml
+type: custom:ubpet-cat-card
+device_id: <Katzen-Gerät>
+show_picture: true
+stats: [cat_last_visit_duration, visits_split, cat_last_poo, cat_last_pee]
+```
+
+Verfügbare `actions` und `stats` stehen in der [englischen README](README.md#dashboard-cards) und werden im Editor mit den Entitätsnamen der eigenen Sprache angeboten. Zurücksetzen-Aktionen fragen nach; Knöpfe, die das Gerät gerade nicht zulässt, sind ausgegraut. Ausgewählte Werte, die das Gerät nicht liefert, werden übersprungen.
+
 ## Datenqualität und Ressourcen
 
 24-Stunden- und Tageswerte beziehen sich auf die importierten Herstellerdatensätze. Das Attribut `history_complete_24h` und der Diagnosesensor **Verlauf: Abruflimit erreicht** zeigen mögliche Lücken. Ein langer Ausfall mit mehr Datensätzen als dem Abruflimit lässt sich ohne bestätigte Pagination nicht vollständig rekonstruieren. Historische Importdaten werden nicht nachträglich in den Recorder geschrieben. „Heute“ folgt der Home-Assistant-Zeitzone.

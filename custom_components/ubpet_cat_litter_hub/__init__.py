@@ -17,6 +17,7 @@ from .const import (
 )
 from .coordinator import UbpetDataUpdateCoordinator
 from .entities import migrate_cat_devices
+from .frontend import async_register_cards
 from .legacy import adopt_registry_entries, async_remove_adopted_entry
 from .providers import account_unique_id, infer_provider, infer_region
 
@@ -26,6 +27,7 @@ async def async_setup_entry(hass, entry):
         **{key: entry.data[key] for key in CLIENT_KEYS},
         area_code=entry.data.get(CONF_AREA_CODE, entry.data.get(CONF_COUNTRY, "")),
     )
+    await async_register_cards(hass)
     coordinator = UbpetDataUpdateCoordinator(hass, client, entry=entry)
     try:
         adopt_registry_entries(hass, entry)

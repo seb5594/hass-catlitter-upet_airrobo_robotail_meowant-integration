@@ -149,3 +149,18 @@ async def test_adopted_entry_keeps_entity_ids_and_removes_old_entry(hass):
     assert dr.async_get(hass).async_get(device.id).identifiers >= {(DOMAIN, "SN1")}
     assert hass.config_entries.async_get_entry(legacy.entry_id) is None
     await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_cards_are_served_and_loaded_once(hass):
+    from unittest.mock import AsyncMock, MagicMock
+
+    from custom_components.ubpet_cat_litter_hub.frontend import CARDS_FILE, CARDS_URL, async_register_cards
+
+    hass.http = MagicMock(async_register_static_paths=AsyncMock())
+    with patch("homeassistant.components.frontend.add_extra_js_url") as add_url:
+        await async_register_cards(hass)
+        await async_register_cards(hass)  # a second config entry must not register again
+    add_url.assert_called_once()
+    assert add_url.call_args.args[1].startswith(f"{CARDS_URL}?v=")
+    hass.http.async_register_static_paths.assert_awaited_once()
+    assert CARDS_FILE.is_file()

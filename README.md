@@ -78,6 +78,30 @@ The integration **does not try credentials on different servers automatically**:
 
 The vendor partly allows only one session per account. When another login takes the session over, the integration backs off with a growing delay and also pauses REST logins. A separate account shared by the owner can help; some settings still require owner rights.
 
+## Dashboard cards
+
+Two cards are registered automatically when the integration loads; no resource has to be added and no file copied. They appear in the card picker as **Cat Litter Hub – Litter box** and **Cat Litter Hub – Cat** and have a visual editor. Entities are found through the device, so renaming entities does not break a card, and all texts follow your language.
+
+```yaml
+type: custom:ubpet-litter-box-card
+device_id: <litter box device>      # chosen in the editor
+name: Cat litter box                # optional
+image: /local/litter-box.png        # optional picture
+sections: [status, presence, bin, chips, actions, stats]   # order and visibility
+chips: [online, deodorant, child_lock, auto_clean_delay, problems]
+actions: [clean, flatten, reset_bin, request_state]
+stats: [cleans_today, last_clean, last_used_by]
+```
+
+```yaml
+type: custom:ubpet-cat-card
+device_id: <cat device>
+show_picture: true
+stats: [cat_last_visit_duration, visits_split, cat_last_poo, cat_last_pee]
+```
+
+Available `actions`: `clean`, `pause_clean`, `resume_clean`, `flatten`, `pause_flatten`, `resume_flatten`, `rake_up`, `rake_down`, `reset_bin`, `reset_deodorant`, `request_state`, `rest_request` (reset actions ask for confirmation; buttons the device currently does not allow are greyed out). Available `stats` for the litter box: `visits_today`, `cleans_today`, `last_clean`, `last_visit`, `last_used_by`, `cleans_since_bin_reset`, `remaining_bin_uses`, `scheduled_cleans`, `firmware_version`; for a cat: `cat_last_visit_duration`, `visits_split`, `cat_visits_24h`, `cat_visits_today`, `cat_last_visit`, `cat_last_poo`, `cat_last_pee`, `cat_pee_visits_24h`, `cat_poo_visits_24h`, `cat_duration_24h`, `cat_average_duration_24h`, `cat_maximum_duration_24h`, `cat_last_visit_weight`, `cat_weight_change`. Selected values that the device does not provide are skipped.
+
 ## Data quality and resources
 
 24-hour and daily values refer to the imported vendor records. The attribute `history_complete_24h` and the diagnostic sensor **History fetch limit reached** show possible gaps. A long outage with more records than the fetch limit cannot be reconstructed completely without confirmed pagination. Historical import data is not written retroactively into the recorder. "Today" follows the Home Assistant time zone.

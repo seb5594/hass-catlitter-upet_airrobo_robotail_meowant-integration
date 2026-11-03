@@ -12,7 +12,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .box_config import empty_waste_bin_reminder_config, first_period_config, period_config_id
 from .compat import DeviceInfo, serial_info
-from .const import DOMAIN, entry_namespace
+from .const import DOMAIN, MODEL_BOX, MODEL_CAT, entry_namespace
 from .writes import async_write
 
 
@@ -49,6 +49,7 @@ class UbpetDeviceEntity(DeviceAvailability, CoordinatorEntity):
         return DeviceInfo(
             identifiers={(DOMAIN, self._serial)},
             manufacturer=self.coordinator.provider_label,
+            model=MODEL_BOX,
             name=device.get("deviceName") or self._serial,
             **serial_info(self._serial),
         )
@@ -69,6 +70,7 @@ class UbpetCatEntity(CatAvailability, CoordinatorEntity):
         return DeviceInfo(
             identifiers={(DOMAIN, self.coordinator.cat_identifier(self._cat_id))},
             manufacturer=self.coordinator.provider_label,
+            model=MODEL_CAT,
             name=(self._cat_data or {}).get("nickname") or f"Cat {self._cat_id}",
         )
 
