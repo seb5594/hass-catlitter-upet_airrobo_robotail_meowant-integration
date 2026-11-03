@@ -3,14 +3,25 @@
     "step": {
       "user": {
         "title": "Cat Litter Hub",
-        "description": "Wähle die App, in der dein Konto angelegt wurde. Die Marke auf dem Katzenklo kann davon abweichen.",
+        "menu_options": {
+          "migrate": "Bestehende UPET-Einrichtung übernehmen",
+          "provider": "Neues Konto hinzufügen"
+        }
+      },
+      "migrate": {
+        "title": "Bestehende Einrichtung übernehmen",
+        "description": "„{title}“ aus der bisherigen UPET-Integration ({count} noch zu übernehmen) wird samt Geräten, Entitäten, Verlauf und Einstellungen übernommen. Vorher bitte eine Home-Assistant-Sicherung erstellen. Der alte Integrationsordner muss bereits entfernt und Home Assistant neu gestartet sein."
+      },
+      "provider": {
+        "title": "Cat Litter Hub",
+        "description": "Wähle die App, mit der das Konto erstellt wurde. Die Marke auf dem Katzenklo kann abweichen.",
         "data": {
           "provider": "Kontoanbieter / App"
         }
       },
       "account": {
         "title": "{provider}: Konto und Server",
-        "description": "Wähle die Kontoregion und das in der App gewählte Land. Home Assistant schlägt die Region nur vor. Meowant nutzt auch für andere Länder den NA/globalen Server.",
+        "description": "Wähle die Kontoregion und das in der App gewählte Land. Vorschlag anhand deiner Home-Assistant-Einstellungen: {suggestion}. Das ist nur ein Vorschlag; maßgeblich ist die Kontoregion in der App. Meowant nutzt auch für andere Länder den NA/globalen Server.",
         "data": {
           "region": "Serverregion des Kontos",
           "country": "Kontoland (aus der App)",
@@ -21,7 +32,7 @@
     },
     "error": {
       "invalid_input": "Bitte ein gültiges Land, Konto und Passwort angeben.",
-      "invalid_auth": "Anmeldung abgelehnt. App/Anbieter, Kontoregion, Land und Passwort prüfen.",
+      "invalid_auth": "Anmeldung abgelehnt. App/Anbieter, Kontoregion, Land und Passwort prüfen. Eine falsche Region zeigt sich ebenfalls als falsches Passwort.",
       "cannot_connect": "Der Anbieter ist nicht erreichbar. Bitte später erneut versuchen.",
       "missing_devices": "Mit diesen Einstellungen fehlen bisher verbundene Katzenklos. Bitte die Kontoregion prüfen.",
       "account_changed": "Für ein anderes Konto bitte einen weiteren Konfigurationseintrag anlegen."
@@ -29,13 +40,19 @@
     "abort": {
       "already_configured": "Dieses Cloudkonto ist bereits eingerichtet.",
       "reauth_successful": "Zugangsdaten aktualisiert.",
-      "reconfigure_successful": "Kontoeinstellungen aktualisiert."
+      "reconfigure_successful": "Kontoeinstellungen aktualisiert.",
+      "legacy_still_installed": "Die bisherige UPET-Integration läuft noch. Ihren Ordner aus custom_components entfernen, Home Assistant neu starten und es erneut versuchen."
     }
   },
   "entity": {
     "sensor": {
       "box_status": {
-        "name": "Betriebsstatus"
+        "name": "Betriebsstatus",
+        "state": {
+          "standby": "Bereit",
+          "running": "Läuft",
+          "paused": "Pausiert"
+        }
       },
       "box_use_times": {
         "name": "Nutzungen seit Behälterreset"
@@ -74,7 +91,14 @@
         "name": "WLAN-Name"
       },
       "empty_waste_bin_reminder_days": {
-        "name": "Erinnerung zum Behälterleeren: Wochentage"
+        "name": "Erinnerung zum Behälterleeren: Wochentage",
+        "state": {
+          "off": "Aus",
+          "every_day": "Täglich",
+          "weekdays": "Werktage",
+          "weekend": "Wochenende",
+          "custom": "Eigene Tage"
+        }
       },
       "mqtt_work_mode": {
         "name": "MQTT-Betriebsmodus"
@@ -98,7 +122,11 @@
         "name": "Letzter Besuch"
       },
       "mqtt_pet_position": {
-        "name": "Position der Katze"
+        "name": "Position der Katze",
+        "state": {
+          "inside": "Im Katzenklo",
+          "away": "Nicht im Katzenklo"
+        }
       },
       "cat_last_visit_duration": {
         "name": "Letzte Besuchsdauer"
@@ -132,6 +160,30 @@
       },
       "cat_weight_change": {
         "name": "Gewichtsänderung seit vorherigem Besuch"
+      },
+      "visits_today": {
+        "name": "Besuche heute"
+      },
+      "cleans_today": {
+        "name": "Reinigungen heute"
+      },
+      "last_clean": {
+        "name": "Letzte Reinigung"
+      },
+      "cleans_since_bin_reset": {
+        "name": "Reinigungen seit Behälterreset"
+      },
+      "last_used_by": {
+        "name": "Zuletzt benutzt von"
+      },
+      "scheduled_cleans": {
+        "name": "Geplante Reinigungen"
+      },
+      "cat_visits_today": {
+        "name": "Besuche heute"
+      },
+      "cat_last_visit_weight": {
+        "name": "Gewicht beim letzten Besuch"
       }
     },
     "binary_sensor": {
@@ -222,6 +274,30 @@
       },
       "box_full_alert": {
         "name": "Warnung bei vollem Abfallbehälter"
+      },
+      "foreign_object_detection": {
+        "name": "Fremdkörpererkennung"
+      },
+      "reminder_monday": {
+        "name": "Erinnerung am Montag"
+      },
+      "reminder_tuesday": {
+        "name": "Erinnerung am Dienstag"
+      },
+      "reminder_wednesday": {
+        "name": "Erinnerung am Mittwoch"
+      },
+      "reminder_thursday": {
+        "name": "Erinnerung am Donnerstag"
+      },
+      "reminder_friday": {
+        "name": "Erinnerung am Freitag"
+      },
+      "reminder_saturday": {
+        "name": "Erinnerung am Samstag"
+      },
+      "reminder_sunday": {
+        "name": "Erinnerung am Sonntag"
       }
     },
     "time": {
@@ -243,7 +319,13 @@
     },
     "select": {
       "empty_waste_bin_reminder_days_select": {
-        "name": "Erinnerung zum Behälterleeren: Wochentage"
+        "name": "Erinnerung zum Behälterleeren: Wochentage",
+        "state": {
+          "off": "Aus",
+          "every_day": "Täglich",
+          "weekdays": "Werktage",
+          "weekend": "Wochenende"
+        }
       }
     },
     "button": {
@@ -308,6 +390,32 @@
         "global": "Global",
         "cn": "China"
       }
+    }
+  },
+  "exceptions": {
+    "command_unavailable": {
+      "message": "Dieser Befehl ist derzeit nicht verfügbar."
+    },
+    "state_changed": {
+      "message": "Der Gerätezustand hat sich geändert, deshalb wurde die Bewegung nicht gesendet."
+    },
+    "command_failed": {
+      "message": "Der Herstellerbefehl ist fehlgeschlagen. Details stehen in der Verbindungsdiagnose."
+    },
+    "auto_clean_unknown": {
+      "message": "Die Einstellung für die automatische Reinigung ist noch unbekannt. Bitte die nächste erfolgreiche Aktualisierung abwarten."
+    },
+    "threshold_exceeds_capacity": {
+      "message": "Die Schwelle überschreitet die vom Katzenklo gemeldete Kapazität."
+    },
+    "permission_required": {
+      "message": "Diese Einstellung erfordert die Berechtigung des Geräteeigentümers."
+    },
+    "vendor_unreachable": {
+      "message": "Der Hersteller war beim Ändern dieser Einstellung nicht erreichbar."
+    },
+    "api_error": {
+      "message": "Der Hersteller hat die Änderung abgelehnt: {detail}"
     }
   }
 }

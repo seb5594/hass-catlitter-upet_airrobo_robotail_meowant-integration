@@ -3,6 +3,17 @@
     "step": {
       "user": {
         "title": "Cat Litter Hub",
+        "menu_options": {
+          "migrate": "Adopt the existing UPET setup",
+          "provider": "Add a new account"
+        }
+      },
+      "migrate": {
+        "title": "Adopt the existing setup",
+        "description": "\"{title}\" from the previous UPET integration ({count} left to adopt) is taken over with its devices, entities, history and settings. Create a Home Assistant backup first. The old integration folder must already be removed and Home Assistant restarted."
+      },
+      "provider": {
+        "title": "Cat Litter Hub",
         "description": "Choose the app used to create your account. The brand printed on the box can differ.",
         "data": {
           "provider": "Account provider / app"
@@ -10,7 +21,7 @@
       },
       "account": {
         "title": "{provider}: account and server",
-        "description": "Select the account region and the country selected in the app. Home Assistant only suggests a region; it does not change the account region automatically. Meowant uses the NA/global server even for accounts in other countries.",
+        "description": "Select the account region and the country selected in the app. Suggested from your Home Assistant settings: {suggestion}. This is only a suggestion; the app's account region decides. Meowant uses the NA/global server even for accounts in other countries.",
         "data": {
           "region": "Account server region",
           "country": "Account country (app)",
@@ -21,7 +32,7 @@
     },
     "error": {
       "invalid_input": "Enter a valid country, account and password.",
-      "invalid_auth": "Login rejected. Check the app/provider, account region, country and password.",
+      "invalid_auth": "Login rejected. Check the app/provider, account region, country and password. A wrong region also shows up as a wrong password.",
       "cannot_connect": "The vendor could not be reached. Try again later.",
       "missing_devices": "The new settings do not return all previously connected boxes. Check the account region.",
       "account_changed": "Create another configuration entry for a different account."
@@ -29,13 +40,19 @@
     "abort": {
       "already_configured": "This cloud account is already configured.",
       "reauth_successful": "Account credentials updated.",
-      "reconfigure_successful": "Account settings updated."
+      "reconfigure_successful": "Account settings updated.",
+      "legacy_still_installed": "The previous UPET integration is still running. Remove its folder from custom_components, restart Home Assistant and try again."
     }
   },
   "entity": {
     "sensor": {
       "box_status": {
-        "name": "Box status"
+        "name": "Box status",
+        "state": {
+          "standby": "Standby",
+          "running": "Running",
+          "paused": "Paused"
+        }
       },
       "box_use_times": {
         "name": "Box use times"
@@ -74,7 +91,14 @@
         "name": "Wi-Fi name"
       },
       "empty_waste_bin_reminder_days": {
-        "name": "Empty waste bin reminder days"
+        "name": "Empty waste bin reminder days",
+        "state": {
+          "off": "Off",
+          "every_day": "Every day",
+          "weekdays": "Weekdays",
+          "weekend": "Weekend",
+          "custom": "Custom days"
+        }
       },
       "mqtt_work_mode": {
         "name": "MQTT work mode"
@@ -98,7 +122,11 @@
         "name": "Last visit"
       },
       "mqtt_pet_position": {
-        "name": "Pet position"
+        "name": "Pet position",
+        "state": {
+          "inside": "Inside litter box",
+          "away": "Away from litter box"
+        }
       },
       "cat_last_visit_duration": {
         "name": "Last visit duration"
@@ -132,6 +160,30 @@
       },
       "cat_weight_change": {
         "name": "Weight change since previous visit"
+      },
+      "visits_today": {
+        "name": "Visits today"
+      },
+      "cleans_today": {
+        "name": "Cleans today"
+      },
+      "last_clean": {
+        "name": "Last clean"
+      },
+      "cleans_since_bin_reset": {
+        "name": "Cleans since waste bin reset"
+      },
+      "last_used_by": {
+        "name": "Last used by"
+      },
+      "scheduled_cleans": {
+        "name": "Scheduled cleans"
+      },
+      "cat_visits_today": {
+        "name": "Visits today"
+      },
+      "cat_last_visit_weight": {
+        "name": "Weight at last visit"
       }
     },
     "binary_sensor": {
@@ -222,6 +274,30 @@
       },
       "box_full_alert": {
         "name": "Waste bin full alert"
+      },
+      "foreign_object_detection": {
+        "name": "Foreign object detection"
+      },
+      "reminder_monday": {
+        "name": "Reminder on Monday"
+      },
+      "reminder_tuesday": {
+        "name": "Reminder on Tuesday"
+      },
+      "reminder_wednesday": {
+        "name": "Reminder on Wednesday"
+      },
+      "reminder_thursday": {
+        "name": "Reminder on Thursday"
+      },
+      "reminder_friday": {
+        "name": "Reminder on Friday"
+      },
+      "reminder_saturday": {
+        "name": "Reminder on Saturday"
+      },
+      "reminder_sunday": {
+        "name": "Reminder on Sunday"
       }
     },
     "time": {
@@ -243,7 +319,13 @@
     },
     "select": {
       "empty_waste_bin_reminder_days_select": {
-        "name": "Empty waste bin reminder days"
+        "name": "Empty waste bin reminder days",
+        "state": {
+          "off": "Off",
+          "every_day": "Every day",
+          "weekdays": "Weekdays",
+          "weekend": "Weekend"
+        }
       }
     },
     "button": {
@@ -308,6 +390,32 @@
         "global": "Global",
         "cn": "China"
       }
+    }
+  },
+  "exceptions": {
+    "command_unavailable": {
+      "message": "This command is currently unavailable."
+    },
+    "state_changed": {
+      "message": "The device state changed, so the movement was not sent."
+    },
+    "command_failed": {
+      "message": "The vendor command failed. See the connection diagnostics."
+    },
+    "auto_clean_unknown": {
+      "message": "The auto clean setting is not known yet. Wait for the next successful update."
+    },
+    "threshold_exceeds_capacity": {
+      "message": "The threshold exceeds the capacity reported by the box."
+    },
+    "permission_required": {
+      "message": "This setting requires permission from the device owner."
+    },
+    "vendor_unreachable": {
+      "message": "The vendor could not be reached while changing this setting."
+    },
+    "api_error": {
+      "message": "The vendor rejected the change: {detail}"
     }
   }
 }

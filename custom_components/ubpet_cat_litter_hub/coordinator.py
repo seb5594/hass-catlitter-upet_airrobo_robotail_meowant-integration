@@ -10,11 +10,24 @@ from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
 from .api import UbpetApiError, UbpetAuthenticationError
 from .compat import SUPPORTS_ALWAYS_UPDATE, SUPPORTS_EXPLICIT_ENTRY
-from .const import DOMAIN
-from .history import History, presence
+from .const import (
+    CONF_LEGACY_ENTRY_ID,
+    DEFAULT_RECORDS_PER_FETCH,
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+    EVENT_BOX_EVENT,
+    EVENT_PRESENCE,
+    EVENT_VISIT,
+    LEGACY_DOMAIN,
+    OPT_RECORDS_PER_FETCH,
+    OPT_SCAN_INTERVAL,
+    entry_namespace,
+)
+from .history import History, presence, timestamp
 from .providers import PROVIDERS
 from .transport import AccountTransport
 
@@ -31,7 +44,7 @@ class UbpetDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER,
             name=f"{DOMAIN}_{entry.entry_id}",
             **({"config_entry": entry} if SUPPORTS_EXPLICIT_ENTRY else {}),
-            update_interval=timedelta(seconds=entry.options.get("scan_interval", 180)),
+            update_interval=timedelta(seconds=entry.options.get(OPT_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)),
             **({"always_update": False} if SUPPORTS_ALWAYS_UPDATE else {}),
         )
         if self.config_entry is None:
@@ -39,9 +52,14 @@ class UbpetDataUpdateCoordinator(DataUpdateCoordinator):
             entry.async_on_unload(self.async_shutdown)
         self.client = client
         self.entry = entry
-        self.client.records_per_fetch = entry.options.get("records_per_fetch", 100)
+        self.client.records_per_fetch = entry.options.get(OPT_RECORDS_PER_FETCH, DEFAULT_RECORDS_PER_FETCH)
         self.transport = AccountTransport(self)
         self._store = Store(hass, 1, f"{DOMAIN}.{entry.entry_id}.visit_analytics")
+        self._legacy_store = (
+            Store(hass, 1, f"{LEGACY_DOMAIN}.{self.namespace}.visit_analytics")
+            if entry.data.get(CONF_LEGACY_ENTRY_ID)
+            else None
+        )
         self.history = History()
         self._history_loaded = False
         self._last_rest_update_at = None
@@ -54,7 +72,7 @@ class UbpetDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         if not self._history_loaded:
-            self.history = History(await self._store.async_load())
+            self.history = History(await self._load_stored_history())
             self._history_loaded = True
         if self.transport.yielding and self.data:
             return self.data
@@ -69,11 +87,7 @@ class UbpetDataUpdateCoordinator(DataUpdateCoordinator):
         now = datetime.now(UTC)
         self._last_rest_update_at = now
         for serial, item in data.get("devices", {}).items():
-            for kind, event_name in (("cat_records", "ubpet_visit"), ("device_records", "ubpet_box_event")):
-                if item.get("fresh", {}).get(kind):
-                    events = self.history.ingest(serial, kind, item.get(kind), now, self.client.records_per_fetch)
-                    for event in events:
-                        self.hass.bus.async_fire(event_name, {"entry_id": self.entry.entry_id, **event})
+            self._ingest_records(serial, item, now)
             item["last_visit"] = self.history.state["box_visits"].get(serial)
             item["history_truncated"] = any(
                 self.history.state["streams"].get(f"{serial}:{kind}", {}).get("truncated", False)
@@ -85,10 +99,29 @@ class UbpetDataUpdateCoordinator(DataUpdateCoordinator):
                 "last_rest_update_at": now,
                 "last_mqtt_update_at": self.last_mqtt_update_at(serial),
             }
-        for cat in data.get("cats", []):
-            cat["visit_analytics"] = self.history.analytics(cat.get("catInfoId"), now)
+        self._attach_analytics(data, now)
         self._store.async_delay_save(lambda: self.history.state, 10)
         return data
+
+    def _ingest_records(self, serial, item, now):
+        for kind, event_name in (("cat_records", EVENT_VISIT), ("device_records", EVENT_BOX_EVENT)):
+            if not item.get("fresh", {}).get(kind):
+                continue
+            for event in self.history.ingest(serial, kind, item.get(kind), now, self.client.records_per_fetch):
+                self.hass.bus.async_fire(event_name, {"entry_id": self.entry.entry_id, **event})
+
+    def _attach_analytics(self, data, now):
+        """Derive per-cat and per-box aggregates from the stored history; "today" follows the HA time zone."""
+        day_start = dt_util.start_of_local_day().astimezone(UTC)
+        cats = data.get("cats", [])
+        for cat in cats:
+            cat["visit_analytics"] = self.history.analytics(cat.get("catInfoId"), now, day_start)
+        nicknames = {str(cat.get("catInfoId")): cat.get("nickname") for cat in cats}
+        for serial, item in data.get("devices", {}).items():
+            reset_at = timestamp((item.get("box_use_times") or {}).get("boxUseTimesResetTime"))
+            analytics = self.history.box_analytics(serial, now, day_start, reset_at)
+            analytics["last_used_by"] = nicknames.get(str(analytics.pop("last_visit_cat_id")))
+            item["box_analytics"] = analytics
 
     def receive_push(self, serial, decoded):
         if self._stopping or serial not in (self.data or {}).get("devices", {}):
@@ -123,7 +156,7 @@ class UbpetDataUpdateCoordinator(DataUpdateCoordinator):
         old_inside = previous.get("cat_inside")
         if old_inside is not None and inside is not None and inside != old_inside:
             self.hass.bus.async_fire(
-                "ubpet_presence",
+                EVENT_PRESENCE,
                 {
                     "entry_id": self.entry.entry_id,
                     "serial_number": serial,
@@ -190,11 +223,21 @@ class UbpetDataUpdateCoordinator(DataUpdateCoordinator):
             self._debounced_refresh.async_cancel()
 
     @property
+    def namespace(self):
+        return entry_namespace(self.entry)
+
+    async def _load_stored_history(self):
+        stored = await self._store.async_load()
+        if stored is None and self._legacy_store is not None:
+            stored = await self._legacy_store.async_load()
+        return stored
+
+    @property
     def provider_label(self):
         return PROVIDERS.get(self.entry.data.get("provider", "upet"), PROVIDERS["upet"]).label
 
     def cat_identifier(self, cat_id):
-        return f"cat_{self.entry.entry_id}_{cat_id}"
+        return f"cat_{self.namespace}_{cat_id}"
 
     @property
     def last_rest_update_at(self):
@@ -208,8 +251,7 @@ class UbpetDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def async_set_cat_poo_duration_threshold(self, cat_id, seconds):
         self.history.set_threshold(cat_id, seconds)
-        for cat in (self.data or {}).get("cats", []):
-            cat["visit_analytics"] = self.history.analytics(cat.get("catInfoId"), datetime.now(UTC))
+        self._attach_analytics(self.data or {}, datetime.now(UTC))
         self._store.async_delay_save(lambda: self.history.state, 2)
         self.async_update_listeners()
 

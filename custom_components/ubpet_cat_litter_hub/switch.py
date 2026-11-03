@@ -1,21 +1,20 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from functools import partial
 from typing import Any
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .compat import DeviceInfo, description_is_frozen, serial_info
+from .box_config import WEEKDAY_BITS, empty_waste_bin_reminder_config, first_period_config, reminder_mask
+from .compat import description_is_frozen, translated_error
 from .const import DOMAIN
 from .coordinator import UbpetDataUpdateCoordinator
-from .entities import DeviceAvailability, setup_discovery, supported
+from .entities import UbpetDeviceEntity, UbpetPeriodEntity, UbpetReminderEntity, setup_discovery, supported
 from .writes import async_write
 
 
@@ -77,45 +76,32 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     def build():
         entities: list[SwitchEntity] = []
         for serial, item in coordinator.data.get("devices", {}).items():
-            entities.append(UbpetAutoCleanSwitch(coordinator, entry.entry_id, serial))
-            entities.append(UbpetDeodorantAlertSwitch(coordinator, entry.entry_id, serial))
+            entities.append(UbpetAutoCleanSwitch(coordinator, coordinator.namespace, serial))
+            entities.append(UbpetDeodorantAlertSwitch(coordinator, coordinator.namespace, serial))
             config = item.get("config", {})
-            if _empty_waste_bin_reminder_config(config):
-                entities.append(UbpetEmptyWasteBinReminderSwitch(coordinator, entry.entry_id, serial))
+            if empty_waste_bin_reminder_config(config):
+                entities.append(UbpetEmptyWasteBinReminderSwitch(coordinator, coordinator.namespace, serial))
+                entities.extend(
+                    UbpetReminderWeekdaySwitch(coordinator, coordinator.namespace, serial, day) for day in WEEKDAY_BITS
+                )
             for description in PERIOD_SWITCHES:
-                if _first_period_config(config, description.config_list_key) and supported(description.key, item):
-                    entities.append(UbpetPeriodSwitch(coordinator, entry.entry_id, serial, description))
-        for serial, item in coordinator.data.get("devices", {}).items():
-            for key, name, field, function_type in FUNCTION_SWITCHES:
-                if item.get("config", {}).get(field) is not None:
-                    entities.append(
-                        UbpetFunctionSwitch(coordinator, entry.entry_id, serial, key, name, field, function_type)
-                    )
+                if first_period_config(config, description.config_list_key) and supported(description.key, item):
+                    entities.append(UbpetPeriodSwitch(coordinator, coordinator.namespace, serial, description))
+            entities.extend(
+                UbpetFunctionSwitch(coordinator, coordinator.namespace, serial, function)
+                for function in FUNCTION_SWITCHES
+                if function.read(config) is not None
+            )
         return entities
 
     setup_discovery(coordinator, entry, async_add_entities, build)
 
 
-class UbpetBaseSwitch(DeviceAvailability, CoordinatorEntity[UbpetDataUpdateCoordinator], SwitchEntity):
+class UbpetBaseSwitch(UbpetDeviceEntity, SwitchEntity):
     def __init__(self, coordinator: UbpetDataUpdateCoordinator, entry_id: str, serial: str, key: str) -> None:
         super().__init__(coordinator)
         self._serial = serial
         self._attr_unique_id = f"{entry_id}_{serial}_{key}"
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        item = self.coordinator.data.get("devices", {}).get(self._serial, {})
-        device = item.get("device", {})
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._serial)},
-            manufacturer=self.coordinator.provider_label,
-            name=device.get("deviceName") or self._serial,
-            **serial_info(self._serial),
-        )
-
-    @property
-    def _device_item(self) -> dict[str, Any] | None:
-        return self.coordinator.data.get("devices", {}).get(self._serial)
 
 
 class UbpetDeodorantAlertSwitch(UbpetBaseSwitch):
@@ -167,7 +153,7 @@ class UbpetAutoCleanSwitch(UbpetBaseSwitch):
         item = self._device_item or {}
         lazy_time = item.get("config", {}).get("lazyTime")
         if lazy_time is None:
-            raise HomeAssistantError("Auto clean delay is unknown; wait for a successful update")
+            raise translated_error("auto_clean_unknown", "Auto clean state is unknown; wait for a successful update")
         await async_write(
             self.hass,
             self.coordinator.client.set_auto_clean_enabled,
@@ -178,7 +164,7 @@ class UbpetAutoCleanSwitch(UbpetBaseSwitch):
         self.coordinator.schedule_refresh(15)
 
 
-class UbpetEmptyWasteBinReminderSwitch(UbpetBaseSwitch):
+class UbpetEmptyWasteBinReminderSwitch(UbpetReminderEntity, UbpetBaseSwitch):
     entity_description = EMPTY_WASTE_BIN_REMINDER
 
     def __init__(self, coordinator: UbpetDataUpdateCoordinator, entry_id: str, serial: str) -> None:
@@ -186,46 +172,51 @@ class UbpetEmptyWasteBinReminderSwitch(UbpetBaseSwitch):
 
     @property
     def is_on(self) -> bool | None:
-        config = self._reminder_config
-        if not config:
-            return None
-        value = config.get("openSwitch")
+        value = (self._reminder_config or {}).get("openSwitch")
         return None if value is None else value == 1
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        await self._set_reminder_enabled(True)
+        await self._write_reminder(open_switch=1)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        await self._set_reminder_enabled(False)
+        await self._write_reminder(open_switch=0)
 
-    async def _set_reminder_enabled(self, enabled: bool) -> None:
-        config = self._reminder_config
-        if not config:
-            return
-        await async_write(
-            self.hass,
-            partial(
-                self.coordinator.client.set_time_point,
-                self._serial,
-                config_id=config["notifyConfigId"],
-                function_type=1,
-                open_switch=1 if enabled else 0,
-                time_hour=config.get("timeHour", 0),
-                time_minute=config.get("timeMinute", 0),
-                option_int=config.get("period", 0),
-            ),
+
+class UbpetReminderWeekdaySwitch(UbpetReminderEntity, UbpetBaseSwitch):
+    """One switch per weekday; together they cover every combination the app offers."""
+
+    def __init__(self, coordinator: UbpetDataUpdateCoordinator, entry_id: str, serial: str, day: str) -> None:
+        key = f"reminder_{day}"
+        super().__init__(coordinator, entry_id, serial, key)
+        self._bit = WEEKDAY_BITS[day]
+        self.entity_description = UbpetSwitchDescription(
+            key=key,
+            name=day.capitalize(),
+            translation_key=key,
+            entity_category=EntityCategory.CONFIG,
+            entity_registry_enabled_default=False,
         )
-        self.coordinator.schedule_refresh(15)
 
     @property
-    def _reminder_config(self) -> dict[str, Any] | None:
-        item = self._device_item
-        if not item:
-            return None
-        return _empty_waste_bin_reminder_config(item.get("config", {}))
+    def is_on(self) -> bool | None:
+        reminder = self._reminder_config
+        return None if reminder is None else bool(reminder_mask(reminder) & self._bit)
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        await self._write_days(True)
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        await self._write_days(False)
+
+    async def _write_days(self, enabled: bool) -> None:
+        reminder = self._reminder_config
+        if reminder is None:
+            return
+        mask = reminder_mask(reminder)
+        await self._write_reminder(option_int=mask | self._bit if enabled else mask & ~self._bit)
 
 
-class UbpetPeriodSwitch(UbpetBaseSwitch):
+class UbpetPeriodSwitch(UbpetPeriodEntity, UbpetBaseSwitch):
     entity_description: UbpetSwitchDescription
 
     def __init__(
@@ -240,97 +231,62 @@ class UbpetPeriodSwitch(UbpetBaseSwitch):
 
     @property
     def is_on(self) -> bool | None:
-        config = self._period_config
-        if not config:
-            return None
-        value = config.get("openSwitch")
+        value = (self._period_config or {}).get("openSwitch")
         return None if value is None else value == 1
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        await self._set_period_enabled(True)
+        await self._write_period(open_switch=1)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        await self._set_period_enabled(False)
+        await self._write_period(open_switch=0)
 
-    async def _set_period_enabled(self, enabled: bool) -> None:
-        config = self._period_config
-        if not config:
-            return
-        config_id = _period_config_id(config, self.entity_description.config_list_key)
-        if config_id is None:
-            return
-        await async_write(
-            self.hass,
-            partial(
-                self.coordinator.client.set_time_period,
-                self._serial,
-                config_id=config_id,
-                function_type=self.entity_description.function_type,
-                open_switch=1 if enabled else 0,
-                start_hour=config.get("startTimeHour", 0),
-                start_minute=config.get("startTimeMinute", 0),
-                end_hour=config.get("endTimeHour", 0),
-                end_minute=config.get("endTimeMinute", 0),
-            ),
+
+@dataclass(frozen=True)
+class FunctionSwitch:
+    """A box setting that is switched through the ``switch/update`` endpoint."""
+
+    key: str
+    function_type: int
+    read: Callable[[dict[str, Any]], bool | None]  # allConfig -> state, None when the box lacks the setting
+
+
+def _flag(field: str) -> Callable[[dict[str, Any]], bool | None]:
+    return lambda config: None if config.get(field) is None else config[field] == 1
+
+
+def _notify_flag(notify_type: int) -> Callable[[dict[str, Any]], bool | None]:
+    def read(config: dict[str, Any]) -> bool | None:
+        entry = next(
+            (e for e in config.get("notifyConfigList") or [] if isinstance(e, dict) and e.get("type") == notify_type),
+            None,
         )
-        self.coordinator.schedule_refresh(15)
+        return None if entry is None else entry.get("openSwitch") == 1
 
-    @property
-    def _period_config(self) -> dict[str, Any] | None:
-        item = self._device_item
-        if not item:
-            return None
-        return _first_period_config(item.get("config", {}), self.entity_description.config_list_key)
-
-
-def _first_period_config(config: dict[str, Any], key: str | None) -> dict[str, Any] | None:
-    if key is None:
-        return None
-    periods = config.get(key)
-    if not isinstance(periods, list) or not periods:
-        return None
-    return periods[0] if isinstance(periods[0], dict) else None
-
-
-def _empty_waste_bin_reminder_config(config: dict[str, Any]) -> dict[str, Any] | None:
-    for item in config.get("notifyConfigList") or []:
-        if isinstance(item, dict) and item.get("type") == 4 and item.get("notifyConfigId") is not None:
-            return item
-    return None
-
-
-def _period_config_id(config: dict[str, Any], list_key: str | None) -> int | None:
-    for key in ("configId", "disturbTimeConfigId", "lightTimeConfigId"):
-        value = config.get(key)
-        if value is not None:
-            return value
-    if list_key == "disturbTimeConfigList":
-        return config.get("disturbTimeConfigId")
-    if list_key == "lightTimeConfigList":
-        return config.get("lightTimeConfigId")
-    return None
+    return read
 
 
 FUNCTION_SWITCHES = (
-    ("child_lock", "Child lock", "controlBoardSwitch", 0),
-    ("shake_mode", "Shake mode", "litterType", 6),
-    ("box_full_alert", "Waste bin full alert", "boxFullAlertSwitch", 7),
+    FunctionSwitch("child_lock", 0, _flag("controlBoardSwitch")),
+    FunctionSwitch("foreign_object_detection", 1, _notify_flag(1)),
+    FunctionSwitch("shake_mode", 6, _flag("litterType")),
+    FunctionSwitch("box_full_alert", 7, _flag("boxFullAlertSwitch")),
 )
 
 
 class UbpetFunctionSwitch(UbpetBaseSwitch):
-    def __init__(self, coordinator, entry_id, serial, key, name, field, function_type):
-        super().__init__(coordinator, entry_id, serial, key)
+    def __init__(self, coordinator, entry_id, serial, function: FunctionSwitch):
+        super().__init__(coordinator, entry_id, serial, function.key)
+        self._function = function
         self.entity_description = UbpetSwitchDescription(
-            key=key, name=name, translation_key=key, entity_category=EntityCategory.CONFIG
+            key=function.key,
+            name=function.key.replace("_", " ").capitalize(),
+            translation_key=function.key,
+            entity_category=EntityCategory.CONFIG,
         )
-        self._field = field
-        self._function_type = function_type
 
     @property
     def is_on(self):
-        value = (self._device_item or {}).get("config", {}).get(self._field)
-        return value == 1 if value is not None else None
+        return self._function.read(self._box_config)
 
     async def async_turn_on(self, **kwargs):
         await self._set(True)
@@ -340,6 +296,6 @@ class UbpetFunctionSwitch(UbpetBaseSwitch):
 
     async def _set(self, enabled):
         await async_write(
-            self.hass, self.coordinator.client.set_function_switch, self._serial, self._function_type, enabled
+            self.hass, self.coordinator.client.set_function_switch, self._serial, self._function.function_type, enabled
         )
         self.coordinator.schedule_refresh(15)

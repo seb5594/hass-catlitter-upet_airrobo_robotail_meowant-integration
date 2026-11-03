@@ -9,6 +9,17 @@ UTC = timezone.utc
 
 
 MAX_EVENTS = 10000
+MAX_CLEANINGS = 2000
+
+# Vendor ``eventType`` values that are confirmed by app captures or issue reports.
+EVENT_CAT_VISIT = 3
+EVENT_WEIGHT_RECORDED = 21
+EVENT_CLEAN_FINISHED = 31  # inferred from timing; reported by bojanrajkovic/upet-hass#6
+BOX_EVENT_NAMES = {
+    EVENT_CAT_VISIT: "cat_visit",
+    EVENT_WEIGHT_RECORDED: "weight_recorded",
+    EVENT_CLEAN_FINISHED: "clean_finished",
+}
 
 
 def number(value):
@@ -47,6 +58,7 @@ class History:
         self.state.setdefault("cats", {})
         self.state.setdefault("streams", {})
         self.state.setdefault("box_visits", {})
+        self.state.setdefault("box_cleanings", {})
 
     def cat(self, cat_id):
         cat = self.state["cats"].setdefault(str(cat_id), {})
@@ -89,12 +101,17 @@ class History:
             if identity in seen:
                 continue
             seen.add(identity)
+            event_type = number(record.get("eventType"))
             event = {**record, "serial_number": serial, "timestamp": at.isoformat()}
+            if event_type in BOX_EVENT_NAMES:
+                event["event_name"] = BOX_EVENT_NAMES[event_type]
+            if kind == "device_records" and event_type == EVENT_CLEAN_FINISHED:
+                self._record_cleaning(serial, at)
             if not new_stream:
                 emitted.append(event)
             duration = number(record.get("costTime"))
             cat_id = record.get("catInfoId")
-            if kind == "cat_records" and number(record.get("eventType")) == 3 and duration is not None and duration > 0:
+            if kind == "cat_records" and event_type == EVENT_CAT_VISIT and duration is not None and duration > 0:
                 item = {
                     "at": at.isoformat(),
                     "duration_seconds": duration,
@@ -138,7 +155,34 @@ class History:
         self.state["streams"][key] = stream
         return emitted
 
-    def analytics(self, cat_id, now):
+    def _record_cleaning(self, serial, at):
+        cleanings = self.state["box_cleanings"].setdefault(serial, [])
+        stamp = at.isoformat()
+        if stamp not in cleanings:
+            cleanings.append(stamp)
+            cleanings.sort()
+            del cleanings[:-MAX_CLEANINGS]
+
+    def box_analytics(self, serial, now, day_start, bin_reset_at=None):
+        """Aggregates of one box that the vendor API does not provide itself."""
+        cleanings = [
+            at for stamp in self.state["box_cleanings"].get(serial, []) if (at := timestamp(stamp)) and at <= now
+        ]
+        visits = [
+            at
+            for cat in self.state["cats"].values()
+            for event in cat["events"]
+            if event.get("serial") == serial and (at := timestamp(event.get("at"))) and at <= now
+        ]
+        return {
+            "visits_today": sum(at >= day_start for at in visits),
+            "cleans_today": sum(at >= day_start for at in cleanings),
+            "last_clean": max(cleanings, default=None),
+            "cleans_since_bin_reset": sum(at >= bin_reset_at for at in cleanings) if bin_reset_at else None,
+            "last_visit_cat_id": (self.state["box_visits"].get(serial) or {}).get("cat_info_id"),
+        }
+
+    def analytics(self, cat_id, now, day_start=None):
         cat = self.cat(cat_id)
         events = [
             (at, e)
@@ -158,6 +202,8 @@ class History:
             "last_visit": events[-1][0] if events else None,
             "last_visit_duration_seconds": events[-1][1]["duration_seconds"] if events else None,
             "visits_24h": len(recent),
+            "visits_today": sum(at >= day_start for at, _ in events) if day_start else None,
+            "last_visit_weight": next((w for _, e in reversed(events) if (w := number(e.get("weight")))), None),
             "duration_24h": sum(durations),
             "average_duration_24h": round(sum(durations) / len(durations), 2) if durations else None,
             "maximum_duration_24h": max(durations) if durations else None,

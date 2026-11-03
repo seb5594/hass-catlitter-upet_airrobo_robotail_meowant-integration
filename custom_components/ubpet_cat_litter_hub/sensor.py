@@ -10,12 +10,20 @@ from homeassistant.const import PERCENTAGE, UnitOfMass, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .compat import DeviceInfo, description_is_frozen, serial_info
+from .box_config import (
+    CUSTOM_PRESET,
+    REMINDER_PRESETS,
+    effective_work_state,
+    empty_waste_bin_reminder_config,
+    mask_days,
+    mask_preset,
+    reminder_mask,
+)
+from .compat import description_is_frozen
 from .const import DOMAIN
 from .coordinator import UbpetDataUpdateCoordinator
-from .entities import CatAvailability, DeviceAvailability, keep_or_supported, setup_discovery
+from .entities import UbpetCatEntity, UbpetDeviceEntity, keep_or_supported, setup_discovery
 from .history import remaining_uses, timestamp
 
 UTC = timezone.utc
@@ -26,12 +34,27 @@ class UbpetSensorDescription(SensorEntityDescription):
     value_fn: Callable[[dict[str, Any]], Any]
 
 
+BOX_STATUSES = ["standby", "running", "paused"]
+
+
+def _reminder_days_preset(item: dict[str, Any]) -> str | None:
+    reminder = empty_waste_bin_reminder_config(item["config"])
+    return None if reminder is None else mask_preset(reminder_mask(reminder))
+
+
+def _pet_position(item: dict[str, Any]) -> str | None:
+    inside = item.get("mqtt_state", {}).get("cat_inside")
+    return None if inside is None else ("inside" if inside else "away")
+
+
 DEVICE_SENSORS: tuple[UbpetSensorDescription, ...] = (
     UbpetSensorDescription(
         key="box_status",
         name="Box status",
         icon="mdi:list-status",
         translation_key="box_status",
+        device_class=SensorDeviceClass.ENUM,
+        options=BOX_STATUSES,
         value_fn=lambda item: _box_status(item),
     ),
     UbpetSensorDescription(
@@ -40,7 +63,9 @@ DEVICE_SENSORS: tuple[UbpetSensorDescription, ...] = (
         icon="mdi:calendar-week",
         translation_key="empty_waste_bin_reminder_days",
         entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda item: _empty_waste_bin_reminder_days(item["config"]),
+        device_class=SensorDeviceClass.ENUM,
+        options=[*REMINDER_PRESETS, CUSTOM_PRESET],
+        value_fn=_reminder_days_preset,
     ),
     UbpetSensorDescription(
         key="box_use_times",
@@ -327,11 +352,90 @@ DEVICE_SENSORS += (
         translation_key="mqtt_pet_position",
         icon="mdi:cat",
         entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda item: (
-            ("Inside litter box" if item.get("mqtt_state", {}).get("cat_inside") else "Away from litter box")
-            if item.get("mqtt_state", {}).get("cat_inside") is not None
-            else None
-        ),
+        device_class=SensorDeviceClass.ENUM,
+        options=["inside", "away"],
+        value_fn=_pet_position,
+    ),
+)
+
+
+def _box_analytic(field: str) -> Callable[[dict[str, Any]], Any]:
+    return lambda item: (item.get("box_analytics") or {}).get(field)
+
+
+def _scheduled_cleans(item: dict[str, Any]) -> int | None:
+    tasks = item["config"].get("taskConfigList")
+    return None if tasks is None else sum(1 for task in tasks if task.get("openSwitch") == 1)
+
+
+DEVICE_SENSORS += (
+    UbpetSensorDescription(
+        key="visits_today",
+        name="Visits today",
+        translation_key="visits_today",
+        icon="mdi:counter",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=_box_analytic("visits_today"),
+    ),
+    UbpetSensorDescription(
+        key="cleans_today",
+        name="Cleans today",
+        translation_key="cleans_today",
+        icon="mdi:broom",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=_box_analytic("cleans_today"),
+    ),
+    UbpetSensorDescription(
+        key="last_clean",
+        name="Last clean",
+        translation_key="last_clean",
+        icon="mdi:broom",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value_fn=_box_analytic("last_clean"),
+    ),
+    UbpetSensorDescription(
+        key="cleans_since_bin_reset",
+        name="Cleans since waste bin reset",
+        translation_key="cleans_since_bin_reset",
+        icon="mdi:delete-restore",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=_box_analytic("cleans_since_bin_reset"),
+    ),
+    UbpetSensorDescription(
+        key="last_used_by",
+        name="Last used by",
+        translation_key="last_used_by",
+        icon="mdi:cat",
+        value_fn=_box_analytic("last_used_by"),
+    ),
+    UbpetSensorDescription(
+        key="scheduled_cleans",
+        name="Scheduled cleans",
+        translation_key="scheduled_cleans",
+        icon="mdi:calendar-clock",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=_scheduled_cleans,
+    ),
+)
+CAT_SENSORS += (
+    UbpetSensorDescription(
+        key="cat_visits_today",
+        name="Visits today",
+        translation_key="cat_visits_today",
+        icon="mdi:counter",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda cat: cat.get("visit_analytics", {}).get("visits_today"),
+    ),
+    UbpetSensorDescription(
+        key="cat_last_visit_weight",
+        name="Weight at last visit",
+        translation_key="cat_last_visit_weight",
+        icon="mdi:scale",
+        native_unit_of_measurement=UnitOfMass.KILOGRAMS,
+        device_class=SensorDeviceClass.WEIGHT,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda cat: cat.get("visit_analytics", {}).get("last_visit_weight"),
     ),
 )
 
@@ -343,7 +447,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         entities: list[SensorEntity] = []
         for serial in coordinator.data.get("devices", {}):
             entities.extend(
-                UbpetDeviceSensor(coordinator, entry.entry_id, serial, description)
+                UbpetDeviceSensor(coordinator, coordinator.namespace, serial, description)
                 for description in DEVICE_SENSORS
                 if keep_or_supported(coordinator, serial, description.key, "sensor")
             )
@@ -352,14 +456,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             if cat_id is None:
                 continue
             entities.extend(
-                UbpetCatSensor(coordinator, entry.entry_id, str(cat_id), description) for description in CAT_SENSORS
+                UbpetCatSensor(coordinator, coordinator.namespace, str(cat_id), description)
+                for description in CAT_SENSORS
             )
         return entities
 
     setup_discovery(coordinator, entry, async_add_entities, build)
 
 
-class UbpetDeviceSensor(DeviceAvailability, CoordinatorEntity[UbpetDataUpdateCoordinator], SensorEntity):
+class UbpetDeviceSensor(UbpetDeviceEntity, SensorEntity):
     entity_description: UbpetSensorDescription
 
     def __init__(
@@ -369,17 +474,6 @@ class UbpetDeviceSensor(DeviceAvailability, CoordinatorEntity[UbpetDataUpdateCoo
         self._serial = serial
         self.entity_description = description
         self._attr_unique_id = f"{entry_id}_{serial}_{description.key}"
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        item = self.coordinator.data.get("devices", {}).get(self._serial, {})
-        device = item.get("device", {})
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._serial)},
-            manufacturer=self.coordinator.provider_label,
-            name=device.get("deviceName") or self._serial,
-            **serial_info(self._serial),
-        )
 
     @property
     def native_value(self) -> Any:
@@ -419,6 +513,9 @@ class UbpetDeviceSensor(DeviceAvailability, CoordinatorEntity[UbpetDataUpdateCoo
                 if isinstance(mqtt_state, dict)
                 else {}
             )
+        if self.entity_description.key == "empty_waste_bin_reminder_days":
+            reminder = empty_waste_bin_reminder_config(item["config"]) or {}
+            return {"days": mask_days(reminder_mask(reminder))}
         if self.entity_description.key in {
             "last_rest_update",
             "last_mqtt_update",
@@ -428,7 +525,7 @@ class UbpetDeviceSensor(DeviceAvailability, CoordinatorEntity[UbpetDataUpdateCoo
         return {}
 
 
-class UbpetCatSensor(CatAvailability, CoordinatorEntity[UbpetDataUpdateCoordinator], SensorEntity):
+class UbpetCatSensor(UbpetCatEntity, SensorEntity):
     entity_description: UbpetSensorDescription
 
     def __init__(
@@ -438,15 +535,6 @@ class UbpetCatSensor(CatAvailability, CoordinatorEntity[UbpetDataUpdateCoordinat
         self._cat_id = cat_id
         self.entity_description = description
         self._attr_unique_id = f"{entry_id}_cat_{cat_id}_{description.key}"
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        cat = self._cat_data or {}
-        return DeviceInfo(
-            identifiers={(DOMAIN, self.coordinator.cat_identifier(self._cat_id))},
-            manufacturer=self.coordinator.provider_label,
-            name=cat.get("nickname") or f"Cat {self._cat_id}",
-        )
 
     @property
     def native_value(self) -> Any:
@@ -481,13 +569,6 @@ class UbpetCatSensor(CatAvailability, CoordinatorEntity[UbpetDataUpdateCoordinat
                 else {}
             ),
         }
-
-    @property
-    def _cat_data(self) -> dict[str, Any] | None:
-        for cat in self.coordinator.data.get("cats", []):
-            if str(cat.get("catInfoId")) == self._cat_id:
-                return cat
-        return None
 
 
 def _firmware_version(config: dict[str, Any]) -> str | None:
@@ -530,56 +611,15 @@ def _box_status(item: dict[str, Any]) -> str | None:
     try:
         status = int(device_status)
     except (TypeError, ValueError):
-        return str(device_status)
-    if status == 1:
-        return "Standby"
-    if status == 3:
-        return "Paused"
-    return "Running"
+        return None
+    return {1: "standby", 3: "paused"}.get(status, "running")
 
 
 def _box_status_from_mqtt(item: dict[str, Any]) -> str | None:
-    state = _mqtt_state_value(item, "w_state_app_name")
-    if state == "PENDING":
-        return "Standby"
-    if state == "RUNNING":
-        return "Running"
-    if state == "PAUSED":
-        return "Paused"
-    return None
-
-
-def _empty_waste_bin_reminder_days(config: dict[str, Any]) -> str | None:
-    reminder = _empty_waste_bin_reminder_config(config)
-    if reminder is None:
-        return None
-    try:
-        period = int(reminder.get("period") or 0)
-    except (TypeError, ValueError):
-        return None
-    days = [
-        name
-        for bit, name in (
-            (1, "Monday"),
-            (2, "Tuesday"),
-            (4, "Wednesday"),
-            (8, "Thursday"),
-            (16, "Friday"),
-            (32, "Saturday"),
-            (64, "Sunday"),
-        )
-        if period & bit
-    ]
-    if len(days) == 7:
-        return "Every day"
-    return ", ".join(days) if days else "Off"
-
-
-def _empty_waste_bin_reminder_config(config: dict[str, Any]) -> dict[str, Any] | None:
-    for item in config.get("notifyConfigList") or []:
-        if isinstance(item, dict) and item.get("type") == 4 and item.get("notifyConfigId") is not None:
-            return item
-    return None
+    state = effective_work_state(
+        _mqtt_state_value(item, "w_mode_app_name"), _mqtt_state_value(item, "w_state_app_name")
+    )
+    return {"PENDING": "standby", "RUNNING": "running", "PAUSED": "paused"}.get(state)
 
 
 def _mqtt_state_value(item: dict[str, Any], key: str) -> Any:

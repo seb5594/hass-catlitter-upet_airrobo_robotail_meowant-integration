@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import inspect
 
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+
+from .const import DOMAIN
 
 try:
     from homeassistant.helpers.device_registry import DeviceInfo as DeviceInfo
@@ -34,3 +37,13 @@ def start_reauth(hass, entry):
                 entry.domain, context={"source": "reauth", "entry_id": entry.entry_id}, data=dict(entry.data)
             )
         )
+
+
+def translated_error(key: str, fallback: str, **placeholders: str) -> HomeAssistantError:
+    """An error whose text follows the user's language (``exceptions`` in strings.json)."""
+    try:
+        return HomeAssistantError(
+            translation_domain=DOMAIN, translation_key=key, translation_placeholders=placeholders or None
+        )
+    except TypeError:  # Home Assistant before 2023.7 cannot translate exceptions
+        return HomeAssistantError(fallback)

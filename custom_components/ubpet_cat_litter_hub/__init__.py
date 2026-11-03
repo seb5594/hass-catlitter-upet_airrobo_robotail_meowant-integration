@@ -5,22 +5,30 @@ from __future__ import annotations
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 
 from .api import UbpetClient
-from .const import DOMAIN, PLATFORMS
+from .const import (
+    CLIENT_KEYS,
+    CONF_AREA_CODE,
+    CONF_COUNTRY,
+    CONF_PROVIDER,
+    CONF_REGION,
+    DOMAIN,
+    OPT_MQTT_ENABLED,
+    PLATFORMS,
+)
 from .coordinator import UbpetDataUpdateCoordinator
 from .entities import migrate_cat_devices
+from .legacy import adopt_registry_entries, async_remove_adopted_entry
 from .providers import account_unique_id, infer_provider, infer_region
 
 
 async def async_setup_entry(hass, entry):
     client = UbpetClient(
-        **{
-            key: entry.data[key]
-            for key in ("account", "password", "app_key", "device_id", "base_url", "app_id", "product")
-        },
-        area_code=entry.data.get("area_code", entry.data.get("country", "")),
+        **{key: entry.data[key] for key in CLIENT_KEYS},
+        area_code=entry.data.get(CONF_AREA_CODE, entry.data.get(CONF_COUNTRY, "")),
     )
     coordinator = UbpetDataUpdateCoordinator(hass, client, entry=entry)
     try:
+        adopt_registry_entries(hass, entry)
         await coordinator.async_config_entry_first_refresh()
         hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
         migrate_cat_devices(hass, entry)
@@ -35,8 +43,9 @@ async def async_setup_entry(hass, entry):
 
     entry.async_on_unload(hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, stop))
     entry.async_on_unload(entry.add_update_listener(_reload))
-    if entry.options.get("mqtt_enabled", True):
+    if entry.options.get(OPT_MQTT_ENABLED, True):
         coordinator.transport.start()
+    hass.async_create_task(async_remove_adopted_entry(hass, entry))
     return True
 
 
@@ -57,8 +66,8 @@ async def async_migrate_entry(hass, entry):
         return False
     if entry.version < 2:
         data = dict(entry.data)
-        data.setdefault("provider", infer_provider(data))
-        data.setdefault("region", infer_region(data))
+        data.setdefault(CONF_PROVIDER, infer_provider(data))
+        data.setdefault(CONF_REGION, infer_region(data))
         # Preserve every connection field, entry ID and entity unique ID.
         hass.config_entries.async_update_entry(entry, data=data, version=2, unique_id=account_unique_id(data))
     return True

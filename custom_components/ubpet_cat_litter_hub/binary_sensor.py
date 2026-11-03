@@ -12,12 +12,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .compat import DeviceInfo, description_is_frozen, serial_info
+from .compat import description_is_frozen
 from .const import DOMAIN
 from .coordinator import UbpetDataUpdateCoordinator
-from .entities import DeviceAvailability, keep_or_supported, setup_discovery
+from .entities import UbpetDeviceEntity, keep_or_supported, setup_discovery
 from .history import waste_full
 
 
@@ -164,7 +163,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     def build():
         entities = [
-            UbpetDeviceBinarySensor(coordinator, entry.entry_id, serial, description)
+            UbpetDeviceBinarySensor(coordinator, coordinator.namespace, serial, description)
             for serial in coordinator.data.get("devices", {})
             for description in BINARY_SENSORS
             if keep_or_supported(coordinator, serial, description.key, "binary_sensor")
@@ -174,7 +173,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     setup_discovery(coordinator, entry, async_add_entities, build)
 
 
-class UbpetDeviceBinarySensor(DeviceAvailability, CoordinatorEntity[UbpetDataUpdateCoordinator], BinarySensorEntity):
+class UbpetDeviceBinarySensor(UbpetDeviceEntity, BinarySensorEntity):
     entity_description: UbpetBinarySensorDescription
 
     def __init__(
@@ -188,17 +187,6 @@ class UbpetDeviceBinarySensor(DeviceAvailability, CoordinatorEntity[UbpetDataUpd
         self._serial = serial
         self.entity_description = description
         self._attr_unique_id = f"{entry_id}_{serial}_{description.key}"
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        item = self.coordinator.data.get("devices", {}).get(self._serial, {})
-        device = item.get("device", {})
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._serial)},
-            manufacturer=self.coordinator.provider_label,
-            name=device.get("deviceName") or self._serial,
-            **serial_info(self._serial),
-        )
 
     @property
     def is_on(self) -> bool | None:

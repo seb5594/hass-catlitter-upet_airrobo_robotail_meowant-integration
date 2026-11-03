@@ -6,15 +6,13 @@ from homeassistant.components.number import NumberEntity, NumberEntityDescriptio
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTime
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .compat import DeviceInfo, serial_info
+from .compat import translated_error
 from .const import DOMAIN
 from .coordinator import UbpetDataUpdateCoordinator
-from .entities import CatAvailability, DeviceAvailability, setup_discovery
+from .entities import UbpetCatEntity, UbpetDeviceEntity, setup_discovery
 from .writes import async_write
 
 AUTO_CLEAN_DELAY = NumberEntityDescription(
@@ -36,19 +34,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     def build():
         entities: list[NumberEntity] = []
         for serial in coordinator.data.get("devices", {}):
-            entities.append(UbpetAutoCleanDelayNumber(coordinator, entry.entry_id, serial))
+            entities.append(UbpetAutoCleanDelayNumber(coordinator, coordinator.namespace, serial))
         for cat in coordinator.data.get("cats", []):
             if cat.get("catInfoId") is not None:
-                entities.append(UbpetCatThresholdNumber(coordinator, entry.entry_id, str(cat["catInfoId"])))
+                entities.append(UbpetCatThresholdNumber(coordinator, coordinator.namespace, str(cat["catInfoId"])))
         for serial, item in coordinator.data.get("devices", {}).items():
             if item.get("box_use_times", {}).get("boxFullMax"):
-                entities.append(UbpetWasteThresholdNumber(coordinator, entry.entry_id, serial))
+                entities.append(UbpetWasteThresholdNumber(coordinator, coordinator.namespace, serial))
         return entities
 
     setup_discovery(coordinator, entry, async_add_entities, build)
 
 
-class UbpetAutoCleanDelayNumber(DeviceAvailability, CoordinatorEntity[UbpetDataUpdateCoordinator], NumberEntity):
+class UbpetAutoCleanDelayNumber(UbpetDeviceEntity, NumberEntity):
     _attr_mode = NumberMode.SLIDER
     entity_description = AUTO_CLEAN_DELAY
 
@@ -56,17 +54,6 @@ class UbpetAutoCleanDelayNumber(DeviceAvailability, CoordinatorEntity[UbpetDataU
         super().__init__(coordinator)
         self._serial = serial
         self._attr_unique_id = f"{entry_id}_{serial}_auto_clean_delay"
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        item = self.coordinator.data.get("devices", {}).get(self._serial, {})
-        device = item.get("device", {})
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._serial)},
-            manufacturer=self.coordinator.provider_label,
-            name=device.get("deviceName") or self._serial,
-            **serial_info(self._serial),
-        )
 
     @property
     def native_value(self) -> int | float | None:
@@ -79,7 +66,7 @@ class UbpetAutoCleanDelayNumber(DeviceAvailability, CoordinatorEntity[UbpetDataU
         minutes = int(round(value))
         enabled = self.coordinator.data.get("devices", {}).get(self._serial, {}).get("config", {}).get("sensorSwitch")
         if enabled not in (0, 1):
-            raise HomeAssistantError("Auto clean state is unknown; wait for a successful update")
+            raise translated_error("auto_clean_unknown", "Auto clean state is unknown; wait for a successful update")
         await async_write(
             self.hass,
             self.coordinator.client.set_auto_clean_delay,
@@ -101,7 +88,7 @@ def _seconds_to_minutes(value: Any) -> int | float | None:
     return int(minutes) if minutes.is_integer() else minutes
 
 
-class UbpetCatThresholdNumber(CatAvailability, CoordinatorEntity[UbpetDataUpdateCoordinator], NumberEntity):
+class UbpetCatThresholdNumber(UbpetCatEntity, NumberEntity):
     _attr_mode = NumberMode.BOX
     entity_description = NumberEntityDescription(
         key="cat_poo_duration_threshold",
@@ -119,21 +106,6 @@ class UbpetCatThresholdNumber(CatAvailability, CoordinatorEntity[UbpetDataUpdate
         super().__init__(coordinator)
         self._cat_id = cat_id
         self._attr_unique_id = f"{entry_id}_cat_{cat_id}_poo_duration_threshold"
-
-    @property
-    def _cat_data(self):
-        return next(
-            (cat for cat in (self.coordinator.data or {}).get("cats", []) if str(cat.get("catInfoId")) == self._cat_id),
-            None,
-        )
-
-    @property
-    def device_info(self):
-        return DeviceInfo(
-            identifiers={(DOMAIN, self.coordinator.cat_identifier(self._cat_id))},
-            manufacturer=self.coordinator.provider_label,
-            name=(self._cat_data or {}).get("nickname") or f"Cat {self._cat_id}",
-        )
 
     @property
     def native_value(self):
@@ -170,6 +142,6 @@ class UbpetWasteThresholdNumber(UbpetAutoCleanDelayNumber):
 
     async def async_set_native_value(self, value):
         if not 1 <= value <= self.native_max_value or value != int(value):
-            raise ValueError("Threshold exceeds reported capacity")
+            raise translated_error("threshold_exceeds_capacity", "Threshold exceeds reported capacity")
         await async_write(self.hass, self.coordinator.client.set_box_full_alert, self._serial, int(value))
         self.coordinator.schedule_refresh(15)

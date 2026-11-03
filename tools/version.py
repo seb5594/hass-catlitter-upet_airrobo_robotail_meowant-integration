@@ -17,7 +17,7 @@ parser.add_argument("--build", type=int, help="Explizite Tages-Buildnummer ab 1"
 args = parser.parse_args()
 day = datetime.strptime(args.date, "%Y-%m-%d").date() if args.date else datetime.now(ZoneInfo("Europe/Berlin")).date()
 prefix = day.strftime("%Y.%m.%d")
-path = ROOT / "custom_components/ubpet/manifest.json"
+path = ROOT / "custom_components/ubpet_cat_litter_hub/manifest.json"
 manifest = json.loads(path.read_text(encoding="utf-8"))
 tags = subprocess.check_output(["git", "tag", "--list", f"v{prefix}.*"], cwd=ROOT, text=True).splitlines()
 pattern = re.compile(re.escape(prefix) + r"\.(\d+)")

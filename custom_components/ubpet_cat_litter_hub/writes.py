@@ -1,8 +1,7 @@
 """Translate vendor setting failures into actionable Home Assistant errors."""
 
-from homeassistant.exceptions import HomeAssistantError
-
 from .api import UbpetApiError
+from .compat import translated_error
 
 
 async def async_write(hass, method, *args):
@@ -14,7 +13,9 @@ async def async_write(hass, method, *args):
             and err.payload.get("code") == 500
             and any(word in str(err.payload.get("message", "")).casefold() for word in ("permission", "权限"))
         ):
-            raise HomeAssistantError("This setting requires permission from the device owner") from err
-        raise HomeAssistantError(str(err)) from err
+            raise translated_error(
+                "permission_required", "This setting requires permission from the device owner"
+            ) from err
+        raise translated_error("api_error", str(err), detail=str(err)) from err
     except OSError as err:
-        raise HomeAssistantError("Could not reach the vendor while changing this setting") from err
+        raise translated_error("vendor_unreachable", "Could not reach the vendor while changing this setting") from err
