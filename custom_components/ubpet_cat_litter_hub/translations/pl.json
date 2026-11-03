@@ -1,0 +1,421 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cat Litter Hub",
+        "menu_options": {
+          "migrate": "Przejmij istniejącą konfigurację UPET",
+          "provider": "Dodaj nowe konto"
+        }
+      },
+      "migrate": {
+        "title": "Przejmij istniejącą konfigurację",
+        "description": "„{title}” z poprzedniej integracji UPET (pozostało do przejęcia: {count}) zostanie przejęte wraz z urządzeniami, encjami, historią i ustawieniami. Najpierw utwórz kopię zapasową Home Assistanta. Folder starej integracji musi być już usunięty, a Home Assistant zrestartowany."
+      },
+      "provider": {
+        "title": "Cat Litter Hub",
+        "description": "Wybierz aplikację, w której utworzono konto. Marka wydrukowana na kuwecie może się różnić.",
+        "data": {
+          "provider": "Dostawca konta / aplikacja"
+        }
+      },
+      "account": {
+        "title": "{provider}: konto i serwer",
+        "description": "Wybierz region konta i kraj wybrany w aplikacji. Propozycja na podstawie ustawień Home Assistanta: {suggestion}. To tylko propozycja; decyduje region konta w aplikacji. Meowant używa serwera NA/globalnego także dla kont z innych krajów.",
+        "data": {
+          "region": "Region serwera konta",
+          "country": "Kraj konta (aplikacja)",
+          "username": "Konto",
+          "password": "Hasło"
+        }
+      }
+    },
+    "error": {
+      "invalid_input": "Podaj prawidłowy kraj, konto i hasło.",
+      "invalid_auth": "Logowanie odrzucone. Sprawdź aplikację/dostawcę, region konta, kraj i hasło. Zły region objawia się także jako złe hasło.",
+      "cannot_connect": "Nie można połączyć się z dostawcą. Spróbuj ponownie później.",
+      "missing_devices": "Nowe ustawienia nie zwracają wszystkich wcześniej połączonych kuwet. Sprawdź region konta.",
+      "account_changed": "Utwórz kolejny wpis konfiguracji dla innego konta."
+    },
+    "abort": {
+      "already_configured": "To konto w chmurze jest już skonfigurowane.",
+      "reauth_successful": "Dane logowania konta zaktualizowane.",
+      "reconfigure_successful": "Ustawienia konta zaktualizowane.",
+      "legacy_still_installed": "Poprzednia integracja UPET nadal działa. Usuń jej folder z custom_components, zrestartuj Home Assistanta i spróbuj ponownie."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "box_status": {
+        "name": "Stan kuwety",
+        "state": {
+          "standby": "Czuwanie",
+          "running": "Pracuje",
+          "paused": "Wstrzymano"
+        }
+      },
+      "box_use_times": {
+        "name": "Liczba użyć kuwety"
+      },
+      "waste_bin_level": {
+        "name": "Poziom pojemnika na odpady"
+      },
+      "waste_bin_last_reset": {
+        "name": "Ostatni reset pojemnika"
+      },
+      "box_full_max": {
+        "name": "Maksymalna pojemność pojemnika"
+      },
+      "box_full_alert": {
+        "name": "Próg ostrzeżenia pojemnika"
+      },
+      "deodorant_remaining_days": {
+        "name": "Wkład zapachowy: pozostałe dni"
+      },
+      "cat_weight": {
+        "name": "Waga"
+      },
+      "cat_visits": {
+        "name": "Wizyty (stare)"
+      },
+      "cat_cost_time": {
+        "name": "Średni czas korzystania (stare)"
+      },
+      "firmware_version": {
+        "name": "Wersja oprogramowania"
+      },
+      "auto_clean_delay_current": {
+        "name": "Opóźnienie automatycznego czyszczenia"
+      },
+      "wifi_name": {
+        "name": "Nazwa Wi-Fi"
+      },
+      "empty_waste_bin_reminder_days": {
+        "name": "Dni przypomnienia o opróżnieniu",
+        "state": {
+          "off": "Wyłączone",
+          "every_day": "Codziennie",
+          "weekdays": "Dni robocze",
+          "weekend": "Weekend",
+          "custom": "Własne dni"
+        }
+      },
+      "mqtt_work_mode": {
+        "name": "Tryb pracy MQTT"
+      },
+      "mqtt_work_state": {
+        "name": "Stan pracy MQTT"
+      },
+      "mqtt_work_cause": {
+        "name": "Przyczyna stanu MQTT"
+      },
+      "last_rest_update": {
+        "name": "Ostatnia aktualizacja REST"
+      },
+      "last_mqtt_update": {
+        "name": "Ostatnia aktualizacja MQTT"
+      },
+      "remaining_bin_uses": {
+        "name": "Użycia do pojemności pojemnika"
+      },
+      "last_visit": {
+        "name": "Ostatnia wizyta"
+      },
+      "mqtt_pet_position": {
+        "name": "Pozycja kota",
+        "state": {
+          "inside": "W kuwecie",
+          "away": "Poza kuwetą"
+        }
+      },
+      "cat_last_visit_duration": {
+        "name": "Czas ostatniej wizyty"
+      },
+      "cat_pee_visits_24h": {
+        "name": "Siusianie w 24 godziny (szacunkowo)"
+      },
+      "cat_poo_visits_24h": {
+        "name": "Kupy w 24 godziny (szacunkowo)"
+      },
+      "cat_last_pee": {
+        "name": "Ostatnie siusianie (szacunkowo)"
+      },
+      "cat_last_poo": {
+        "name": "Ostatnia kupa (szacunkowo)"
+      },
+      "cat_last_visit": {
+        "name": "Ostatnia wizyta"
+      },
+      "cat_visits_24h": {
+        "name": "Wizyty w 24 godziny"
+      },
+      "cat_duration_24h": {
+        "name": "Czas w kuwecie w 24 godziny"
+      },
+      "cat_average_duration_24h": {
+        "name": "Średni czas wizyty w 24 godziny"
+      },
+      "cat_maximum_duration_24h": {
+        "name": "Najdłuższa wizyta w 24 godziny"
+      },
+      "cat_weight_change": {
+        "name": "Zmiana wagi od poprzedniej wizyty"
+      },
+      "visits_today": {
+        "name": "Wizyty dzisiaj"
+      },
+      "cleans_today": {
+        "name": "Czyszczenia dzisiaj"
+      },
+      "last_clean": {
+        "name": "Ostatnie czyszczenie"
+      },
+      "cleans_since_bin_reset": {
+        "name": "Czyszczenia od resetu pojemnika"
+      },
+      "last_used_by": {
+        "name": "Ostatnio użyte przez"
+      },
+      "scheduled_cleans": {
+        "name": "Zaplanowane czyszczenia"
+      },
+      "cat_visits_today": {
+        "name": "Wizyty dzisiaj"
+      },
+      "cat_last_visit_weight": {
+        "name": "Waga podczas ostatniej wizyty"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "Online"
+      },
+      "deodorant_expired": {
+        "name": "Wkład zapachowy wygasł"
+      },
+      "sensor_switch": {
+        "name": "Czujnik włączony"
+      },
+      "camera_switch": {
+        "name": "Kamera włączona"
+      },
+      "control_board_switch": {
+        "name": "Blokada rodzicielska"
+      },
+      "cat_inside": {
+        "name": "Kot w kuwecie"
+      },
+      "cat_nearby": {
+        "name": "Kot w pobliżu"
+      },
+      "cover_open": {
+        "name": "Pokrywa otwarta"
+      },
+      "drum_not_in_place": {
+        "name": "Bęben nie na miejscu"
+      },
+      "drum_stuck": {
+        "name": "Bęben zablokowany"
+      },
+      "scale_fault": {
+        "name": "Usterka wagi"
+      },
+      "camera_fault": {
+        "name": "Usterka kamery"
+      },
+      "light": {
+        "name": "Światło"
+      },
+      "firmware_updating": {
+        "name": "Trwa aktualizacja oprogramowania"
+      },
+      "mqtt_connected": {
+        "name": "MQTT połączono"
+      },
+      "waste_bin_full": {
+        "name": "Osiągnięto próg pojemnika"
+      },
+      "history_truncated": {
+        "name": "Osiągnięto limit pobierania historii"
+      }
+    },
+    "number": {
+      "auto_clean_delay": {
+        "name": "Opóźnienie automatycznego czyszczenia"
+      },
+      "cat_poo_duration_threshold": {
+        "name": "Próg czasu dla kupy (szacunek)"
+      },
+      "box_full_alert_threshold": {
+        "name": "Pojemnik pełny po"
+      }
+    },
+    "switch": {
+      "deodorant_alert": {
+        "name": "Alert wkładu zapachowego"
+      },
+      "do_not_disturb": {
+        "name": "Nie przeszkadzać"
+      },
+      "light_schedule": {
+        "name": "Harmonogram światła"
+      },
+      "empty_waste_bin_reminder": {
+        "name": "Przypomnienie o opróżnieniu pojemnika"
+      },
+      "auto_clean": {
+        "name": "Automatyczne czyszczenie"
+      },
+      "child_lock": {
+        "name": "Blokada rodzicielska"
+      },
+      "shake_mode": {
+        "name": "Tryb wstrząsania"
+      },
+      "box_full_alert": {
+        "name": "Alert pełnego pojemnika"
+      },
+      "foreign_object_detection": {
+        "name": "Wykrywanie ciał obcych"
+      },
+      "reminder_monday": {
+        "name": "Przypomnienie w poniedziałek"
+      },
+      "reminder_tuesday": {
+        "name": "Przypomnienie we wtorek"
+      },
+      "reminder_wednesday": {
+        "name": "Przypomnienie w środę"
+      },
+      "reminder_thursday": {
+        "name": "Przypomnienie w czwartek"
+      },
+      "reminder_friday": {
+        "name": "Przypomnienie w piątek"
+      },
+      "reminder_saturday": {
+        "name": "Przypomnienie w sobotę"
+      },
+      "reminder_sunday": {
+        "name": "Przypomnienie w niedzielę"
+      }
+    },
+    "time": {
+      "do_not_disturb_start": {
+        "name": "Początek trybu Nie przeszkadzać"
+      },
+      "do_not_disturb_end": {
+        "name": "Koniec trybu Nie przeszkadzać"
+      },
+      "light_schedule_start": {
+        "name": "Początek harmonogramu światła"
+      },
+      "light_schedule_end": {
+        "name": "Koniec harmonogramu światła"
+      },
+      "empty_waste_bin_reminder_time": {
+        "name": "Godzina przypomnienia o opróżnieniu"
+      }
+    },
+    "select": {
+      "empty_waste_bin_reminder_days_select": {
+        "name": "Dni przypomnienia o opróżnieniu",
+        "state": {
+          "off": "Wyłączone",
+          "every_day": "Codziennie",
+          "weekdays": "Dni robocze",
+          "weekend": "Weekend"
+        }
+      }
+    },
+    "button": {
+      "rest_request": {
+        "name": "Zapytanie REST"
+      },
+      "mqtt_request_state": {
+        "name": "Poproś o stan"
+      },
+      "reset_waste_bin": {
+        "name": "Zresetuj pojemnik na odpady"
+      },
+      "mqtt_start_clean_up": {
+        "name": "Rozpocznij czyszczenie"
+      },
+      "mqtt_pause_clean_up": {
+        "name": "Wstrzymaj czyszczenie"
+      },
+      "mqtt_resume_clean_up": {
+        "name": "Wznów czyszczenie"
+      },
+      "mqtt_start_flatten": {
+        "name": "Wyrównaj żwirek"
+      },
+      "mqtt_pause_flatten": {
+        "name": "Wstrzymaj wyrównywanie"
+      },
+      "mqtt_resume_flatten": {
+        "name": "Wznów wyrównywanie"
+      },
+      "mqtt_start_rise": {
+        "name": "Podnieś grabki"
+      },
+      "mqtt_start_drop": {
+        "name": "Opuść grabki"
+      },
+      "reset_deodorant": {
+        "name": "Zresetuj wkład zapachowy"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Aktualizacje z chmury",
+        "description": "Jedno stałe połączenie MQTT na konto. REST okresowo odświeża ustawienia i wizyty.",
+        "data": {
+          "scan_interval": "Interwał REST (sekundy, 60–3600)",
+          "records_per_fetch": "Rekordy na kuwetę i strumień (20–200)",
+          "mqtt_enabled": "Włącz push MQTT i polecenia"
+        }
+      }
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "eu": "Europa (UE)",
+        "na": "Ameryka Północna / globalny serwer Meowant",
+        "asia": "Azja (Japonia / Korea Południowa)",
+        "ru": "Rosja",
+        "global": "Globalnie",
+        "cn": "Chiny"
+      }
+    }
+  },
+  "exceptions": {
+    "command_unavailable": {
+      "message": "To polecenie jest obecnie niedostępne."
+    },
+    "state_changed": {
+      "message": "Stan urządzenia zmienił się, więc ruch nie został wysłany."
+    },
+    "command_failed": {
+      "message": "Polecenie producenta nie powiodło się. Zobacz diagnostykę połączenia."
+    },
+    "auto_clean_unknown": {
+      "message": "Ustawienie automatycznego czyszczenia nie jest jeszcze znane. Poczekaj na następną udaną aktualizację."
+    },
+    "threshold_exceeds_capacity": {
+      "message": "Próg przekracza pojemność zgłoszoną przez kuwetę."
+    },
+    "permission_required": {
+      "message": "To ustawienie wymaga uprawnień właściciela urządzenia."
+    },
+    "vendor_unreachable": {
+      "message": "Producent był niedostępny podczas zmiany tego ustawienia."
+    },
+    "api_error": {
+      "message": "Producent odrzucił zmianę: {detail}"
+    }
+  }
+}

@@ -1,0 +1,421 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cat Litter Hub",
+        "menu_options": {
+          "migrate": "Reprendre la configuration UPET existante",
+          "provider": "Ajouter un nouveau compte"
+        }
+      },
+      "migrate": {
+        "title": "Reprendre la configuration existante",
+        "description": "« {title} » de l'ancienne intégration UPET ({count} restant à reprendre) est repris avec ses appareils, entités, historique et réglages. Créez d'abord une sauvegarde de Home Assistant. Le dossier de l'ancienne intégration doit déjà être supprimé et Home Assistant redémarré."
+      },
+      "provider": {
+        "title": "Cat Litter Hub",
+        "description": "Choisissez l'application avec laquelle le compte a été créé. La marque imprimée sur le bac peut différer.",
+        "data": {
+          "provider": "Fournisseur du compte / application"
+        }
+      },
+      "account": {
+        "title": "{provider} : compte et serveur",
+        "description": "Sélectionnez la région du compte et le pays choisi dans l'application. Suggestion d'après vos réglages Home Assistant : {suggestion}. Ce n'est qu'une suggestion ; la région du compte dans l'application fait foi. Meowant utilise le serveur NA/global même pour les comptes d'autres pays.",
+        "data": {
+          "region": "Région du serveur du compte",
+          "country": "Pays du compte (application)",
+          "username": "Compte",
+          "password": "Mot de passe"
+        }
+      }
+    },
+    "error": {
+      "invalid_input": "Saisissez un pays, un compte et un mot de passe valides.",
+      "invalid_auth": "Connexion refusée. Vérifiez l'application/le fournisseur, la région du compte, le pays et le mot de passe. Une mauvaise région apparaît aussi comme un mauvais mot de passe.",
+      "cannot_connect": "Le fournisseur est injoignable. Réessayez plus tard.",
+      "missing_devices": "Les nouveaux réglages ne renvoient pas tous les bacs déjà connectés. Vérifiez la région du compte.",
+      "account_changed": "Créez une autre entrée de configuration pour un autre compte."
+    },
+    "abort": {
+      "already_configured": "Ce compte cloud est déjà configuré.",
+      "reauth_successful": "Identifiants du compte mis à jour.",
+      "reconfigure_successful": "Réglages du compte mis à jour.",
+      "legacy_still_installed": "L'ancienne intégration UPET est encore active. Supprimez son dossier de custom_components, redémarrez Home Assistant et réessayez."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "box_status": {
+        "name": "État du bac",
+        "state": {
+          "standby": "Veille",
+          "running": "En marche",
+          "paused": "En pause"
+        }
+      },
+      "box_use_times": {
+        "name": "Utilisations du bac"
+      },
+      "waste_bin_level": {
+        "name": "Niveau du bac à déchets"
+      },
+      "waste_bin_last_reset": {
+        "name": "Dernière réinitialisation du bac"
+      },
+      "box_full_max": {
+        "name": "Capacité maximale du bac"
+      },
+      "box_full_alert": {
+        "name": "Seuil d'alerte du bac"
+      },
+      "deodorant_remaining_days": {
+        "name": "Bloc désodorisant : jours restants"
+      },
+      "cat_weight": {
+        "name": "Poids"
+      },
+      "cat_visits": {
+        "name": "Visites (ancien)"
+      },
+      "cat_cost_time": {
+        "name": "Durée moyenne d'utilisation (ancien)"
+      },
+      "firmware_version": {
+        "name": "Version du micrologiciel"
+      },
+      "auto_clean_delay_current": {
+        "name": "Délai de nettoyage automatique"
+      },
+      "wifi_name": {
+        "name": "Nom du Wi-Fi"
+      },
+      "empty_waste_bin_reminder_days": {
+        "name": "Jours du rappel de vidage du bac",
+        "state": {
+          "off": "Désactivé",
+          "every_day": "Tous les jours",
+          "weekdays": "Jours ouvrés",
+          "weekend": "Week-end",
+          "custom": "Jours personnalisés"
+        }
+      },
+      "mqtt_work_mode": {
+        "name": "Mode de fonctionnement MQTT"
+      },
+      "mqtt_work_state": {
+        "name": "État de fonctionnement MQTT"
+      },
+      "mqtt_work_cause": {
+        "name": "Cause d'état MQTT"
+      },
+      "last_rest_update": {
+        "name": "Dernière mise à jour REST"
+      },
+      "last_mqtt_update": {
+        "name": "Dernière mise à jour MQTT"
+      },
+      "remaining_bin_uses": {
+        "name": "Utilisations avant saturation du bac"
+      },
+      "last_visit": {
+        "name": "Dernière visite"
+      },
+      "mqtt_pet_position": {
+        "name": "Position du chat",
+        "state": {
+          "inside": "Dans le bac",
+          "away": "Hors du bac"
+        }
+      },
+      "cat_last_visit_duration": {
+        "name": "Durée de la dernière visite"
+      },
+      "cat_pee_visits_24h": {
+        "name": "Urines sur 24 heures (estimé)"
+      },
+      "cat_poo_visits_24h": {
+        "name": "Selles sur 24 heures (estimé)"
+      },
+      "cat_last_pee": {
+        "name": "Dernière urine (estimé)"
+      },
+      "cat_last_poo": {
+        "name": "Dernières selles (estimé)"
+      },
+      "cat_last_visit": {
+        "name": "Dernière visite"
+      },
+      "cat_visits_24h": {
+        "name": "Visites sur 24 heures"
+      },
+      "cat_duration_24h": {
+        "name": "Temps passé dans le bac sur 24 heures"
+      },
+      "cat_average_duration_24h": {
+        "name": "Durée moyenne des visites sur 24 heures"
+      },
+      "cat_maximum_duration_24h": {
+        "name": "Visite la plus longue sur 24 heures"
+      },
+      "cat_weight_change": {
+        "name": "Variation de poids depuis la visite précédente"
+      },
+      "visits_today": {
+        "name": "Visites aujourd'hui"
+      },
+      "cleans_today": {
+        "name": "Nettoyages aujourd'hui"
+      },
+      "last_clean": {
+        "name": "Dernier nettoyage"
+      },
+      "cleans_since_bin_reset": {
+        "name": "Nettoyages depuis la réinitialisation du bac"
+      },
+      "last_used_by": {
+        "name": "Dernier utilisateur"
+      },
+      "scheduled_cleans": {
+        "name": "Nettoyages programmés"
+      },
+      "cat_visits_today": {
+        "name": "Visites aujourd'hui"
+      },
+      "cat_last_visit_weight": {
+        "name": "Poids lors de la dernière visite"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "En ligne"
+      },
+      "deodorant_expired": {
+        "name": "Bloc désodorisant expiré"
+      },
+      "sensor_switch": {
+        "name": "Capteur activé"
+      },
+      "camera_switch": {
+        "name": "Caméra activée"
+      },
+      "control_board_switch": {
+        "name": "Verrouillage enfant"
+      },
+      "cat_inside": {
+        "name": "Chat dans le bac"
+      },
+      "cat_nearby": {
+        "name": "Chat à proximité"
+      },
+      "cover_open": {
+        "name": "Capot ouvert"
+      },
+      "drum_not_in_place": {
+        "name": "Tambour mal positionné"
+      },
+      "drum_stuck": {
+        "name": "Tambour bloqué"
+      },
+      "scale_fault": {
+        "name": "Défaut de la balance"
+      },
+      "camera_fault": {
+        "name": "Défaut de la caméra"
+      },
+      "light": {
+        "name": "Lumière"
+      },
+      "firmware_updating": {
+        "name": "Mise à jour du micrologiciel en cours"
+      },
+      "mqtt_connected": {
+        "name": "MQTT connecté"
+      },
+      "waste_bin_full": {
+        "name": "Seuil du bac à déchets atteint"
+      },
+      "history_truncated": {
+        "name": "Limite de récupération de l'historique atteinte"
+      }
+    },
+    "number": {
+      "auto_clean_delay": {
+        "name": "Délai de nettoyage automatique"
+      },
+      "cat_poo_duration_threshold": {
+        "name": "Seuil de durée pour les selles (estimation)"
+      },
+      "box_full_alert_threshold": {
+        "name": "Bac plein après"
+      }
+    },
+    "switch": {
+      "deodorant_alert": {
+        "name": "Alerte du bloc désodorisant"
+      },
+      "do_not_disturb": {
+        "name": "Ne pas déranger"
+      },
+      "light_schedule": {
+        "name": "Programmation de la lumière"
+      },
+      "empty_waste_bin_reminder": {
+        "name": "Rappel de vidage du bac"
+      },
+      "auto_clean": {
+        "name": "Nettoyage automatique"
+      },
+      "child_lock": {
+        "name": "Verrouillage enfant"
+      },
+      "shake_mode": {
+        "name": "Mode secousse"
+      },
+      "box_full_alert": {
+        "name": "Alerte bac plein"
+      },
+      "foreign_object_detection": {
+        "name": "Détection de corps étranger"
+      },
+      "reminder_monday": {
+        "name": "Rappel le lundi"
+      },
+      "reminder_tuesday": {
+        "name": "Rappel le mardi"
+      },
+      "reminder_wednesday": {
+        "name": "Rappel le mercredi"
+      },
+      "reminder_thursday": {
+        "name": "Rappel le jeudi"
+      },
+      "reminder_friday": {
+        "name": "Rappel le vendredi"
+      },
+      "reminder_saturday": {
+        "name": "Rappel le samedi"
+      },
+      "reminder_sunday": {
+        "name": "Rappel le dimanche"
+      }
+    },
+    "time": {
+      "do_not_disturb_start": {
+        "name": "Début de « Ne pas déranger »"
+      },
+      "do_not_disturb_end": {
+        "name": "Fin de « Ne pas déranger »"
+      },
+      "light_schedule_start": {
+        "name": "Début de la programmation de la lumière"
+      },
+      "light_schedule_end": {
+        "name": "Fin de la programmation de la lumière"
+      },
+      "empty_waste_bin_reminder_time": {
+        "name": "Heure du rappel de vidage du bac"
+      }
+    },
+    "select": {
+      "empty_waste_bin_reminder_days_select": {
+        "name": "Jours du rappel de vidage du bac",
+        "state": {
+          "off": "Désactivé",
+          "every_day": "Tous les jours",
+          "weekdays": "Jours ouvrés",
+          "weekend": "Week-end"
+        }
+      }
+    },
+    "button": {
+      "rest_request": {
+        "name": "Requête REST"
+      },
+      "mqtt_request_state": {
+        "name": "Demander l'état"
+      },
+      "reset_waste_bin": {
+        "name": "Réinitialiser le bac à déchets"
+      },
+      "mqtt_start_clean_up": {
+        "name": "Démarrer le nettoyage"
+      },
+      "mqtt_pause_clean_up": {
+        "name": "Mettre le nettoyage en pause"
+      },
+      "mqtt_resume_clean_up": {
+        "name": "Reprendre le nettoyage"
+      },
+      "mqtt_start_flatten": {
+        "name": "Lisser la litière"
+      },
+      "mqtt_pause_flatten": {
+        "name": "Mettre le lissage en pause"
+      },
+      "mqtt_resume_flatten": {
+        "name": "Reprendre le lissage"
+      },
+      "mqtt_start_rise": {
+        "name": "Relever le râteau"
+      },
+      "mqtt_start_drop": {
+        "name": "Abaisser le râteau"
+      },
+      "reset_deodorant": {
+        "name": "Réinitialiser le bloc désodorisant"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Mises à jour cloud",
+        "description": "Une connexion MQTT permanente par compte. REST actualise régulièrement les réglages et les visites.",
+        "data": {
+          "scan_interval": "Intervalle REST (secondes, 60–3600)",
+          "records_per_fetch": "Enregistrements par bac et par flux (20–200)",
+          "mqtt_enabled": "Activer le push MQTT et les commandes"
+        }
+      }
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "eu": "Europe (UE)",
+        "na": "Amérique du Nord / serveur mondial Meowant",
+        "asia": "Asie (Japon / Corée du Sud)",
+        "ru": "Russie",
+        "global": "Mondial",
+        "cn": "Chine"
+      }
+    }
+  },
+  "exceptions": {
+    "command_unavailable": {
+      "message": "Cette commande n'est actuellement pas disponible."
+    },
+    "state_changed": {
+      "message": "L'état de l'appareil a changé, le mouvement n'a donc pas été envoyé."
+    },
+    "command_failed": {
+      "message": "La commande du fabricant a échoué. Consultez les diagnostics de connexion."
+    },
+    "auto_clean_unknown": {
+      "message": "Le réglage du nettoyage automatique n'est pas encore connu. Attendez la prochaine mise à jour réussie."
+    },
+    "threshold_exceeds_capacity": {
+      "message": "Le seuil dépasse la capacité indiquée par le bac."
+    },
+    "permission_required": {
+      "message": "Ce réglage nécessite l'autorisation du propriétaire de l'appareil."
+    },
+    "vendor_unreachable": {
+      "message": "Le fabricant était injoignable lors de la modification de ce réglage."
+    },
+    "api_error": {
+      "message": "Le fabricant a refusé la modification : {detail}"
+    }
+  }
+}

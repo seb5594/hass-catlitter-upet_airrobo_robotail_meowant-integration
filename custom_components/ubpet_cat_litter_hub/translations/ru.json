@@ -1,0 +1,421 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cat Litter Hub",
+        "menu_options": {
+          "migrate": "Перенять существующую настройку UPET",
+          "provider": "Добавить новую учётную запись"
+        }
+      },
+      "migrate": {
+        "title": "Перенять существующую настройку",
+        "description": "«{title}» из прежней интеграции UPET (осталось перенять: {count}) переносится вместе с устройствами, объектами, историей и настройками. Сначала создайте резервную копию Home Assistant. Папка старой интеграции должна быть уже удалена, а Home Assistant перезапущен."
+      },
+      "provider": {
+        "title": "Cat Litter Hub",
+        "description": "Выберите приложение, в котором создана учётная запись. Бренд на самом лотке может отличаться.",
+        "data": {
+          "provider": "Поставщик учётной записи / приложение"
+        }
+      },
+      "account": {
+        "title": "{provider}: учётная запись и сервер",
+        "description": "Выберите регион учётной записи и страну, выбранную в приложении. Предложение по настройкам Home Assistant: {suggestion}. Это лишь предложение; решающим является регион учётной записи в приложении. Meowant использует сервер NA/глобальный даже для учётных записей из других стран.",
+        "data": {
+          "region": "Регион сервера учётной записи",
+          "country": "Страна учётной записи (приложение)",
+          "username": "Учётная запись",
+          "password": "Пароль"
+        }
+      }
+    },
+    "error": {
+      "invalid_input": "Укажите корректные страну, учётную запись и пароль.",
+      "invalid_auth": "Вход отклонён. Проверьте приложение/поставщика, регион учётной записи, страну и пароль. Неверный регион также выглядит как неверный пароль.",
+      "cannot_connect": "Не удалось связаться с поставщиком. Повторите попытку позже.",
+      "missing_devices": "Новые настройки не возвращают все ранее подключённые лотки. Проверьте регион учётной записи.",
+      "account_changed": "Создайте ещё одну запись конфигурации для другой учётной записи."
+    },
+    "abort": {
+      "already_configured": "Эта облачная учётная запись уже настроена.",
+      "reauth_successful": "Данные учётной записи обновлены.",
+      "reconfigure_successful": "Настройки учётной записи обновлены.",
+      "legacy_still_installed": "Прежняя интеграция UPET всё ещё работает. Удалите её папку из custom_components, перезапустите Home Assistant и повторите попытку."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "box_status": {
+        "name": "Состояние лотка",
+        "state": {
+          "standby": "Ожидание",
+          "running": "Работает",
+          "paused": "Пауза"
+        }
+      },
+      "box_use_times": {
+        "name": "Количество использований лотка"
+      },
+      "waste_bin_level": {
+        "name": "Уровень заполнения контейнера для отходов"
+      },
+      "waste_bin_last_reset": {
+        "name": "Последний сброс контейнера"
+      },
+      "box_full_max": {
+        "name": "Максимальная ёмкость контейнера"
+      },
+      "box_full_alert": {
+        "name": "Порог предупреждения контейнера"
+      },
+      "deodorant_remaining_days": {
+        "name": "Блок-ароматизатор: осталось дней"
+      },
+      "cat_weight": {
+        "name": "Вес"
+      },
+      "cat_visits": {
+        "name": "Посещения (устар.)"
+      },
+      "cat_cost_time": {
+        "name": "Средняя длительность использования (устар.)"
+      },
+      "firmware_version": {
+        "name": "Версия прошивки"
+      },
+      "auto_clean_delay_current": {
+        "name": "Задержка автоочистки"
+      },
+      "wifi_name": {
+        "name": "Имя сети Wi-Fi"
+      },
+      "empty_waste_bin_reminder_days": {
+        "name": "Дни напоминания об опорожнении",
+        "state": {
+          "off": "Выкл.",
+          "every_day": "Каждый день",
+          "weekdays": "Будни",
+          "weekend": "Выходные",
+          "custom": "Свои дни"
+        }
+      },
+      "mqtt_work_mode": {
+        "name": "Режим работы MQTT"
+      },
+      "mqtt_work_state": {
+        "name": "Состояние работы MQTT"
+      },
+      "mqtt_work_cause": {
+        "name": "Причина состояния MQTT"
+      },
+      "last_rest_update": {
+        "name": "Последнее обновление REST"
+      },
+      "last_mqtt_update": {
+        "name": "Последнее обновление MQTT"
+      },
+      "remaining_bin_uses": {
+        "name": "Использований до заполнения контейнера"
+      },
+      "last_visit": {
+        "name": "Последнее посещение"
+      },
+      "mqtt_pet_position": {
+        "name": "Положение кота",
+        "state": {
+          "inside": "В лотке",
+          "away": "Вне лотка"
+        }
+      },
+      "cat_last_visit_duration": {
+        "name": "Длительность последнего посещения"
+      },
+      "cat_pee_visits_24h": {
+        "name": "Мочеиспускания за 24 часа (оценка)"
+      },
+      "cat_poo_visits_24h": {
+        "name": "Дефекации за 24 часа (оценка)"
+      },
+      "cat_last_pee": {
+        "name": "Последнее мочеиспускание (оценка)"
+      },
+      "cat_last_poo": {
+        "name": "Последняя дефекация (оценка)"
+      },
+      "cat_last_visit": {
+        "name": "Последнее посещение"
+      },
+      "cat_visits_24h": {
+        "name": "Посещения за 24 часа"
+      },
+      "cat_duration_24h": {
+        "name": "Время в лотке за 24 часа"
+      },
+      "cat_average_duration_24h": {
+        "name": "Средняя длительность посещения за 24 часа"
+      },
+      "cat_maximum_duration_24h": {
+        "name": "Самое долгое посещение за 24 часа"
+      },
+      "cat_weight_change": {
+        "name": "Изменение веса с предыдущего посещения"
+      },
+      "visits_today": {
+        "name": "Посещения сегодня"
+      },
+      "cleans_today": {
+        "name": "Очистки сегодня"
+      },
+      "last_clean": {
+        "name": "Последняя очистка"
+      },
+      "cleans_since_bin_reset": {
+        "name": "Очистки с момента сброса контейнера"
+      },
+      "last_used_by": {
+        "name": "Последний пользователь"
+      },
+      "scheduled_cleans": {
+        "name": "Запланированные очистки"
+      },
+      "cat_visits_today": {
+        "name": "Посещения сегодня"
+      },
+      "cat_last_visit_weight": {
+        "name": "Вес при последнем посещении"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "В сети"
+      },
+      "deodorant_expired": {
+        "name": "Блок-ароматизатор истёк"
+      },
+      "sensor_switch": {
+        "name": "Датчик включён"
+      },
+      "camera_switch": {
+        "name": "Камера включена"
+      },
+      "control_board_switch": {
+        "name": "Защита от детей"
+      },
+      "cat_inside": {
+        "name": "Кот в лотке"
+      },
+      "cat_nearby": {
+        "name": "Кот рядом"
+      },
+      "cover_open": {
+        "name": "Крышка открыта"
+      },
+      "drum_not_in_place": {
+        "name": "Барабан не на месте"
+      },
+      "drum_stuck": {
+        "name": "Барабан заблокирован"
+      },
+      "scale_fault": {
+        "name": "Неисправность весов"
+      },
+      "camera_fault": {
+        "name": "Неисправность камеры"
+      },
+      "light": {
+        "name": "Подсветка"
+      },
+      "firmware_updating": {
+        "name": "Идёт обновление прошивки"
+      },
+      "mqtt_connected": {
+        "name": "MQTT подключён"
+      },
+      "waste_bin_full": {
+        "name": "Достигнут порог контейнера"
+      },
+      "history_truncated": {
+        "name": "Достигнут предел загрузки истории"
+      }
+    },
+    "number": {
+      "auto_clean_delay": {
+        "name": "Задержка автоочистки"
+      },
+      "cat_poo_duration_threshold": {
+        "name": "Порог длительности для дефекации (оценка)"
+      },
+      "box_full_alert_threshold": {
+        "name": "Контейнер полон через"
+      }
+    },
+    "switch": {
+      "deodorant_alert": {
+        "name": "Оповещение о блоке-ароматизаторе"
+      },
+      "do_not_disturb": {
+        "name": "Не беспокоить"
+      },
+      "light_schedule": {
+        "name": "Расписание подсветки"
+      },
+      "empty_waste_bin_reminder": {
+        "name": "Напоминание об опорожнении контейнера"
+      },
+      "auto_clean": {
+        "name": "Автоочистка"
+      },
+      "child_lock": {
+        "name": "Защита от детей"
+      },
+      "shake_mode": {
+        "name": "Режим встряхивания"
+      },
+      "box_full_alert": {
+        "name": "Оповещение о полном контейнере"
+      },
+      "foreign_object_detection": {
+        "name": "Обнаружение посторонних предметов"
+      },
+      "reminder_monday": {
+        "name": "Напоминание в понедельник"
+      },
+      "reminder_tuesday": {
+        "name": "Напоминание во вторник"
+      },
+      "reminder_wednesday": {
+        "name": "Напоминание в среду"
+      },
+      "reminder_thursday": {
+        "name": "Напоминание в четверг"
+      },
+      "reminder_friday": {
+        "name": "Напоминание в пятницу"
+      },
+      "reminder_saturday": {
+        "name": "Напоминание в субботу"
+      },
+      "reminder_sunday": {
+        "name": "Напоминание в воскресенье"
+      }
+    },
+    "time": {
+      "do_not_disturb_start": {
+        "name": "Начало режима «Не беспокоить»"
+      },
+      "do_not_disturb_end": {
+        "name": "Конец режима «Не беспокоить»"
+      },
+      "light_schedule_start": {
+        "name": "Начало расписания подсветки"
+      },
+      "light_schedule_end": {
+        "name": "Конец расписания подсветки"
+      },
+      "empty_waste_bin_reminder_time": {
+        "name": "Время напоминания об опорожнении"
+      }
+    },
+    "select": {
+      "empty_waste_bin_reminder_days_select": {
+        "name": "Дни напоминания об опорожнении",
+        "state": {
+          "off": "Выкл.",
+          "every_day": "Каждый день",
+          "weekdays": "Будни",
+          "weekend": "Выходные"
+        }
+      }
+    },
+    "button": {
+      "rest_request": {
+        "name": "Запрос REST"
+      },
+      "mqtt_request_state": {
+        "name": "Запросить состояние"
+      },
+      "reset_waste_bin": {
+        "name": "Сбросить контейнер для отходов"
+      },
+      "mqtt_start_clean_up": {
+        "name": "Начать очистку"
+      },
+      "mqtt_pause_clean_up": {
+        "name": "Приостановить очистку"
+      },
+      "mqtt_resume_clean_up": {
+        "name": "Возобновить очистку"
+      },
+      "mqtt_start_flatten": {
+        "name": "Разровнять наполнитель"
+      },
+      "mqtt_pause_flatten": {
+        "name": "Приостановить разравнивание"
+      },
+      "mqtt_resume_flatten": {
+        "name": "Возобновить разравнивание"
+      },
+      "mqtt_start_rise": {
+        "name": "Поднять грабли"
+      },
+      "mqtt_start_drop": {
+        "name": "Опустить грабли"
+      },
+      "reset_deodorant": {
+        "name": "Сбросить блок-ароматизатор"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Облачные обновления",
+        "description": "Одно постоянное соединение MQTT на учётную запись. REST периодически обновляет настройки и посещения.",
+        "data": {
+          "scan_interval": "Интервал REST (секунды, 60–3600)",
+          "records_per_fetch": "Записей на лоток и поток (20–200)",
+          "mqtt_enabled": "Включить push MQTT и команды"
+        }
+      }
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "eu": "Европа (ЕС)",
+        "na": "Северная Америка / глобальный сервер Meowant",
+        "asia": "Азия (Япония / Южная Корея)",
+        "ru": "Россия",
+        "global": "Глобально",
+        "cn": "Китай"
+      }
+    }
+  },
+  "exceptions": {
+    "command_unavailable": {
+      "message": "Эта команда сейчас недоступна."
+    },
+    "state_changed": {
+      "message": "Состояние устройства изменилось, поэтому движение не было отправлено."
+    },
+    "command_failed": {
+      "message": "Команда производителя не выполнена. См. диагностику соединения."
+    },
+    "auto_clean_unknown": {
+      "message": "Настройка автоочистки пока неизвестна. Дождитесь следующего успешного обновления."
+    },
+    "threshold_exceeds_capacity": {
+      "message": "Порог превышает ёмкость, сообщённую лотком."
+    },
+    "permission_required": {
+      "message": "Для этой настройки требуется разрешение владельца устройства."
+    },
+    "vendor_unreachable": {
+      "message": "Производитель был недоступен при изменении этой настройки."
+    },
+    "api_error": {
+      "message": "Производитель отклонил изменение: {detail}"
+    }
+  }
+}

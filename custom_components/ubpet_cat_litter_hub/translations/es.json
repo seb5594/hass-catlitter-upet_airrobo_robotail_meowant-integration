@@ -1,0 +1,421 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cat Litter Hub",
+        "menu_options": {
+          "migrate": "Adoptar la configuración UPET existente",
+          "provider": "Añadir una cuenta nueva"
+        }
+      },
+      "migrate": {
+        "title": "Adoptar la configuración existente",
+        "description": "«{title}» de la integración UPET anterior ({count} pendientes de adoptar) se adopta con sus dispositivos, entidades, historial y ajustes. Crea antes una copia de seguridad de Home Assistant. La carpeta de la integración antigua debe estar eliminada y Home Assistant reiniciado."
+      },
+      "provider": {
+        "title": "Cat Litter Hub",
+        "description": "Elige la aplicación con la que se creó la cuenta. La marca impresa en el arenero puede ser distinta.",
+        "data": {
+          "provider": "Proveedor de la cuenta / aplicación"
+        }
+      },
+      "account": {
+        "title": "{provider}: cuenta y servidor",
+        "description": "Selecciona la región de la cuenta y el país elegido en la aplicación. Sugerencia según tus ajustes de Home Assistant: {suggestion}. Es solo una sugerencia; manda la región de la cuenta en la aplicación. Meowant usa el servidor NA/global incluso para cuentas de otros países.",
+        "data": {
+          "region": "Región del servidor de la cuenta",
+          "country": "País de la cuenta (aplicación)",
+          "username": "Cuenta",
+          "password": "Contraseña"
+        }
+      }
+    },
+    "error": {
+      "invalid_input": "Introduce un país, una cuenta y una contraseña válidos.",
+      "invalid_auth": "Inicio de sesión rechazado. Comprueba la aplicación/proveedor, la región de la cuenta, el país y la contraseña. Una región incorrecta también aparece como contraseña incorrecta.",
+      "cannot_connect": "No se pudo contactar con el proveedor. Inténtalo de nuevo más tarde.",
+      "missing_devices": "Los nuevos ajustes no devuelven todos los areneros conectados anteriormente. Comprueba la región de la cuenta.",
+      "account_changed": "Crea otra entrada de configuración para una cuenta distinta."
+    },
+    "abort": {
+      "already_configured": "Esta cuenta en la nube ya está configurada.",
+      "reauth_successful": "Credenciales de la cuenta actualizadas.",
+      "reconfigure_successful": "Ajustes de la cuenta actualizados.",
+      "legacy_still_installed": "La integración UPET anterior sigue en ejecución. Elimina su carpeta de custom_components, reinicia Home Assistant e inténtalo de nuevo."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "box_status": {
+        "name": "Estado del arenero",
+        "state": {
+          "standby": "En espera",
+          "running": "En marcha",
+          "paused": "En pausa"
+        }
+      },
+      "box_use_times": {
+        "name": "Usos del arenero"
+      },
+      "waste_bin_level": {
+        "name": "Nivel del cubo de residuos"
+      },
+      "waste_bin_last_reset": {
+        "name": "Último reinicio del cubo"
+      },
+      "box_full_max": {
+        "name": "Capacidad máxima del cubo"
+      },
+      "box_full_alert": {
+        "name": "Umbral de aviso del cubo"
+      },
+      "deodorant_remaining_days": {
+        "name": "Bloque desodorante: días restantes"
+      },
+      "cat_weight": {
+        "name": "Peso"
+      },
+      "cat_visits": {
+        "name": "Visitas (antiguo)"
+      },
+      "cat_cost_time": {
+        "name": "Duración media de uso (antiguo)"
+      },
+      "firmware_version": {
+        "name": "Versión del firmware"
+      },
+      "auto_clean_delay_current": {
+        "name": "Retardo de limpieza automática"
+      },
+      "wifi_name": {
+        "name": "Nombre de la Wi-Fi"
+      },
+      "empty_waste_bin_reminder_days": {
+        "name": "Días del recordatorio de vaciado",
+        "state": {
+          "off": "Desactivado",
+          "every_day": "Todos los días",
+          "weekdays": "Días laborables",
+          "weekend": "Fin de semana",
+          "custom": "Días personalizados"
+        }
+      },
+      "mqtt_work_mode": {
+        "name": "Modo de trabajo MQTT"
+      },
+      "mqtt_work_state": {
+        "name": "Estado de trabajo MQTT"
+      },
+      "mqtt_work_cause": {
+        "name": "Causa de estado MQTT"
+      },
+      "last_rest_update": {
+        "name": "Última actualización REST"
+      },
+      "last_mqtt_update": {
+        "name": "Última actualización MQTT"
+      },
+      "remaining_bin_uses": {
+        "name": "Usos hasta la capacidad del cubo"
+      },
+      "last_visit": {
+        "name": "Última visita"
+      },
+      "mqtt_pet_position": {
+        "name": "Posición del gato",
+        "state": {
+          "inside": "Dentro del arenero",
+          "away": "Fuera del arenero"
+        }
+      },
+      "cat_last_visit_duration": {
+        "name": "Duración de la última visita"
+      },
+      "cat_pee_visits_24h": {
+        "name": "Micciones en 24 horas (estimado)"
+      },
+      "cat_poo_visits_24h": {
+        "name": "Deposiciones en 24 horas (estimado)"
+      },
+      "cat_last_pee": {
+        "name": "Última micción (estimado)"
+      },
+      "cat_last_poo": {
+        "name": "Última deposición (estimado)"
+      },
+      "cat_last_visit": {
+        "name": "Última visita"
+      },
+      "cat_visits_24h": {
+        "name": "Visitas en 24 horas"
+      },
+      "cat_duration_24h": {
+        "name": "Tiempo en el arenero en 24 horas"
+      },
+      "cat_average_duration_24h": {
+        "name": "Duración media de las visitas en 24 horas"
+      },
+      "cat_maximum_duration_24h": {
+        "name": "Visita más larga en 24 horas"
+      },
+      "cat_weight_change": {
+        "name": "Cambio de peso desde la visita anterior"
+      },
+      "visits_today": {
+        "name": "Visitas hoy"
+      },
+      "cleans_today": {
+        "name": "Limpiezas hoy"
+      },
+      "last_clean": {
+        "name": "Última limpieza"
+      },
+      "cleans_since_bin_reset": {
+        "name": "Limpiezas desde el reinicio del cubo"
+      },
+      "last_used_by": {
+        "name": "Último usuario"
+      },
+      "scheduled_cleans": {
+        "name": "Limpiezas programadas"
+      },
+      "cat_visits_today": {
+        "name": "Visitas hoy"
+      },
+      "cat_last_visit_weight": {
+        "name": "Peso en la última visita"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "En línea"
+      },
+      "deodorant_expired": {
+        "name": "Bloque desodorante caducado"
+      },
+      "sensor_switch": {
+        "name": "Sensor activado"
+      },
+      "camera_switch": {
+        "name": "Cámara activada"
+      },
+      "control_board_switch": {
+        "name": "Bloqueo infantil"
+      },
+      "cat_inside": {
+        "name": "Gato dentro"
+      },
+      "cat_nearby": {
+        "name": "Gato cerca"
+      },
+      "cover_open": {
+        "name": "Tapa abierta"
+      },
+      "drum_not_in_place": {
+        "name": "Tambor mal colocado"
+      },
+      "drum_stuck": {
+        "name": "Tambor atascado"
+      },
+      "scale_fault": {
+        "name": "Fallo de la báscula"
+      },
+      "camera_fault": {
+        "name": "Fallo de la cámara"
+      },
+      "light": {
+        "name": "Luz"
+      },
+      "firmware_updating": {
+        "name": "Actualizando firmware"
+      },
+      "mqtt_connected": {
+        "name": "MQTT conectado"
+      },
+      "waste_bin_full": {
+        "name": "Umbral del cubo alcanzado"
+      },
+      "history_truncated": {
+        "name": "Límite de recuperación del historial alcanzado"
+      }
+    },
+    "number": {
+      "auto_clean_delay": {
+        "name": "Retardo de limpieza automática"
+      },
+      "cat_poo_duration_threshold": {
+        "name": "Umbral de duración para deposiciones (estimación)"
+      },
+      "box_full_alert_threshold": {
+        "name": "Cubo lleno tras"
+      }
+    },
+    "switch": {
+      "deodorant_alert": {
+        "name": "Aviso del bloque desodorante"
+      },
+      "do_not_disturb": {
+        "name": "No molestar"
+      },
+      "light_schedule": {
+        "name": "Programación de la luz"
+      },
+      "empty_waste_bin_reminder": {
+        "name": "Recordatorio de vaciado del cubo"
+      },
+      "auto_clean": {
+        "name": "Limpieza automática"
+      },
+      "child_lock": {
+        "name": "Bloqueo infantil"
+      },
+      "shake_mode": {
+        "name": "Modo sacudida"
+      },
+      "box_full_alert": {
+        "name": "Aviso de cubo lleno"
+      },
+      "foreign_object_detection": {
+        "name": "Detección de objetos extraños"
+      },
+      "reminder_monday": {
+        "name": "Recordatorio el lunes"
+      },
+      "reminder_tuesday": {
+        "name": "Recordatorio el martes"
+      },
+      "reminder_wednesday": {
+        "name": "Recordatorio el miércoles"
+      },
+      "reminder_thursday": {
+        "name": "Recordatorio el jueves"
+      },
+      "reminder_friday": {
+        "name": "Recordatorio el viernes"
+      },
+      "reminder_saturday": {
+        "name": "Recordatorio el sábado"
+      },
+      "reminder_sunday": {
+        "name": "Recordatorio el domingo"
+      }
+    },
+    "time": {
+      "do_not_disturb_start": {
+        "name": "Inicio de No molestar"
+      },
+      "do_not_disturb_end": {
+        "name": "Fin de No molestar"
+      },
+      "light_schedule_start": {
+        "name": "Inicio de la programación de la luz"
+      },
+      "light_schedule_end": {
+        "name": "Fin de la programación de la luz"
+      },
+      "empty_waste_bin_reminder_time": {
+        "name": "Hora del recordatorio de vaciado"
+      }
+    },
+    "select": {
+      "empty_waste_bin_reminder_days_select": {
+        "name": "Días del recordatorio de vaciado",
+        "state": {
+          "off": "Desactivado",
+          "every_day": "Todos los días",
+          "weekdays": "Días laborables",
+          "weekend": "Fin de semana"
+        }
+      }
+    },
+    "button": {
+      "rest_request": {
+        "name": "Solicitud REST"
+      },
+      "mqtt_request_state": {
+        "name": "Solicitar estado"
+      },
+      "reset_waste_bin": {
+        "name": "Reiniciar el cubo de residuos"
+      },
+      "mqtt_start_clean_up": {
+        "name": "Iniciar limpieza"
+      },
+      "mqtt_pause_clean_up": {
+        "name": "Pausar limpieza"
+      },
+      "mqtt_resume_clean_up": {
+        "name": "Reanudar limpieza"
+      },
+      "mqtt_start_flatten": {
+        "name": "Alisar la arena"
+      },
+      "mqtt_pause_flatten": {
+        "name": "Pausar alisado"
+      },
+      "mqtt_resume_flatten": {
+        "name": "Reanudar alisado"
+      },
+      "mqtt_start_rise": {
+        "name": "Subir el rastrillo"
+      },
+      "mqtt_start_drop": {
+        "name": "Bajar el rastrillo"
+      },
+      "reset_deodorant": {
+        "name": "Reiniciar el bloque desodorante"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Actualizaciones en la nube",
+        "description": "Una conexión MQTT permanente por cuenta. REST actualiza periódicamente los ajustes y las visitas.",
+        "data": {
+          "scan_interval": "Intervalo REST (segundos, 60–3600)",
+          "records_per_fetch": "Registros por arenero y flujo (20–200)",
+          "mqtt_enabled": "Activar push MQTT y comandos"
+        }
+      }
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "eu": "Europa (UE)",
+        "na": "Norteamérica / servidor global de Meowant",
+        "asia": "Asia (Japón / Corea del Sur)",
+        "ru": "Rusia",
+        "global": "Global",
+        "cn": "China"
+      }
+    }
+  },
+  "exceptions": {
+    "command_unavailable": {
+      "message": "Este comando no está disponible en este momento."
+    },
+    "state_changed": {
+      "message": "El estado del dispositivo cambió, por lo que no se envió el movimiento."
+    },
+    "command_failed": {
+      "message": "El comando del fabricante falló. Consulta el diagnóstico de conexión."
+    },
+    "auto_clean_unknown": {
+      "message": "El ajuste de limpieza automática aún no se conoce. Espera a la próxima actualización correcta."
+    },
+    "threshold_exceeds_capacity": {
+      "message": "El umbral supera la capacidad indicada por el arenero."
+    },
+    "permission_required": {
+      "message": "Este ajuste requiere el permiso del propietario del dispositivo."
+    },
+    "vendor_unreachable": {
+      "message": "No se pudo contactar con el fabricante al cambiar este ajuste."
+    },
+    "api_error": {
+      "message": "El fabricante rechazó el cambio: {detail}"
+    }
+  }
+}
