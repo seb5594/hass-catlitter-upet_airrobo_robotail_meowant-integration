@@ -1,0 +1,421 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cat Litter Hub",
+        "menu_options": {
+          "migrate": "Převzít stávající nastavení UPET",
+          "provider": "Přidat nový účet"
+        }
+      },
+      "migrate": {
+        "title": "Převzít stávající nastavení",
+        "description": "„{title}“ z dřívější integrace UPET (zbývá převzít: {count}) bude převzato se zařízeními, entitami, historií a nastavením. Nejprve vytvořte zálohu Home Assistantu. Složka staré integrace musí být již odstraněna a Home Assistant restartován."
+      },
+      "provider": {
+        "title": "Cat Litter Hub",
+        "description": "Vyberte aplikaci, ve které byl účet vytvořen. Značka vytištěná na toaletě se může lišit.",
+        "data": {
+          "provider": "Poskytovatel účtu / aplikace"
+        }
+      },
+      "account": {
+        "title": "{provider}: účet a server",
+        "description": "Vyberte oblast účtu a zemi zvolenou v aplikaci. Návrh podle nastavení Home Assistantu: {suggestion}. Jde jen o návrh; rozhoduje oblast účtu v aplikaci. Meowant používá server NA/globální i pro účty z jiných zemí.",
+        "data": {
+          "region": "Oblast serveru účtu",
+          "country": "Země účtu (aplikace)",
+          "username": "Účet",
+          "password": "Heslo"
+        }
+      }
+    },
+    "error": {
+      "invalid_input": "Zadejte platnou zemi, účet a heslo.",
+      "invalid_auth": "Přihlášení bylo odmítnuto. Zkontrolujte aplikaci/poskytovatele, oblast účtu, zemi a heslo. Špatná oblast se projeví i jako špatné heslo.",
+      "cannot_connect": "Poskytovatele se nepodařilo kontaktovat. Zkuste to později.",
+      "missing_devices": "Nové nastavení nevrací všechny dříve připojené toalety. Zkontrolujte oblast účtu.",
+      "account_changed": "Pro jiný účet vytvořte další konfigurační záznam."
+    },
+    "abort": {
+      "already_configured": "Tento cloudový účet je již nastaven.",
+      "reauth_successful": "Přihlašovací údaje účtu byly aktualizovány.",
+      "reconfigure_successful": "Nastavení účtu bylo aktualizováno.",
+      "legacy_still_installed": "Dřívější integrace UPET stále běží. Odstraňte její složku z custom_components, restartujte Home Assistant a zkuste to znovu."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "box_status": {
+        "name": "Stav toalety",
+        "state": {
+          "standby": "Pohotovost",
+          "running": "Běží",
+          "paused": "Pozastaveno"
+        }
+      },
+      "box_use_times": {
+        "name": "Počet použití toalety"
+      },
+      "waste_bin_level": {
+        "name": "Naplnění nádoby na odpad"
+      },
+      "waste_bin_last_reset": {
+        "name": "Poslední reset nádoby"
+      },
+      "box_full_max": {
+        "name": "Maximální kapacita nádoby"
+      },
+      "box_full_alert": {
+        "name": "Varovný práh nádoby"
+      },
+      "deodorant_remaining_days": {
+        "name": "Pohlcovač pachu: zbývající dny"
+      },
+      "cat_weight": {
+        "name": "Hmotnost"
+      },
+      "cat_visits": {
+        "name": "Návštěvy (staré)"
+      },
+      "cat_cost_time": {
+        "name": "Průměrná doba používání (staré)"
+      },
+      "firmware_version": {
+        "name": "Verze firmwaru"
+      },
+      "auto_clean_delay_current": {
+        "name": "Zpoždění automatického čištění"
+      },
+      "wifi_name": {
+        "name": "Název Wi-Fi"
+      },
+      "empty_waste_bin_reminder_days": {
+        "name": "Dny připomenutí vyprázdnění",
+        "state": {
+          "off": "Vypnuto",
+          "every_day": "Každý den",
+          "weekdays": "Pracovní dny",
+          "weekend": "Víkend",
+          "custom": "Vlastní dny"
+        }
+      },
+      "mqtt_work_mode": {
+        "name": "Pracovní režim MQTT"
+      },
+      "mqtt_work_state": {
+        "name": "Pracovní stav MQTT"
+      },
+      "mqtt_work_cause": {
+        "name": "Příčina stavu MQTT"
+      },
+      "last_rest_update": {
+        "name": "Poslední aktualizace REST"
+      },
+      "last_mqtt_update": {
+        "name": "Poslední aktualizace MQTT"
+      },
+      "remaining_bin_uses": {
+        "name": "Použití do kapacity nádoby"
+      },
+      "last_visit": {
+        "name": "Poslední návštěva"
+      },
+      "mqtt_pet_position": {
+        "name": "Poloha kočky",
+        "state": {
+          "inside": "V toaletě",
+          "away": "Mimo toaletu"
+        }
+      },
+      "cat_last_visit_duration": {
+        "name": "Délka poslední návštěvy"
+      },
+      "cat_pee_visits_24h": {
+        "name": "Močení za 24 hodin (odhad)"
+      },
+      "cat_poo_visits_24h": {
+        "name": "Stolice za 24 hodin (odhad)"
+      },
+      "cat_last_pee": {
+        "name": "Poslední močení (odhad)"
+      },
+      "cat_last_poo": {
+        "name": "Poslední stolice (odhad)"
+      },
+      "cat_last_visit": {
+        "name": "Poslední návštěva"
+      },
+      "cat_visits_24h": {
+        "name": "Návštěvy za 24 hodin"
+      },
+      "cat_duration_24h": {
+        "name": "Čas v toaletě za 24 hodin"
+      },
+      "cat_average_duration_24h": {
+        "name": "Průměrná délka návštěvy za 24 hodin"
+      },
+      "cat_maximum_duration_24h": {
+        "name": "Nejdelší návštěva za 24 hodin"
+      },
+      "cat_weight_change": {
+        "name": "Změna hmotnosti od předchozí návštěvy"
+      },
+      "visits_today": {
+        "name": "Návštěvy dnes"
+      },
+      "cleans_today": {
+        "name": "Čištění dnes"
+      },
+      "last_clean": {
+        "name": "Poslední čištění"
+      },
+      "cleans_since_bin_reset": {
+        "name": "Čištění od resetu nádoby"
+      },
+      "last_used_by": {
+        "name": "Naposledy použila"
+      },
+      "scheduled_cleans": {
+        "name": "Naplánovaná čištění"
+      },
+      "cat_visits_today": {
+        "name": "Návštěvy dnes"
+      },
+      "cat_last_visit_weight": {
+        "name": "Hmotnost při poslední návštěvě"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "Online"
+      },
+      "deodorant_expired": {
+        "name": "Pohlcovač pachu vypršel"
+      },
+      "sensor_switch": {
+        "name": "Senzor zapnut"
+      },
+      "camera_switch": {
+        "name": "Kamera zapnuta"
+      },
+      "control_board_switch": {
+        "name": "Dětská pojistka"
+      },
+      "cat_inside": {
+        "name": "Kočka v toaletě"
+      },
+      "cat_nearby": {
+        "name": "Kočka poblíž"
+      },
+      "cover_open": {
+        "name": "Kryt otevřen"
+      },
+      "drum_not_in_place": {
+        "name": "Buben není na místě"
+      },
+      "drum_stuck": {
+        "name": "Buben se zasekl"
+      },
+      "scale_fault": {
+        "name": "Porucha váhy"
+      },
+      "camera_fault": {
+        "name": "Porucha kamery"
+      },
+      "light": {
+        "name": "Světlo"
+      },
+      "firmware_updating": {
+        "name": "Probíhá aktualizace firmwaru"
+      },
+      "mqtt_connected": {
+        "name": "MQTT připojeno"
+      },
+      "waste_bin_full": {
+        "name": "Dosažen práh nádoby"
+      },
+      "history_truncated": {
+        "name": "Dosažen limit načítání historie"
+      }
+    },
+    "number": {
+      "auto_clean_delay": {
+        "name": "Zpoždění automatického čištění"
+      },
+      "cat_poo_duration_threshold": {
+        "name": "Práh délky pro stolici (odhad)"
+      },
+      "box_full_alert_threshold": {
+        "name": "Nádoba plná po"
+      }
+    },
+    "switch": {
+      "deodorant_alert": {
+        "name": "Upozornění na pohlcovač pachu"
+      },
+      "do_not_disturb": {
+        "name": "Nerušit"
+      },
+      "light_schedule": {
+        "name": "Časový plán světla"
+      },
+      "empty_waste_bin_reminder": {
+        "name": "Připomenutí vyprázdnění nádoby"
+      },
+      "auto_clean": {
+        "name": "Automatické čištění"
+      },
+      "child_lock": {
+        "name": "Dětská pojistka"
+      },
+      "shake_mode": {
+        "name": "Režim třepání"
+      },
+      "box_full_alert": {
+        "name": "Upozornění na plnou nádobu"
+      },
+      "foreign_object_detection": {
+        "name": "Detekce cizích předmětů"
+      },
+      "reminder_monday": {
+        "name": "Připomenutí v pondělí"
+      },
+      "reminder_tuesday": {
+        "name": "Připomenutí v úterý"
+      },
+      "reminder_wednesday": {
+        "name": "Připomenutí ve středu"
+      },
+      "reminder_thursday": {
+        "name": "Připomenutí ve čtvrtek"
+      },
+      "reminder_friday": {
+        "name": "Připomenutí v pátek"
+      },
+      "reminder_saturday": {
+        "name": "Připomenutí v sobotu"
+      },
+      "reminder_sunday": {
+        "name": "Připomenutí v neděli"
+      }
+    },
+    "time": {
+      "do_not_disturb_start": {
+        "name": "Začátek režimu Nerušit"
+      },
+      "do_not_disturb_end": {
+        "name": "Konec režimu Nerušit"
+      },
+      "light_schedule_start": {
+        "name": "Začátek časového plánu světla"
+      },
+      "light_schedule_end": {
+        "name": "Konec časového plánu světla"
+      },
+      "empty_waste_bin_reminder_time": {
+        "name": "Čas připomenutí vyprázdnění"
+      }
+    },
+    "select": {
+      "empty_waste_bin_reminder_days_select": {
+        "name": "Dny připomenutí vyprázdnění",
+        "state": {
+          "off": "Vypnuto",
+          "every_day": "Každý den",
+          "weekdays": "Pracovní dny",
+          "weekend": "Víkend"
+        }
+      }
+    },
+    "button": {
+      "rest_request": {
+        "name": "Požadavek REST"
+      },
+      "mqtt_request_state": {
+        "name": "Vyžádat stav"
+      },
+      "reset_waste_bin": {
+        "name": "Resetovat nádobu na odpad"
+      },
+      "mqtt_start_clean_up": {
+        "name": "Spustit čištění"
+      },
+      "mqtt_pause_clean_up": {
+        "name": "Pozastavit čištění"
+      },
+      "mqtt_resume_clean_up": {
+        "name": "Pokračovat v čištění"
+      },
+      "mqtt_start_flatten": {
+        "name": "Vyrovnat steliv"
+      },
+      "mqtt_pause_flatten": {
+        "name": "Pozastavit vyrovnávání"
+      },
+      "mqtt_resume_flatten": {
+        "name": "Pokračovat ve vyrovnávání"
+      },
+      "mqtt_start_rise": {
+        "name": "Zvednout hrabla"
+      },
+      "mqtt_start_drop": {
+        "name": "Spustit hrabla"
+      },
+      "reset_deodorant": {
+        "name": "Resetovat pohlcovač pachu"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Aktualizace z cloudu",
+        "description": "Jedno trvalé spojení MQTT na účet. REST pravidelně obnovuje nastavení a návštěvy.",
+        "data": {
+          "scan_interval": "Interval REST (sekundy, 60–3600)",
+          "records_per_fetch": "Záznamů na toaletu a tok (20–200)",
+          "mqtt_enabled": "Zapnout push MQTT a příkazy"
+        }
+      }
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "eu": "Evropa (EU)",
+        "na": "Severní Amerika / globální server Meowant",
+        "asia": "Asie (Japonsko / Jižní Korea)",
+        "ru": "Rusko",
+        "global": "Globální",
+        "cn": "Čína"
+      }
+    }
+  },
+  "exceptions": {
+    "command_unavailable": {
+      "message": "Tento příkaz není momentálně k dispozici."
+    },
+    "state_changed": {
+      "message": "Stav zařízení se změnil, proto nebyl pohyb odeslán."
+    },
+    "command_failed": {
+      "message": "Příkaz výrobce selhal. Viz diagnostika připojení."
+    },
+    "auto_clean_unknown": {
+      "message": "Nastavení automatického čištění zatím není známo. Počkejte na další úspěšnou aktualizaci."
+    },
+    "threshold_exceeds_capacity": {
+      "message": "Práh překračuje kapacitu hlášenou toaletou."
+    },
+    "permission_required": {
+      "message": "Toto nastavení vyžaduje oprávnění vlastníka zařízení."
+    },
+    "vendor_unreachable": {
+      "message": "Výrobce byl při změně tohoto nastavení nedostupný."
+    },
+    "api_error": {
+      "message": "Výrobce změnu odmítl: {detail}"
+    }
+  }
+}

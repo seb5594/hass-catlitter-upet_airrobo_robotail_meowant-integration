@@ -1,0 +1,421 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cat Litter Hub",
+        "menu_options": {
+          "migrate": "Ta över den befintliga UPET-konfigurationen",
+          "provider": "Lägg till ett nytt konto"
+        }
+      },
+      "migrate": {
+        "title": "Ta över den befintliga konfigurationen",
+        "description": "”{title}” från den tidigare UPET-integrationen ({count} kvar att ta över) tas över med enheter, entiteter, historik och inställningar. Skapa först en säkerhetskopia av Home Assistant. Den gamla integrationsmappen måste redan vara borttagen och Home Assistant omstartad."
+      },
+      "provider": {
+        "title": "Cat Litter Hub",
+        "description": "Välj appen som kontot skapades med. Märket som är tryckt på kattlådan kan skilja sig.",
+        "data": {
+          "provider": "Kontoleverantör / app"
+        }
+      },
+      "account": {
+        "title": "{provider}: konto och server",
+        "description": "Välj kontots region och landet som valdes i appen. Förslag utifrån dina Home Assistant-inställningar: {suggestion}. Det är bara ett förslag; kontots region i appen avgör. Meowant använder NA-/global server även för konton i andra länder.",
+        "data": {
+          "region": "Kontots serverregion",
+          "country": "Kontoland (app)",
+          "username": "Konto",
+          "password": "Lösenord"
+        }
+      }
+    },
+    "error": {
+      "invalid_input": "Ange ett giltigt land, konto och lösenord.",
+      "invalid_auth": "Inloggningen avvisades. Kontrollera app/leverantör, kontoregion, land och lösenord. En felaktig region visas också som fel lösenord.",
+      "cannot_connect": "Leverantören kunde inte nås. Försök igen senare.",
+      "missing_devices": "De nya inställningarna returnerar inte alla tidigare anslutna kattlådor. Kontrollera kontoregionen.",
+      "account_changed": "Skapa en ny konfigurationspost för ett annat konto."
+    },
+    "abort": {
+      "already_configured": "Det här molnkontot är redan konfigurerat.",
+      "reauth_successful": "Kontouppgifterna uppdaterades.",
+      "reconfigure_successful": "Kontoinställningarna uppdaterades.",
+      "legacy_still_installed": "Den tidigare UPET-integrationen körs fortfarande. Ta bort dess mapp från custom_components, starta om Home Assistant och försök igen."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "box_status": {
+        "name": "Kattlådans status",
+        "state": {
+          "standby": "Standby",
+          "running": "Körs",
+          "paused": "Pausad"
+        }
+      },
+      "box_use_times": {
+        "name": "Antal användningar"
+      },
+      "waste_bin_level": {
+        "name": "Avfallsbehållarens nivå"
+      },
+      "waste_bin_last_reset": {
+        "name": "Senaste återställning av behållaren"
+      },
+      "box_full_max": {
+        "name": "Behållarens maxkapacitet"
+      },
+      "box_full_alert": {
+        "name": "Behållarens varningsgräns"
+      },
+      "deodorant_remaining_days": {
+        "name": "Luktblock: dagar kvar"
+      },
+      "cat_weight": {
+        "name": "Vikt"
+      },
+      "cat_visits": {
+        "name": "Besök (äldre)"
+      },
+      "cat_cost_time": {
+        "name": "Genomsnittlig användningstid (äldre)"
+      },
+      "firmware_version": {
+        "name": "Firmwareversion"
+      },
+      "auto_clean_delay_current": {
+        "name": "Fördröjning för automatisk rengöring"
+      },
+      "wifi_name": {
+        "name": "Wi-Fi-namn"
+      },
+      "empty_waste_bin_reminder_days": {
+        "name": "Dagar för påminnelse om tömning",
+        "state": {
+          "off": "Av",
+          "every_day": "Varje dag",
+          "weekdays": "Vardagar",
+          "weekend": "Helg",
+          "custom": "Egna dagar"
+        }
+      },
+      "mqtt_work_mode": {
+        "name": "MQTT-arbetsläge"
+      },
+      "mqtt_work_state": {
+        "name": "MQTT-arbetstillstånd"
+      },
+      "mqtt_work_cause": {
+        "name": "MQTT-tillståndsorsak"
+      },
+      "last_rest_update": {
+        "name": "Senaste REST-uppdatering"
+      },
+      "last_mqtt_update": {
+        "name": "Senaste MQTT-uppdatering"
+      },
+      "remaining_bin_uses": {
+        "name": "Användningar till behållarens kapacitet"
+      },
+      "last_visit": {
+        "name": "Senaste besök"
+      },
+      "mqtt_pet_position": {
+        "name": "Kattens position",
+        "state": {
+          "inside": "I kattlådan",
+          "away": "Utanför kattlådan"
+        }
+      },
+      "cat_last_visit_duration": {
+        "name": "Senaste besökets längd"
+      },
+      "cat_pee_visits_24h": {
+        "name": "Kiss på 24 timmar (uppskattat)"
+      },
+      "cat_poo_visits_24h": {
+        "name": "Bajs på 24 timmar (uppskattat)"
+      },
+      "cat_last_pee": {
+        "name": "Senaste kiss (uppskattat)"
+      },
+      "cat_last_poo": {
+        "name": "Senaste bajs (uppskattat)"
+      },
+      "cat_last_visit": {
+        "name": "Senaste besök"
+      },
+      "cat_visits_24h": {
+        "name": "Besök på 24 timmar"
+      },
+      "cat_duration_24h": {
+        "name": "Tid i kattlådan på 24 timmar"
+      },
+      "cat_average_duration_24h": {
+        "name": "Genomsnittlig besökslängd på 24 timmar"
+      },
+      "cat_maximum_duration_24h": {
+        "name": "Längsta besök på 24 timmar"
+      },
+      "cat_weight_change": {
+        "name": "Viktförändring sedan föregående besök"
+      },
+      "visits_today": {
+        "name": "Besök idag"
+      },
+      "cleans_today": {
+        "name": "Rengöringar idag"
+      },
+      "last_clean": {
+        "name": "Senaste rengöring"
+      },
+      "cleans_since_bin_reset": {
+        "name": "Rengöringar sedan behållaren återställdes"
+      },
+      "last_used_by": {
+        "name": "Senast använd av"
+      },
+      "scheduled_cleans": {
+        "name": "Schemalagda rengöringar"
+      },
+      "cat_visits_today": {
+        "name": "Besök idag"
+      },
+      "cat_last_visit_weight": {
+        "name": "Vikt vid senaste besöket"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "Online"
+      },
+      "deodorant_expired": {
+        "name": "Luktblocket har gått ut"
+      },
+      "sensor_switch": {
+        "name": "Sensor aktiverad"
+      },
+      "camera_switch": {
+        "name": "Kamera aktiverad"
+      },
+      "control_board_switch": {
+        "name": "Barnlås"
+      },
+      "cat_inside": {
+        "name": "Katt i kattlådan"
+      },
+      "cat_nearby": {
+        "name": "Katt i närheten"
+      },
+      "cover_open": {
+        "name": "Locket öppet"
+      },
+      "drum_not_in_place": {
+        "name": "Trumman sitter inte på plats"
+      },
+      "drum_stuck": {
+        "name": "Trumman har fastnat"
+      },
+      "scale_fault": {
+        "name": "Vågfel"
+      },
+      "camera_fault": {
+        "name": "Kamerafel"
+      },
+      "light": {
+        "name": "Ljus"
+      },
+      "firmware_updating": {
+        "name": "Firmware uppdateras"
+      },
+      "mqtt_connected": {
+        "name": "MQTT ansluten"
+      },
+      "waste_bin_full": {
+        "name": "Behållarens gräns nådd"
+      },
+      "history_truncated": {
+        "name": "Gränsen för hämtning av historik nådd"
+      }
+    },
+    "number": {
+      "auto_clean_delay": {
+        "name": "Fördröjning för automatisk rengöring"
+      },
+      "cat_poo_duration_threshold": {
+        "name": "Tidsgräns för bajs (uppskattning)"
+      },
+      "box_full_alert_threshold": {
+        "name": "Behållaren full efter"
+      }
+    },
+    "switch": {
+      "deodorant_alert": {
+        "name": "Luktblocksvarning"
+      },
+      "do_not_disturb": {
+        "name": "Stör ej"
+      },
+      "light_schedule": {
+        "name": "Ljusschema"
+      },
+      "empty_waste_bin_reminder": {
+        "name": "Påminnelse om att tömma behållaren"
+      },
+      "auto_clean": {
+        "name": "Automatisk rengöring"
+      },
+      "child_lock": {
+        "name": "Barnlås"
+      },
+      "shake_mode": {
+        "name": "Skakläge"
+      },
+      "box_full_alert": {
+        "name": "Varning för full behållare"
+      },
+      "foreign_object_detection": {
+        "name": "Främmande föremål-detektering"
+      },
+      "reminder_monday": {
+        "name": "Påminnelse på måndag"
+      },
+      "reminder_tuesday": {
+        "name": "Påminnelse på tisdag"
+      },
+      "reminder_wednesday": {
+        "name": "Påminnelse på onsdag"
+      },
+      "reminder_thursday": {
+        "name": "Påminnelse på torsdag"
+      },
+      "reminder_friday": {
+        "name": "Påminnelse på fredag"
+      },
+      "reminder_saturday": {
+        "name": "Påminnelse på lördag"
+      },
+      "reminder_sunday": {
+        "name": "Påminnelse på söndag"
+      }
+    },
+    "time": {
+      "do_not_disturb_start": {
+        "name": "Stör ej: start"
+      },
+      "do_not_disturb_end": {
+        "name": "Stör ej: slut"
+      },
+      "light_schedule_start": {
+        "name": "Ljusschema: start"
+      },
+      "light_schedule_end": {
+        "name": "Ljusschema: slut"
+      },
+      "empty_waste_bin_reminder_time": {
+        "name": "Tid för tömningspåminnelse"
+      }
+    },
+    "select": {
+      "empty_waste_bin_reminder_days_select": {
+        "name": "Dagar för påminnelse om tömning",
+        "state": {
+          "off": "Av",
+          "every_day": "Varje dag",
+          "weekdays": "Vardagar",
+          "weekend": "Helg"
+        }
+      }
+    },
+    "button": {
+      "rest_request": {
+        "name": "REST-förfrågan"
+      },
+      "mqtt_request_state": {
+        "name": "Begär status"
+      },
+      "reset_waste_bin": {
+        "name": "Återställ avfallsbehållaren"
+      },
+      "mqtt_start_clean_up": {
+        "name": "Starta rengöring"
+      },
+      "mqtt_pause_clean_up": {
+        "name": "Pausa rengöring"
+      },
+      "mqtt_resume_clean_up": {
+        "name": "Återuppta rengöring"
+      },
+      "mqtt_start_flatten": {
+        "name": "Jämna ut kattsanden"
+      },
+      "mqtt_pause_flatten": {
+        "name": "Pausa utjämning"
+      },
+      "mqtt_resume_flatten": {
+        "name": "Återuppta utjämning"
+      },
+      "mqtt_start_rise": {
+        "name": "Höj kratsen"
+      },
+      "mqtt_start_drop": {
+        "name": "Sänk kratsen"
+      },
+      "reset_deodorant": {
+        "name": "Återställ luktblocket"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Molnuppdateringar",
+        "description": "En permanent MQTT-anslutning per konto. REST uppdaterar regelbundet inställningar och besök.",
+        "data": {
+          "scan_interval": "REST-intervall (sekunder, 60–3600)",
+          "records_per_fetch": "Poster per kattlåda och flöde (20–200)",
+          "mqtt_enabled": "Aktivera MQTT-push och kommandon"
+        }
+      }
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "eu": "Europa (EU)",
+        "na": "Nordamerika / globala Meowant-servern",
+        "asia": "Asien (Japan / Sydkorea)",
+        "ru": "Ryssland",
+        "global": "Globalt",
+        "cn": "Kina"
+      }
+    }
+  },
+  "exceptions": {
+    "command_unavailable": {
+      "message": "Det här kommandot är inte tillgängligt just nu."
+    },
+    "state_changed": {
+      "message": "Enhetens tillstånd ändrades, så rörelsen skickades inte."
+    },
+    "command_failed": {
+      "message": "Tillverkarens kommando misslyckades. Se anslutningsdiagnostiken."
+    },
+    "auto_clean_unknown": {
+      "message": "Inställningen för automatisk rengöring är ännu inte känd. Vänta på nästa lyckade uppdatering."
+    },
+    "threshold_exceeds_capacity": {
+      "message": "Gränsen överskrider kapaciteten som kattlådan rapporterar."
+    },
+    "permission_required": {
+      "message": "Den här inställningen kräver behörighet från enhetens ägare."
+    },
+    "vendor_unreachable": {
+      "message": "Tillverkaren kunde inte nås när inställningen ändrades."
+    },
+    "api_error": {
+      "message": "Tillverkaren avvisade ändringen: {detail}"
+    }
+  }
+}

@@ -1,0 +1,421 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cat Litter Hub",
+        "menu_options": {
+          "migrate": "Adopt the existing UPET setup",
+          "provider": "Add a new account"
+        }
+      },
+      "migrate": {
+        "title": "Adopt the existing setup",
+        "description": "\"{title}\" from the previous UPET integration ({count} left to adopt) is taken over with its devices, entities, history and settings. Create a Home Assistant backup first. The old integration folder must already be removed and Home Assistant restarted."
+      },
+      "provider": {
+        "title": "Cat Litter Hub",
+        "description": "Choose the app used to create your account. The brand printed on the box can differ.",
+        "data": {
+          "provider": "Account provider / app"
+        }
+      },
+      "account": {
+        "title": "{provider}: account and server",
+        "description": "Select the account region and the country selected in the app. Suggested from your Home Assistant settings: {suggestion}. This is only a suggestion; the app's account region decides. Meowant uses the NA/global server even for accounts in other countries.",
+        "data": {
+          "region": "Account server region",
+          "country": "Account country (app)",
+          "username": "Account",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "invalid_input": "Enter a valid country, account and password.",
+      "invalid_auth": "Login rejected. Check the app/provider, account region, country and password. A wrong region also shows up as a wrong password.",
+      "cannot_connect": "The vendor could not be reached. Try again later.",
+      "missing_devices": "The new settings do not return all previously connected boxes. Check the account region.",
+      "account_changed": "Create another configuration entry for a different account."
+    },
+    "abort": {
+      "already_configured": "This cloud account is already configured.",
+      "reauth_successful": "Account credentials updated.",
+      "reconfigure_successful": "Account settings updated.",
+      "legacy_still_installed": "The previous UPET integration is still running. Remove its folder from custom_components, restart Home Assistant and try again."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "box_status": {
+        "name": "Box status",
+        "state": {
+          "standby": "Standby",
+          "running": "Running",
+          "paused": "Paused"
+        }
+      },
+      "box_use_times": {
+        "name": "Box use times"
+      },
+      "waste_bin_level": {
+        "name": "Waste bin level"
+      },
+      "waste_bin_last_reset": {
+        "name": "Waste bin last reset"
+      },
+      "box_full_max": {
+        "name": "Box full max"
+      },
+      "box_full_alert": {
+        "name": "Box full alert"
+      },
+      "deodorant_remaining_days": {
+        "name": "Deodorant remaining days"
+      },
+      "cat_weight": {
+        "name": "Weight"
+      },
+      "cat_visits": {
+        "name": "Visits (legacy)"
+      },
+      "cat_cost_time": {
+        "name": "Average usage duration (legacy)"
+      },
+      "firmware_version": {
+        "name": "Firmware version"
+      },
+      "auto_clean_delay_current": {
+        "name": "Auto clean delay"
+      },
+      "wifi_name": {
+        "name": "Wi-Fi name"
+      },
+      "empty_waste_bin_reminder_days": {
+        "name": "Empty waste bin reminder days",
+        "state": {
+          "off": "Off",
+          "every_day": "Every day",
+          "weekdays": "Weekdays",
+          "weekend": "Weekend",
+          "custom": "Custom days"
+        }
+      },
+      "mqtt_work_mode": {
+        "name": "MQTT work mode"
+      },
+      "mqtt_work_state": {
+        "name": "MQTT work state"
+      },
+      "mqtt_work_cause": {
+        "name": "MQTT work cause"
+      },
+      "last_rest_update": {
+        "name": "Last REST update"
+      },
+      "last_mqtt_update": {
+        "name": "Last MQTT update"
+      },
+      "remaining_bin_uses": {
+        "name": "Uses until bin capacity"
+      },
+      "last_visit": {
+        "name": "Last visit"
+      },
+      "mqtt_pet_position": {
+        "name": "Pet position",
+        "state": {
+          "inside": "Inside litter box",
+          "away": "Away from litter box"
+        }
+      },
+      "cat_last_visit_duration": {
+        "name": "Last visit duration"
+      },
+      "cat_pee_visits_24h": {
+        "name": "Pee in 24 hours (estimated)"
+      },
+      "cat_poo_visits_24h": {
+        "name": "Poo in 24 hours (estimated)"
+      },
+      "cat_last_pee": {
+        "name": "Last pee (estimated)"
+      },
+      "cat_last_poo": {
+        "name": "Last poo (estimated)"
+      },
+      "cat_last_visit": {
+        "name": "Last visit"
+      },
+      "cat_visits_24h": {
+        "name": "Visits in 24 hours"
+      },
+      "cat_duration_24h": {
+        "name": "Time in box in 24 hours"
+      },
+      "cat_average_duration_24h": {
+        "name": "Average visit duration in 24 hours"
+      },
+      "cat_maximum_duration_24h": {
+        "name": "Longest visit in 24 hours"
+      },
+      "cat_weight_change": {
+        "name": "Weight change since previous visit"
+      },
+      "visits_today": {
+        "name": "Visits today"
+      },
+      "cleans_today": {
+        "name": "Cleans today"
+      },
+      "last_clean": {
+        "name": "Last clean"
+      },
+      "cleans_since_bin_reset": {
+        "name": "Cleans since waste bin reset"
+      },
+      "last_used_by": {
+        "name": "Last used by"
+      },
+      "scheduled_cleans": {
+        "name": "Scheduled cleans"
+      },
+      "cat_visits_today": {
+        "name": "Visits today"
+      },
+      "cat_last_visit_weight": {
+        "name": "Weight at last visit"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "Online"
+      },
+      "deodorant_expired": {
+        "name": "Deodorant expired"
+      },
+      "sensor_switch": {
+        "name": "Sensor enabled"
+      },
+      "camera_switch": {
+        "name": "Camera enabled"
+      },
+      "control_board_switch": {
+        "name": "Child lock"
+      },
+      "cat_inside": {
+        "name": "Cat inside"
+      },
+      "cat_nearby": {
+        "name": "Cat nearby"
+      },
+      "cover_open": {
+        "name": "Cover open"
+      },
+      "drum_not_in_place": {
+        "name": "Drum not in place"
+      },
+      "drum_stuck": {
+        "name": "Drum stuck"
+      },
+      "scale_fault": {
+        "name": "Scale fault"
+      },
+      "camera_fault": {
+        "name": "Camera fault"
+      },
+      "light": {
+        "name": "Light"
+      },
+      "firmware_updating": {
+        "name": "Firmware updating"
+      },
+      "mqtt_connected": {
+        "name": "MQTT connected"
+      },
+      "waste_bin_full": {
+        "name": "Waste bin threshold reached"
+      },
+      "history_truncated": {
+        "name": "History fetch limit reached"
+      }
+    },
+    "number": {
+      "auto_clean_delay": {
+        "name": "Auto clean delay"
+      },
+      "cat_poo_duration_threshold": {
+        "name": "Poo duration threshold (estimate)"
+      },
+      "box_full_alert_threshold": {
+        "name": "Waste bin full after"
+      }
+    },
+    "switch": {
+      "deodorant_alert": {
+        "name": "Deodorant alert"
+      },
+      "do_not_disturb": {
+        "name": "Do not disturb"
+      },
+      "light_schedule": {
+        "name": "Light schedule"
+      },
+      "empty_waste_bin_reminder": {
+        "name": "Empty waste bin reminder"
+      },
+      "auto_clean": {
+        "name": "Auto clean"
+      },
+      "child_lock": {
+        "name": "Child lock"
+      },
+      "shake_mode": {
+        "name": "Shake mode"
+      },
+      "box_full_alert": {
+        "name": "Waste bin full alert"
+      },
+      "foreign_object_detection": {
+        "name": "Foreign object detection"
+      },
+      "reminder_monday": {
+        "name": "Reminder on Monday"
+      },
+      "reminder_tuesday": {
+        "name": "Reminder on Tuesday"
+      },
+      "reminder_wednesday": {
+        "name": "Reminder on Wednesday"
+      },
+      "reminder_thursday": {
+        "name": "Reminder on Thursday"
+      },
+      "reminder_friday": {
+        "name": "Reminder on Friday"
+      },
+      "reminder_saturday": {
+        "name": "Reminder on Saturday"
+      },
+      "reminder_sunday": {
+        "name": "Reminder on Sunday"
+      }
+    },
+    "time": {
+      "do_not_disturb_start": {
+        "name": "Do not disturb start"
+      },
+      "do_not_disturb_end": {
+        "name": "Do not disturb end"
+      },
+      "light_schedule_start": {
+        "name": "Light schedule start"
+      },
+      "light_schedule_end": {
+        "name": "Light schedule end"
+      },
+      "empty_waste_bin_reminder_time": {
+        "name": "Empty waste bin reminder time"
+      }
+    },
+    "select": {
+      "empty_waste_bin_reminder_days_select": {
+        "name": "Empty waste bin reminder days",
+        "state": {
+          "off": "Off",
+          "every_day": "Every day",
+          "weekdays": "Weekdays",
+          "weekend": "Weekend"
+        }
+      }
+    },
+    "button": {
+      "rest_request": {
+        "name": "REST request"
+      },
+      "mqtt_request_state": {
+        "name": "Request state"
+      },
+      "reset_waste_bin": {
+        "name": "Reset waste bin"
+      },
+      "mqtt_start_clean_up": {
+        "name": "Start clean"
+      },
+      "mqtt_pause_clean_up": {
+        "name": "Pause clean"
+      },
+      "mqtt_resume_clean_up": {
+        "name": "Resume clean"
+      },
+      "mqtt_start_flatten": {
+        "name": "Flatten"
+      },
+      "mqtt_pause_flatten": {
+        "name": "Pause flatten"
+      },
+      "mqtt_resume_flatten": {
+        "name": "Resume flatten"
+      },
+      "mqtt_start_rise": {
+        "name": "Raise litter rake"
+      },
+      "mqtt_start_drop": {
+        "name": "Lower litter rake"
+      },
+      "reset_deodorant": {
+        "name": "Reset deodorant"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Cloud updates",
+        "description": "One persistent MQTT connection per account. REST periodically refreshes settings and visits.",
+        "data": {
+          "scan_interval": "REST interval (seconds, 60–3600)",
+          "records_per_fetch": "Records per box and stream (20–200)",
+          "mqtt_enabled": "Enable MQTT push and commands"
+        }
+      }
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "eu": "Europe (EU)",
+        "na": "North America / global Meowant backend",
+        "asia": "Asia (Japan / South Korea)",
+        "ru": "Russia",
+        "global": "Global",
+        "cn": "China"
+      }
+    }
+  },
+  "exceptions": {
+    "command_unavailable": {
+      "message": "This command is currently unavailable."
+    },
+    "state_changed": {
+      "message": "The device state changed, so the movement was not sent."
+    },
+    "command_failed": {
+      "message": "The vendor command failed. See the connection diagnostics."
+    },
+    "auto_clean_unknown": {
+      "message": "The auto clean setting is not known yet. Wait for the next successful update."
+    },
+    "threshold_exceeds_capacity": {
+      "message": "The threshold exceeds the capacity reported by the box."
+    },
+    "permission_required": {
+      "message": "This setting requires permission from the device owner."
+    },
+    "vendor_unreachable": {
+      "message": "The vendor could not be reached while changing this setting."
+    },
+    "api_error": {
+      "message": "The vendor rejected the change: {detail}"
+    }
+  }
+}

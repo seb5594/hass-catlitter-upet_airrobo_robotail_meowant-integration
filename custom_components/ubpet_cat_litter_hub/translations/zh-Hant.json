@@ -1,0 +1,421 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cat Litter Hub",
+        "menu_options": {
+          "migrate": "接管現有的 UPET 設定",
+          "provider": "新增帳號"
+        }
+      },
+      "migrate": {
+        "title": "接管現有設定",
+        "description": "將接管先前 UPET 整合中的「{title}」（尚有 {count} 個待接管），包含其裝置、實體、歷史紀錄與設定。請先建立 Home Assistant 備份。舊整合的資料夾必須已刪除，且 Home Assistant 已重新啟動。"
+      },
+      "provider": {
+        "title": "Cat Litter Hub",
+        "description": "選擇建立帳號時使用的 App。貓砂盆上印刷的品牌可能與此不同。",
+        "data": {
+          "provider": "帳號供應商 / App"
+        }
+      },
+      "account": {
+        "title": "{provider}：帳號與伺服器",
+        "description": "選擇帳號所在區域，以及在 App 中選擇的國家/地區。依據你的 Home Assistant 設定所提供的建議：{suggestion}。這僅是建議，仍以 App 中的帳號區域為準。即使帳號位於其他國家/地區，Meowant 也使用 NA/全球伺服器。",
+        "data": {
+          "region": "帳號伺服器區域",
+          "country": "帳號國家/地區（App）",
+          "username": "帳號",
+          "password": "密碼"
+        }
+      }
+    },
+    "error": {
+      "invalid_input": "請輸入有效的國家/地區、帳號與密碼。",
+      "invalid_auth": "登入遭拒。請檢查 App/供應商、帳號區域、國家/地區與密碼。區域錯誤同樣會顯示為密碼錯誤。",
+      "cannot_connect": "無法連線至供應商。請稍後再試。",
+      "missing_devices": "新設定並未傳回先前連線的所有貓砂盆。請檢查帳號區域。",
+      "account_changed": "其他帳號請另外建立設定項目。"
+    },
+    "abort": {
+      "already_configured": "此雲端帳號已設定。",
+      "reauth_successful": "帳號憑證已更新。",
+      "reconfigure_successful": "帳號設定已更新。",
+      "legacy_still_installed": "先前的 UPET 整合仍在執行。請從 custom_components 中刪除其資料夾，重新啟動 Home Assistant 後再試一次。"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "box_status": {
+        "name": "貓砂盆狀態",
+        "state": {
+          "standby": "待機",
+          "running": "運作中",
+          "paused": "已暫停"
+        }
+      },
+      "box_use_times": {
+        "name": "使用次數"
+      },
+      "waste_bin_level": {
+        "name": "廢料桶水位"
+      },
+      "waste_bin_last_reset": {
+        "name": "廢料桶上次重設"
+      },
+      "box_full_max": {
+        "name": "廢料桶最大容量"
+      },
+      "box_full_alert": {
+        "name": "廢料桶警告閾值"
+      },
+      "deodorant_remaining_days": {
+        "name": "除臭塊：剩餘天數"
+      },
+      "cat_weight": {
+        "name": "體重"
+      },
+      "cat_visits": {
+        "name": "造訪次數（舊）"
+      },
+      "cat_cost_time": {
+        "name": "平均使用時間（舊）"
+      },
+      "firmware_version": {
+        "name": "韌體版本"
+      },
+      "auto_clean_delay_current": {
+        "name": "自動清潔延遲"
+      },
+      "wifi_name": {
+        "name": "Wi-Fi 名稱"
+      },
+      "empty_waste_bin_reminder_days": {
+        "name": "清空提醒的星期",
+        "state": {
+          "off": "關閉",
+          "every_day": "每天",
+          "weekdays": "平日",
+          "weekend": "週末",
+          "custom": "自訂日期"
+        }
+      },
+      "mqtt_work_mode": {
+        "name": "MQTT 工作模式"
+      },
+      "mqtt_work_state": {
+        "name": "MQTT 工作狀態"
+      },
+      "mqtt_work_cause": {
+        "name": "MQTT 狀態原因"
+      },
+      "last_rest_update": {
+        "name": "上次 REST 更新"
+      },
+      "last_mqtt_update": {
+        "name": "上次 MQTT 更新"
+      },
+      "remaining_bin_uses": {
+        "name": "距廢料桶滿載的剩餘使用次數"
+      },
+      "last_visit": {
+        "name": "上次造訪"
+      },
+      "mqtt_pet_position": {
+        "name": "貓的位置",
+        "state": {
+          "inside": "在貓砂盆內",
+          "away": "不在貓砂盆內"
+        }
+      },
+      "cat_last_visit_duration": {
+        "name": "上次造訪時間長度"
+      },
+      "cat_pee_visits_24h": {
+        "name": "24 小時內排尿次數（估算）"
+      },
+      "cat_poo_visits_24h": {
+        "name": "24 小時內排便次數（估算）"
+      },
+      "cat_last_pee": {
+        "name": "上次排尿（估算）"
+      },
+      "cat_last_poo": {
+        "name": "上次排便（估算）"
+      },
+      "cat_last_visit": {
+        "name": "上次造訪"
+      },
+      "cat_visits_24h": {
+        "name": "24 小時內造訪次數"
+      },
+      "cat_duration_24h": {
+        "name": "24 小時內在盆內的時間"
+      },
+      "cat_average_duration_24h": {
+        "name": "24 小時內平均造訪時間"
+      },
+      "cat_maximum_duration_24h": {
+        "name": "24 小時內最長造訪"
+      },
+      "cat_weight_change": {
+        "name": "自上次造訪以來的體重變化"
+      },
+      "visits_today": {
+        "name": "今日造訪次數"
+      },
+      "cleans_today": {
+        "name": "今日清潔次數"
+      },
+      "last_clean": {
+        "name": "上次清潔"
+      },
+      "cleans_since_bin_reset": {
+        "name": "廢料桶重設後的清潔次數"
+      },
+      "last_used_by": {
+        "name": "最近使用者"
+      },
+      "scheduled_cleans": {
+        "name": "排程清潔"
+      },
+      "cat_visits_today": {
+        "name": "今日造訪次數"
+      },
+      "cat_last_visit_weight": {
+        "name": "上次造訪時的體重"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "線上"
+      },
+      "deodorant_expired": {
+        "name": "除臭塊已過期"
+      },
+      "sensor_switch": {
+        "name": "感測器已啟用"
+      },
+      "camera_switch": {
+        "name": "攝影機已啟用"
+      },
+      "control_board_switch": {
+        "name": "兒童鎖"
+      },
+      "cat_inside": {
+        "name": "貓在盆內"
+      },
+      "cat_nearby": {
+        "name": "貓在附近"
+      },
+      "cover_open": {
+        "name": "蓋子已開啟"
+      },
+      "drum_not_in_place": {
+        "name": "滾筒未就位"
+      },
+      "drum_stuck": {
+        "name": "滾筒卡住"
+      },
+      "scale_fault": {
+        "name": "秤故障"
+      },
+      "camera_fault": {
+        "name": "攝影機故障"
+      },
+      "light": {
+        "name": "燈光"
+      },
+      "firmware_updating": {
+        "name": "韌體更新中"
+      },
+      "mqtt_connected": {
+        "name": "MQTT 已連線"
+      },
+      "waste_bin_full": {
+        "name": "已達廢料桶閾值"
+      },
+      "history_truncated": {
+        "name": "已達歷史紀錄擷取上限"
+      }
+    },
+    "number": {
+      "auto_clean_delay": {
+        "name": "自動清潔延遲"
+      },
+      "cat_poo_duration_threshold": {
+        "name": "排便時間閾值（估算）"
+      },
+      "box_full_alert_threshold": {
+        "name": "廢料桶滿載於"
+      }
+    },
+    "switch": {
+      "deodorant_alert": {
+        "name": "除臭塊警示"
+      },
+      "do_not_disturb": {
+        "name": "勿擾"
+      },
+      "light_schedule": {
+        "name": "燈光排程"
+      },
+      "empty_waste_bin_reminder": {
+        "name": "清空廢料桶提醒"
+      },
+      "auto_clean": {
+        "name": "自動清潔"
+      },
+      "child_lock": {
+        "name": "兒童鎖"
+      },
+      "shake_mode": {
+        "name": "搖晃模式"
+      },
+      "box_full_alert": {
+        "name": "廢料桶已滿警示"
+      },
+      "foreign_object_detection": {
+        "name": "異物偵測"
+      },
+      "reminder_monday": {
+        "name": "週一提醒"
+      },
+      "reminder_tuesday": {
+        "name": "週二提醒"
+      },
+      "reminder_wednesday": {
+        "name": "週三提醒"
+      },
+      "reminder_thursday": {
+        "name": "週四提醒"
+      },
+      "reminder_friday": {
+        "name": "週五提醒"
+      },
+      "reminder_saturday": {
+        "name": "週六提醒"
+      },
+      "reminder_sunday": {
+        "name": "週日提醒"
+      }
+    },
+    "time": {
+      "do_not_disturb_start": {
+        "name": "勿擾開始"
+      },
+      "do_not_disturb_end": {
+        "name": "勿擾結束"
+      },
+      "light_schedule_start": {
+        "name": "燈光排程開始"
+      },
+      "light_schedule_end": {
+        "name": "燈光排程結束"
+      },
+      "empty_waste_bin_reminder_time": {
+        "name": "清空提醒時間"
+      }
+    },
+    "select": {
+      "empty_waste_bin_reminder_days_select": {
+        "name": "清空提醒的星期",
+        "state": {
+          "off": "關閉",
+          "every_day": "每天",
+          "weekdays": "平日",
+          "weekend": "週末"
+        }
+      }
+    },
+    "button": {
+      "rest_request": {
+        "name": "REST 請求"
+      },
+      "mqtt_request_state": {
+        "name": "請求狀態"
+      },
+      "reset_waste_bin": {
+        "name": "重設廢料桶"
+      },
+      "mqtt_start_clean_up": {
+        "name": "開始清潔"
+      },
+      "mqtt_pause_clean_up": {
+        "name": "暫停清潔"
+      },
+      "mqtt_resume_clean_up": {
+        "name": "繼續清潔"
+      },
+      "mqtt_start_flatten": {
+        "name": "撫平貓砂"
+      },
+      "mqtt_pause_flatten": {
+        "name": "暫停撫平"
+      },
+      "mqtt_resume_flatten": {
+        "name": "繼續撫平"
+      },
+      "mqtt_start_rise": {
+        "name": "抬起耙子"
+      },
+      "mqtt_start_drop": {
+        "name": "放下耙子"
+      },
+      "reset_deodorant": {
+        "name": "重設除臭塊"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "雲端更新",
+        "description": "每個帳號使用一條持續的 MQTT 連線。REST 會定期更新設定與造訪紀錄。",
+        "data": {
+          "scan_interval": "REST 間隔（秒，60–3600）",
+          "records_per_fetch": "每個貓砂盆與資料流的紀錄數（20–200）",
+          "mqtt_enabled": "啟用 MQTT 推送與指令"
+        }
+      }
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "eu": "歐洲（EU）",
+        "na": "北美 / Meowant 全球伺服器",
+        "asia": "亞洲（日本 / 南韓）",
+        "ru": "俄羅斯",
+        "global": "全球",
+        "cn": "中國"
+      }
+    }
+  },
+  "exceptions": {
+    "command_unavailable": {
+      "message": "目前無法使用此指令。"
+    },
+    "state_changed": {
+      "message": "裝置狀態已變更，因此未傳送動作。"
+    },
+    "command_failed": {
+      "message": "廠商指令失敗。請查看連線診斷資訊。"
+    },
+    "auto_clean_unknown": {
+      "message": "自動清潔設定目前尚未知。請等待下一次成功更新。"
+    },
+    "threshold_exceeds_capacity": {
+      "message": "閾值超過貓砂盆回報的容量。"
+    },
+    "permission_required": {
+      "message": "此設定需要裝置擁有者的權限。"
+    },
+    "vendor_unreachable": {
+      "message": "變更此設定時無法連線至廠商。"
+    },
+    "api_error": {
+      "message": "廠商拒絕了變更：{detail}"
+    }
+  }
+}

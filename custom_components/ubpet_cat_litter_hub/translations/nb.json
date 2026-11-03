@@ -1,0 +1,421 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cat Litter Hub",
+        "menu_options": {
+          "migrate": "Ta over det eksisterende UPET-oppsettet",
+          "provider": "Legg til en ny konto"
+        }
+      },
+      "migrate": {
+        "title": "Ta over det eksisterende oppsettet",
+        "description": "«{title}» fra den tidligere UPET-integrasjonen ({count} igjen å ta over) tas over med enheter, entiteter, historikk og innstillinger. Lag først en sikkerhetskopi av Home Assistant. Den gamle integrasjonsmappen må allerede være fjernet og Home Assistant startet på nytt."
+      },
+      "provider": {
+        "title": "Cat Litter Hub",
+        "description": "Velg appen kontoen ble opprettet med. Merket som er trykt på kattedoen kan avvike.",
+        "data": {
+          "provider": "Kontoleverandør / app"
+        }
+      },
+      "account": {
+        "title": "{provider}: konto og server",
+        "description": "Velg kontoens region og landet som ble valgt i appen. Forslag basert på Home Assistant-innstillingene dine: {suggestion}. Dette er bare et forslag; kontoregionen i appen avgjør. Meowant bruker NA-/global server selv for kontoer i andre land.",
+        "data": {
+          "region": "Kontoens serverregion",
+          "country": "Kontoens land (app)",
+          "username": "Konto",
+          "password": "Passord"
+        }
+      }
+    },
+    "error": {
+      "invalid_input": "Oppgi et gyldig land, en konto og et passord.",
+      "invalid_auth": "Innloggingen ble avvist. Kontroller app/leverandør, kontoregion, land og passord. En feil region vises også som feil passord.",
+      "cannot_connect": "Leverandøren kunne ikke nås. Prøv igjen senere.",
+      "missing_devices": "De nye innstillingene returnerer ikke alle tidligere tilkoblede kattedoer. Kontroller kontoregionen.",
+      "account_changed": "Opprett en ny konfigurasjonspost for en annen konto."
+    },
+    "abort": {
+      "already_configured": "Denne skykontoen er allerede konfigurert.",
+      "reauth_successful": "Kontoopplysningene er oppdatert.",
+      "reconfigure_successful": "Kontoinnstillingene er oppdatert.",
+      "legacy_still_installed": "Den tidligere UPET-integrasjonen kjører fortsatt. Fjern mappen fra custom_components, start Home Assistant på nytt og prøv igjen."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "box_status": {
+        "name": "Kattedoens status",
+        "state": {
+          "standby": "Standby",
+          "running": "Kjører",
+          "paused": "Pauset"
+        }
+      },
+      "box_use_times": {
+        "name": "Antall bruk"
+      },
+      "waste_bin_level": {
+        "name": "Avfallsbeholderens nivå"
+      },
+      "waste_bin_last_reset": {
+        "name": "Beholderens siste tilbakestilling"
+      },
+      "box_full_max": {
+        "name": "Beholderens maksimale kapasitet"
+      },
+      "box_full_alert": {
+        "name": "Beholderens varselgrense"
+      },
+      "deodorant_remaining_days": {
+        "name": "Luktblokk: gjenstående dager"
+      },
+      "cat_weight": {
+        "name": "Vekt"
+      },
+      "cat_visits": {
+        "name": "Besøk (eldre)"
+      },
+      "cat_cost_time": {
+        "name": "Gjennomsnittlig bruksvarighet (eldre)"
+      },
+      "firmware_version": {
+        "name": "Firmwareversjon"
+      },
+      "auto_clean_delay_current": {
+        "name": "Forsinkelse for automatisk rengjøring"
+      },
+      "wifi_name": {
+        "name": "Wi-Fi-navn"
+      },
+      "empty_waste_bin_reminder_days": {
+        "name": "Dager for tømmepåminnelse",
+        "state": {
+          "off": "Av",
+          "every_day": "Hver dag",
+          "weekdays": "Hverdager",
+          "weekend": "Helg",
+          "custom": "Egne dager"
+        }
+      },
+      "mqtt_work_mode": {
+        "name": "MQTT-arbeidsmodus"
+      },
+      "mqtt_work_state": {
+        "name": "MQTT-arbeidstilstand"
+      },
+      "mqtt_work_cause": {
+        "name": "MQTT-tilstandsårsak"
+      },
+      "last_rest_update": {
+        "name": "Siste REST-oppdatering"
+      },
+      "last_mqtt_update": {
+        "name": "Siste MQTT-oppdatering"
+      },
+      "remaining_bin_uses": {
+        "name": "Bruk til beholderens kapasitet"
+      },
+      "last_visit": {
+        "name": "Siste besøk"
+      },
+      "mqtt_pet_position": {
+        "name": "Kattens posisjon",
+        "state": {
+          "inside": "I kattedoen",
+          "away": "Utenfor kattedoen"
+        }
+      },
+      "cat_last_visit_duration": {
+        "name": "Varighet av siste besøk"
+      },
+      "cat_pee_visits_24h": {
+        "name": "Tiss siste 24 timer (anslått)"
+      },
+      "cat_poo_visits_24h": {
+        "name": "Bæsj siste 24 timer (anslått)"
+      },
+      "cat_last_pee": {
+        "name": "Siste tiss (anslått)"
+      },
+      "cat_last_poo": {
+        "name": "Siste bæsj (anslått)"
+      },
+      "cat_last_visit": {
+        "name": "Siste besøk"
+      },
+      "cat_visits_24h": {
+        "name": "Besøk siste 24 timer"
+      },
+      "cat_duration_24h": {
+        "name": "Tid i kattedoen siste 24 timer"
+      },
+      "cat_average_duration_24h": {
+        "name": "Gjennomsnittlig besøksvarighet siste 24 timer"
+      },
+      "cat_maximum_duration_24h": {
+        "name": "Lengste besøk siste 24 timer"
+      },
+      "cat_weight_change": {
+        "name": "Vektendring siden forrige besøk"
+      },
+      "visits_today": {
+        "name": "Besøk i dag"
+      },
+      "cleans_today": {
+        "name": "Rengjøringer i dag"
+      },
+      "last_clean": {
+        "name": "Siste rengjøring"
+      },
+      "cleans_since_bin_reset": {
+        "name": "Rengjøringer siden beholderen ble tilbakestilt"
+      },
+      "last_used_by": {
+        "name": "Sist brukt av"
+      },
+      "scheduled_cleans": {
+        "name": "Planlagte rengjøringer"
+      },
+      "cat_visits_today": {
+        "name": "Besøk i dag"
+      },
+      "cat_last_visit_weight": {
+        "name": "Vekt ved siste besøk"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "Online"
+      },
+      "deodorant_expired": {
+        "name": "Luktblokken har gått ut"
+      },
+      "sensor_switch": {
+        "name": "Sensor aktivert"
+      },
+      "camera_switch": {
+        "name": "Kamera aktivert"
+      },
+      "control_board_switch": {
+        "name": "Barnesikring"
+      },
+      "cat_inside": {
+        "name": "Katt i kattedoen"
+      },
+      "cat_nearby": {
+        "name": "Katt i nærheten"
+      },
+      "cover_open": {
+        "name": "Lokket er åpent"
+      },
+      "drum_not_in_place": {
+        "name": "Trommelen sitter ikke på plass"
+      },
+      "drum_stuck": {
+        "name": "Trommelen har satt seg fast"
+      },
+      "scale_fault": {
+        "name": "Vektfeil"
+      },
+      "camera_fault": {
+        "name": "Kamerafeil"
+      },
+      "light": {
+        "name": "Lys"
+      },
+      "firmware_updating": {
+        "name": "Firmware oppdateres"
+      },
+      "mqtt_connected": {
+        "name": "MQTT tilkoblet"
+      },
+      "waste_bin_full": {
+        "name": "Beholderens grense nådd"
+      },
+      "history_truncated": {
+        "name": "Grensen for henting av historikk nådd"
+      }
+    },
+    "number": {
+      "auto_clean_delay": {
+        "name": "Forsinkelse for automatisk rengjøring"
+      },
+      "cat_poo_duration_threshold": {
+        "name": "Varighetsgrense for bæsj (estimat)"
+      },
+      "box_full_alert_threshold": {
+        "name": "Beholder full etter"
+      }
+    },
+    "switch": {
+      "deodorant_alert": {
+        "name": "Varsel om luktblokk"
+      },
+      "do_not_disturb": {
+        "name": "Ikke forstyrr"
+      },
+      "light_schedule": {
+        "name": "Lysplan"
+      },
+      "empty_waste_bin_reminder": {
+        "name": "Påminnelse om å tømme beholderen"
+      },
+      "auto_clean": {
+        "name": "Automatisk rengjøring"
+      },
+      "child_lock": {
+        "name": "Barnesikring"
+      },
+      "shake_mode": {
+        "name": "Ristemodus"
+      },
+      "box_full_alert": {
+        "name": "Varsel om full beholder"
+      },
+      "foreign_object_detection": {
+        "name": "Gjenkjenning av fremmedlegemer"
+      },
+      "reminder_monday": {
+        "name": "Påminnelse på mandag"
+      },
+      "reminder_tuesday": {
+        "name": "Påminnelse på tirsdag"
+      },
+      "reminder_wednesday": {
+        "name": "Påminnelse på onsdag"
+      },
+      "reminder_thursday": {
+        "name": "Påminnelse på torsdag"
+      },
+      "reminder_friday": {
+        "name": "Påminnelse på fredag"
+      },
+      "reminder_saturday": {
+        "name": "Påminnelse på lørdag"
+      },
+      "reminder_sunday": {
+        "name": "Påminnelse på søndag"
+      }
+    },
+    "time": {
+      "do_not_disturb_start": {
+        "name": "Ikke forstyrr: start"
+      },
+      "do_not_disturb_end": {
+        "name": "Ikke forstyrr: slutt"
+      },
+      "light_schedule_start": {
+        "name": "Lysplan: start"
+      },
+      "light_schedule_end": {
+        "name": "Lysplan: slutt"
+      },
+      "empty_waste_bin_reminder_time": {
+        "name": "Tidspunkt for tømmepåminnelse"
+      }
+    },
+    "select": {
+      "empty_waste_bin_reminder_days_select": {
+        "name": "Dager for tømmepåminnelse",
+        "state": {
+          "off": "Av",
+          "every_day": "Hver dag",
+          "weekdays": "Hverdager",
+          "weekend": "Helg"
+        }
+      }
+    },
+    "button": {
+      "rest_request": {
+        "name": "REST-forespørsel"
+      },
+      "mqtt_request_state": {
+        "name": "Be om status"
+      },
+      "reset_waste_bin": {
+        "name": "Tilbakestill avfallsbeholderen"
+      },
+      "mqtt_start_clean_up": {
+        "name": "Start rengjøring"
+      },
+      "mqtt_pause_clean_up": {
+        "name": "Sett rengjøring på pause"
+      },
+      "mqtt_resume_clean_up": {
+        "name": "Gjenoppta rengjøring"
+      },
+      "mqtt_start_flatten": {
+        "name": "Jevn ut kattesanden"
+      },
+      "mqtt_pause_flatten": {
+        "name": "Sett utjevning på pause"
+      },
+      "mqtt_resume_flatten": {
+        "name": "Gjenoppta utjevning"
+      },
+      "mqtt_start_rise": {
+        "name": "Hev rive"
+      },
+      "mqtt_start_drop": {
+        "name": "Senk rive"
+      },
+      "reset_deodorant": {
+        "name": "Tilbakestill luktblokken"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Skyoppdateringer",
+        "description": "Én fast MQTT-tilkobling per konto. REST oppdaterer jevnlig innstillinger og besøk.",
+        "data": {
+          "scan_interval": "REST-intervall (sekunder, 60–3600)",
+          "records_per_fetch": "Poster per kattedo og strøm (20–200)",
+          "mqtt_enabled": "Aktiver MQTT-push og kommandoer"
+        }
+      }
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "eu": "Europa (EU)",
+        "na": "Nord-Amerika / global Meowant-server",
+        "asia": "Asia (Japan / Sør-Korea)",
+        "ru": "Russland",
+        "global": "Globalt",
+        "cn": "Kina"
+      }
+    }
+  },
+  "exceptions": {
+    "command_unavailable": {
+      "message": "Denne kommandoen er ikke tilgjengelig akkurat nå."
+    },
+    "state_changed": {
+      "message": "Enhetens tilstand endret seg, så bevegelsen ble ikke sendt."
+    },
+    "command_failed": {
+      "message": "Produsentens kommando mislyktes. Se tilkoblingsdiagnostikken."
+    },
+    "auto_clean_unknown": {
+      "message": "Innstillingen for automatisk rengjøring er ennå ikke kjent. Vent på neste vellykkede oppdatering."
+    },
+    "threshold_exceeds_capacity": {
+      "message": "Grensen overstiger kapasiteten kattedoen rapporterer."
+    },
+    "permission_required": {
+      "message": "Denne innstillingen krever tillatelse fra enhetens eier."
+    },
+    "vendor_unreachable": {
+      "message": "Produsenten kunne ikke nås da innstillingen ble endret."
+    },
+    "api_error": {
+      "message": "Produsenten avviste endringen: {detail}"
+    }
+  }
+}

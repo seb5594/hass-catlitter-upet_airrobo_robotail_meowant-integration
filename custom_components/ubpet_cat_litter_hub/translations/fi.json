@@ -1,0 +1,421 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cat Litter Hub",
+        "menu_options": {
+          "migrate": "Ota käyttöön olemassa oleva UPET-määritys",
+          "provider": "Lisää uusi tili"
+        }
+      },
+      "migrate": {
+        "title": "Ota käyttöön olemassa oleva määritys",
+        "description": "”{title}” aiemmasta UPET-integraatiosta ({count} vielä otettavana käyttöön) siirretään laitteineen, entiteetteineen, historioineen ja asetuksineen. Luo ensin Home Assistantin varmuuskopio. Vanhan integraation kansion täytyy olla jo poistettu ja Home Assistant käynnistetty uudelleen."
+      },
+      "provider": {
+        "title": "Cat Litter Hub",
+        "description": "Valitse sovellus, jolla tili luotiin. Kissanvessaan painettu merkki voi poiketa.",
+        "data": {
+          "provider": "Tilin palveluntarjoaja / sovellus"
+        }
+      },
+      "account": {
+        "title": "{provider}: tili ja palvelin",
+        "description": "Valitse tilin alue ja sovelluksessa valittu maa. Ehdotus Home Assistantin asetusten perusteella: {suggestion}. Tämä on vain ehdotus; ratkaisevaa on tilin alue sovelluksessa. Meowant käyttää NA-/maailmanlaajuista palvelinta myös muiden maiden tileille.",
+        "data": {
+          "region": "Tilin palvelinalue",
+          "country": "Tilin maa (sovellus)",
+          "username": "Tili",
+          "password": "Salasana"
+        }
+      }
+    },
+    "error": {
+      "invalid_input": "Anna kelvollinen maa, tili ja salasana.",
+      "invalid_auth": "Kirjautuminen hylättiin. Tarkista sovellus/palveluntarjoaja, tilin alue, maa ja salasana. Väärä alue näkyy myös vääränä salasanana.",
+      "cannot_connect": "Palveluntarjoajaan ei saatu yhteyttä. Yritä myöhemmin uudelleen.",
+      "missing_devices": "Uudet asetukset eivät palauta kaikkia aiemmin liitettyjä kissanvessoja. Tarkista tilin alue.",
+      "account_changed": "Luo toinen määrityskohde toista tiliä varten."
+    },
+    "abort": {
+      "already_configured": "Tämä pilvitili on jo määritetty.",
+      "reauth_successful": "Tilin tunnistetiedot päivitetty.",
+      "reconfigure_successful": "Tilin asetukset päivitetty.",
+      "legacy_still_installed": "Aiempi UPET-integraatio on yhä käynnissä. Poista sen kansio hakemistosta custom_components, käynnistä Home Assistant uudelleen ja yritä uudelleen."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "box_status": {
+        "name": "Kissanvessan tila",
+        "state": {
+          "standby": "Valmiustila",
+          "running": "Käynnissä",
+          "paused": "Tauolla"
+        }
+      },
+      "box_use_times": {
+        "name": "Käyttökerrat"
+      },
+      "waste_bin_level": {
+        "name": "Jätesäiliön täyttötaso"
+      },
+      "waste_bin_last_reset": {
+        "name": "Säiliön viimeisin nollaus"
+      },
+      "box_full_max": {
+        "name": "Säiliön enimmäiskapasiteetti"
+      },
+      "box_full_alert": {
+        "name": "Säiliön varoitusraja"
+      },
+      "deodorant_remaining_days": {
+        "name": "Hajunpoistolohko: päiviä jäljellä"
+      },
+      "cat_weight": {
+        "name": "Paino"
+      },
+      "cat_visits": {
+        "name": "Käynnit (vanha)"
+      },
+      "cat_cost_time": {
+        "name": "Keskimääräinen käyttöaika (vanha)"
+      },
+      "firmware_version": {
+        "name": "Laiteohjelmistoversio"
+      },
+      "auto_clean_delay_current": {
+        "name": "Automaattisen puhdistuksen viive"
+      },
+      "wifi_name": {
+        "name": "Wi-Fi-verkon nimi"
+      },
+      "empty_waste_bin_reminder_days": {
+        "name": "Tyhjennysmuistutuksen päivät",
+        "state": {
+          "off": "Pois",
+          "every_day": "Joka päivä",
+          "weekdays": "Arkipäivät",
+          "weekend": "Viikonloppu",
+          "custom": "Omat päivät"
+        }
+      },
+      "mqtt_work_mode": {
+        "name": "MQTT-työtila"
+      },
+      "mqtt_work_state": {
+        "name": "MQTT-työtilanne"
+      },
+      "mqtt_work_cause": {
+        "name": "MQTT-tilan syy"
+      },
+      "last_rest_update": {
+        "name": "Viimeisin REST-päivitys"
+      },
+      "last_mqtt_update": {
+        "name": "Viimeisin MQTT-päivitys"
+      },
+      "remaining_bin_uses": {
+        "name": "Käyttökertoja säiliön täyttymiseen"
+      },
+      "last_visit": {
+        "name": "Viimeisin käynti"
+      },
+      "mqtt_pet_position": {
+        "name": "Kissan sijainti",
+        "state": {
+          "inside": "Kissanvessassa",
+          "away": "Kissanvessan ulkopuolella"
+        }
+      },
+      "cat_last_visit_duration": {
+        "name": "Viimeisen käynnin kesto"
+      },
+      "cat_pee_visits_24h": {
+        "name": "Pissat 24 tunnin aikana (arvio)"
+      },
+      "cat_poo_visits_24h": {
+        "name": "Kakat 24 tunnin aikana (arvio)"
+      },
+      "cat_last_pee": {
+        "name": "Viimeisin pissa (arvio)"
+      },
+      "cat_last_poo": {
+        "name": "Viimeisin kakka (arvio)"
+      },
+      "cat_last_visit": {
+        "name": "Viimeisin käynti"
+      },
+      "cat_visits_24h": {
+        "name": "Käynnit 24 tunnin aikana"
+      },
+      "cat_duration_24h": {
+        "name": "Aika kissanvessassa 24 tunnin aikana"
+      },
+      "cat_average_duration_24h": {
+        "name": "Käyntien keskimääräinen kesto 24 tunnin aikana"
+      },
+      "cat_maximum_duration_24h": {
+        "name": "Pisin käynti 24 tunnin aikana"
+      },
+      "cat_weight_change": {
+        "name": "Painon muutos edellisestä käynnistä"
+      },
+      "visits_today": {
+        "name": "Käynnit tänään"
+      },
+      "cleans_today": {
+        "name": "Puhdistukset tänään"
+      },
+      "last_clean": {
+        "name": "Viimeisin puhdistus"
+      },
+      "cleans_since_bin_reset": {
+        "name": "Puhdistukset säiliön nollauksen jälkeen"
+      },
+      "last_used_by": {
+        "name": "Viimeksi käyttänyt"
+      },
+      "scheduled_cleans": {
+        "name": "Ajastetut puhdistukset"
+      },
+      "cat_visits_today": {
+        "name": "Käynnit tänään"
+      },
+      "cat_last_visit_weight": {
+        "name": "Paino viimeisellä käynnillä"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "Online"
+      },
+      "deodorant_expired": {
+        "name": "Hajunpoistolohko vanhentunut"
+      },
+      "sensor_switch": {
+        "name": "Anturi käytössä"
+      },
+      "camera_switch": {
+        "name": "Kamera käytössä"
+      },
+      "control_board_switch": {
+        "name": "Lapsilukko"
+      },
+      "cat_inside": {
+        "name": "Kissa kissanvessassa"
+      },
+      "cat_nearby": {
+        "name": "Kissa lähellä"
+      },
+      "cover_open": {
+        "name": "Kansi auki"
+      },
+      "drum_not_in_place": {
+        "name": "Rumpu ei paikallaan"
+      },
+      "drum_stuck": {
+        "name": "Rumpu jumissa"
+      },
+      "scale_fault": {
+        "name": "Vaakavika"
+      },
+      "camera_fault": {
+        "name": "Kameravika"
+      },
+      "light": {
+        "name": "Valo"
+      },
+      "firmware_updating": {
+        "name": "Laiteohjelmistoa päivitetään"
+      },
+      "mqtt_connected": {
+        "name": "MQTT yhdistetty"
+      },
+      "waste_bin_full": {
+        "name": "Säiliön raja saavutettu"
+      },
+      "history_truncated": {
+        "name": "Historian noudon raja saavutettu"
+      }
+    },
+    "number": {
+      "auto_clean_delay": {
+        "name": "Automaattisen puhdistuksen viive"
+      },
+      "cat_poo_duration_threshold": {
+        "name": "Kakan kestoraja (arvio)"
+      },
+      "box_full_alert_threshold": {
+        "name": "Säiliö täynnä jälkeen"
+      }
+    },
+    "switch": {
+      "deodorant_alert": {
+        "name": "Hajunpoistolohkon hälytys"
+      },
+      "do_not_disturb": {
+        "name": "Älä häiritse"
+      },
+      "light_schedule": {
+        "name": "Valon aikataulu"
+      },
+      "empty_waste_bin_reminder": {
+        "name": "Säiliön tyhjennysmuistutus"
+      },
+      "auto_clean": {
+        "name": "Automaattinen puhdistus"
+      },
+      "child_lock": {
+        "name": "Lapsilukko"
+      },
+      "shake_mode": {
+        "name": "Ravistustila"
+      },
+      "box_full_alert": {
+        "name": "Täyden säiliön hälytys"
+      },
+      "foreign_object_detection": {
+        "name": "Vieraiden esineiden tunnistus"
+      },
+      "reminder_monday": {
+        "name": "Muistutus maanantaina"
+      },
+      "reminder_tuesday": {
+        "name": "Muistutus tiistaina"
+      },
+      "reminder_wednesday": {
+        "name": "Muistutus keskiviikkona"
+      },
+      "reminder_thursday": {
+        "name": "Muistutus torstaina"
+      },
+      "reminder_friday": {
+        "name": "Muistutus perjantaina"
+      },
+      "reminder_saturday": {
+        "name": "Muistutus lauantaina"
+      },
+      "reminder_sunday": {
+        "name": "Muistutus sunnuntaina"
+      }
+    },
+    "time": {
+      "do_not_disturb_start": {
+        "name": "Älä häiritse: alku"
+      },
+      "do_not_disturb_end": {
+        "name": "Älä häiritse: loppu"
+      },
+      "light_schedule_start": {
+        "name": "Valon aikataulu: alku"
+      },
+      "light_schedule_end": {
+        "name": "Valon aikataulu: loppu"
+      },
+      "empty_waste_bin_reminder_time": {
+        "name": "Tyhjennysmuistutuksen kellonaika"
+      }
+    },
+    "select": {
+      "empty_waste_bin_reminder_days_select": {
+        "name": "Tyhjennysmuistutuksen päivät",
+        "state": {
+          "off": "Pois",
+          "every_day": "Joka päivä",
+          "weekdays": "Arkipäivät",
+          "weekend": "Viikonloppu"
+        }
+      }
+    },
+    "button": {
+      "rest_request": {
+        "name": "REST-pyyntö"
+      },
+      "mqtt_request_state": {
+        "name": "Pyydä tila"
+      },
+      "reset_waste_bin": {
+        "name": "Nollaa jätesäiliö"
+      },
+      "mqtt_start_clean_up": {
+        "name": "Aloita puhdistus"
+      },
+      "mqtt_pause_clean_up": {
+        "name": "Keskeytä puhdistus"
+      },
+      "mqtt_resume_clean_up": {
+        "name": "Jatka puhdistusta"
+      },
+      "mqtt_start_flatten": {
+        "name": "Tasoita hiekka"
+      },
+      "mqtt_pause_flatten": {
+        "name": "Keskeytä tasoitus"
+      },
+      "mqtt_resume_flatten": {
+        "name": "Jatka tasoitusta"
+      },
+      "mqtt_start_rise": {
+        "name": "Nosta harava"
+      },
+      "mqtt_start_drop": {
+        "name": "Laske harava"
+      },
+      "reset_deodorant": {
+        "name": "Nollaa hajunpoistolohko"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Pilvipäivitykset",
+        "description": "Yksi pysyvä MQTT-yhteys tiliä kohden. REST päivittää säännöllisesti asetukset ja käynnit.",
+        "data": {
+          "scan_interval": "REST-väli (sekuntia, 60–3600)",
+          "records_per_fetch": "Tietueita kissanvessaa ja virtaa kohden (20–200)",
+          "mqtt_enabled": "Ota MQTT-push ja komennot käyttöön"
+        }
+      }
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "eu": "Eurooppa (EU)",
+        "na": "Pohjois-Amerikka / Meowantin maailmanlaajuinen palvelin",
+        "asia": "Aasia (Japani / Etelä-Korea)",
+        "ru": "Venäjä",
+        "global": "Maailmanlaajuinen",
+        "cn": "Kiina"
+      }
+    }
+  },
+  "exceptions": {
+    "command_unavailable": {
+      "message": "Tämä komento ei ole tällä hetkellä käytettävissä."
+    },
+    "state_changed": {
+      "message": "Laitteen tila muuttui, joten liikettä ei lähetetty."
+    },
+    "command_failed": {
+      "message": "Valmistajan komento epäonnistui. Katso yhteysdiagnostiikka."
+    },
+    "auto_clean_unknown": {
+      "message": "Automaattisen puhdistuksen asetus ei ole vielä tiedossa. Odota seuraavaa onnistunutta päivitystä."
+    },
+    "threshold_exceeds_capacity": {
+      "message": "Raja ylittää kissanvessan ilmoittaman kapasiteetin."
+    },
+    "permission_required": {
+      "message": "Tämä asetus vaatii laitteen omistajan luvan."
+    },
+    "vendor_unreachable": {
+      "message": "Valmistajaan ei saatu yhteyttä asetusta muutettaessa."
+    },
+    "api_error": {
+      "message": "Valmistaja hylkäsi muutoksen: {detail}"
+    }
+  }
+}

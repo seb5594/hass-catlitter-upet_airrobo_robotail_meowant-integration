@@ -1,0 +1,421 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cat Litter Hub",
+        "menu_options": {
+          "migrate": "Adotar a configuração UPET existente",
+          "provider": "Adicionar uma conta nova"
+        }
+      },
+      "migrate": {
+        "title": "Adotar a configuração existente",
+        "description": "«{title}» da integração UPET anterior ({count} por adotar) é adotado com os seus dispositivos, entidades, histórico e definições. Crie primeiro uma cópia de segurança do Home Assistant. A pasta da integração antiga já tem de estar removida e o Home Assistant reiniciado."
+      },
+      "provider": {
+        "title": "Cat Litter Hub",
+        "description": "Escolha a aplicação com que a conta foi criada. A marca impressa na caixa de areia pode ser diferente.",
+        "data": {
+          "provider": "Fornecedor da conta / aplicação"
+        }
+      },
+      "account": {
+        "title": "{provider}: conta e servidor",
+        "description": "Selecione a região da conta e o país escolhido na aplicação. Sugestão com base nas definições do Home Assistant: {suggestion}. É apenas uma sugestão; a região da conta na aplicação é que conta. A Meowant usa o servidor NA/global mesmo para contas de outros países.",
+        "data": {
+          "region": "Região do servidor da conta",
+          "country": "País da conta (aplicação)",
+          "username": "Conta",
+          "password": "Palavra-passe"
+        }
+      }
+    },
+    "error": {
+      "invalid_input": "Introduza um país, uma conta e uma palavra-passe válidos.",
+      "invalid_auth": "Início de sessão recusado. Verifique a aplicação/fornecedor, a região da conta, o país e a palavra-passe. Uma região errada também aparece como palavra-passe errada.",
+      "cannot_connect": "Não foi possível contactar o fornecedor. Tente novamente mais tarde.",
+      "missing_devices": "As novas definições não devolvem todas as caixas de areia ligadas anteriormente. Verifique a região da conta.",
+      "account_changed": "Crie outra entrada de configuração para uma conta diferente."
+    },
+    "abort": {
+      "already_configured": "Esta conta na nuvem já está configurada.",
+      "reauth_successful": "Credenciais da conta atualizadas.",
+      "reconfigure_successful": "Definições da conta atualizadas.",
+      "legacy_still_installed": "A integração UPET anterior ainda está em execução. Remova a respetiva pasta de custom_components, reinicie o Home Assistant e tente novamente."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "box_status": {
+        "name": "Estado da caixa de areia",
+        "state": {
+          "standby": "Em espera",
+          "running": "Em funcionamento",
+          "paused": "Em pausa"
+        }
+      },
+      "box_use_times": {
+        "name": "Utilizações da caixa"
+      },
+      "waste_bin_level": {
+        "name": "Nível do depósito de resíduos"
+      },
+      "waste_bin_last_reset": {
+        "name": "Última reposição do depósito"
+      },
+      "box_full_max": {
+        "name": "Capacidade máxima do depósito"
+      },
+      "box_full_alert": {
+        "name": "Limite de aviso do depósito"
+      },
+      "deodorant_remaining_days": {
+        "name": "Bloco desodorizante: dias restantes"
+      },
+      "cat_weight": {
+        "name": "Peso"
+      },
+      "cat_visits": {
+        "name": "Visitas (antigo)"
+      },
+      "cat_cost_time": {
+        "name": "Duração média de utilização (antigo)"
+      },
+      "firmware_version": {
+        "name": "Versão do firmware"
+      },
+      "auto_clean_delay_current": {
+        "name": "Atraso da limpeza automática"
+      },
+      "wifi_name": {
+        "name": "Nome do Wi-Fi"
+      },
+      "empty_waste_bin_reminder_days": {
+        "name": "Dias do lembrete de esvaziamento",
+        "state": {
+          "off": "Desligado",
+          "every_day": "Todos os dias",
+          "weekdays": "Dias úteis",
+          "weekend": "Fim de semana",
+          "custom": "Dias personalizados"
+        }
+      },
+      "mqtt_work_mode": {
+        "name": "Modo de trabalho MQTT"
+      },
+      "mqtt_work_state": {
+        "name": "Estado de trabalho MQTT"
+      },
+      "mqtt_work_cause": {
+        "name": "Causa do estado MQTT"
+      },
+      "last_rest_update": {
+        "name": "Última atualização REST"
+      },
+      "last_mqtt_update": {
+        "name": "Última atualização MQTT"
+      },
+      "remaining_bin_uses": {
+        "name": "Utilizações até à capacidade do depósito"
+      },
+      "last_visit": {
+        "name": "Última visita"
+      },
+      "mqtt_pet_position": {
+        "name": "Posição do gato",
+        "state": {
+          "inside": "Dentro da caixa de areia",
+          "away": "Fora da caixa de areia"
+        }
+      },
+      "cat_last_visit_duration": {
+        "name": "Duração da última visita"
+      },
+      "cat_pee_visits_24h": {
+        "name": "Xixi em 24 horas (estimado)"
+      },
+      "cat_poo_visits_24h": {
+        "name": "Cocó em 24 horas (estimado)"
+      },
+      "cat_last_pee": {
+        "name": "Último xixi (estimado)"
+      },
+      "cat_last_poo": {
+        "name": "Último cocó (estimado)"
+      },
+      "cat_last_visit": {
+        "name": "Última visita"
+      },
+      "cat_visits_24h": {
+        "name": "Visitas em 24 horas"
+      },
+      "cat_duration_24h": {
+        "name": "Tempo na caixa em 24 horas"
+      },
+      "cat_average_duration_24h": {
+        "name": "Duração média das visitas em 24 horas"
+      },
+      "cat_maximum_duration_24h": {
+        "name": "Visita mais longa em 24 horas"
+      },
+      "cat_weight_change": {
+        "name": "Variação de peso desde a visita anterior"
+      },
+      "visits_today": {
+        "name": "Visitas hoje"
+      },
+      "cleans_today": {
+        "name": "Limpezas hoje"
+      },
+      "last_clean": {
+        "name": "Última limpeza"
+      },
+      "cleans_since_bin_reset": {
+        "name": "Limpezas desde a reposição do depósito"
+      },
+      "last_used_by": {
+        "name": "Último uso por"
+      },
+      "scheduled_cleans": {
+        "name": "Limpezas agendadas"
+      },
+      "cat_visits_today": {
+        "name": "Visitas hoje"
+      },
+      "cat_last_visit_weight": {
+        "name": "Peso na última visita"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "Online"
+      },
+      "deodorant_expired": {
+        "name": "Bloco desodorizante expirado"
+      },
+      "sensor_switch": {
+        "name": "Sensor ativado"
+      },
+      "camera_switch": {
+        "name": "Câmara ativada"
+      },
+      "control_board_switch": {
+        "name": "Bloqueio para crianças"
+      },
+      "cat_inside": {
+        "name": "Gato dentro"
+      },
+      "cat_nearby": {
+        "name": "Gato por perto"
+      },
+      "cover_open": {
+        "name": "Tampa aberta"
+      },
+      "drum_not_in_place": {
+        "name": "Tambor fora do lugar"
+      },
+      "drum_stuck": {
+        "name": "Tambor bloqueado"
+      },
+      "scale_fault": {
+        "name": "Avaria da balança"
+      },
+      "camera_fault": {
+        "name": "Avaria da câmara"
+      },
+      "light": {
+        "name": "Luz"
+      },
+      "firmware_updating": {
+        "name": "Atualização de firmware em curso"
+      },
+      "mqtt_connected": {
+        "name": "MQTT ligado"
+      },
+      "waste_bin_full": {
+        "name": "Limite do depósito atingido"
+      },
+      "history_truncated": {
+        "name": "Limite de obtenção do histórico atingido"
+      }
+    },
+    "number": {
+      "auto_clean_delay": {
+        "name": "Atraso da limpeza automática"
+      },
+      "cat_poo_duration_threshold": {
+        "name": "Limite de duração para cocó (estimativa)"
+      },
+      "box_full_alert_threshold": {
+        "name": "Depósito cheio após"
+      }
+    },
+    "switch": {
+      "deodorant_alert": {
+        "name": "Alerta do bloco desodorizante"
+      },
+      "do_not_disturb": {
+        "name": "Não incomodar"
+      },
+      "light_schedule": {
+        "name": "Agenda da luz"
+      },
+      "empty_waste_bin_reminder": {
+        "name": "Lembrete para esvaziar o depósito"
+      },
+      "auto_clean": {
+        "name": "Limpeza automática"
+      },
+      "child_lock": {
+        "name": "Bloqueio para crianças"
+      },
+      "shake_mode": {
+        "name": "Modo de agitação"
+      },
+      "box_full_alert": {
+        "name": "Alerta de depósito cheio"
+      },
+      "foreign_object_detection": {
+        "name": "Deteção de objetos estranhos"
+      },
+      "reminder_monday": {
+        "name": "Lembrete à segunda-feira"
+      },
+      "reminder_tuesday": {
+        "name": "Lembrete à terça-feira"
+      },
+      "reminder_wednesday": {
+        "name": "Lembrete à quarta-feira"
+      },
+      "reminder_thursday": {
+        "name": "Lembrete à quinta-feira"
+      },
+      "reminder_friday": {
+        "name": "Lembrete à sexta-feira"
+      },
+      "reminder_saturday": {
+        "name": "Lembrete ao sábado"
+      },
+      "reminder_sunday": {
+        "name": "Lembrete ao domingo"
+      }
+    },
+    "time": {
+      "do_not_disturb_start": {
+        "name": "Início de Não incomodar"
+      },
+      "do_not_disturb_end": {
+        "name": "Fim de Não incomodar"
+      },
+      "light_schedule_start": {
+        "name": "Início da agenda da luz"
+      },
+      "light_schedule_end": {
+        "name": "Fim da agenda da luz"
+      },
+      "empty_waste_bin_reminder_time": {
+        "name": "Hora do lembrete de esvaziamento"
+      }
+    },
+    "select": {
+      "empty_waste_bin_reminder_days_select": {
+        "name": "Dias do lembrete de esvaziamento",
+        "state": {
+          "off": "Desligado",
+          "every_day": "Todos os dias",
+          "weekdays": "Dias úteis",
+          "weekend": "Fim de semana"
+        }
+      }
+    },
+    "button": {
+      "rest_request": {
+        "name": "Pedido REST"
+      },
+      "mqtt_request_state": {
+        "name": "Pedir estado"
+      },
+      "reset_waste_bin": {
+        "name": "Repor o depósito de resíduos"
+      },
+      "mqtt_start_clean_up": {
+        "name": "Iniciar limpeza"
+      },
+      "mqtt_pause_clean_up": {
+        "name": "Pausar limpeza"
+      },
+      "mqtt_resume_clean_up": {
+        "name": "Retomar limpeza"
+      },
+      "mqtt_start_flatten": {
+        "name": "Alisar a areia"
+      },
+      "mqtt_pause_flatten": {
+        "name": "Pausar alisamento"
+      },
+      "mqtt_resume_flatten": {
+        "name": "Retomar alisamento"
+      },
+      "mqtt_start_rise": {
+        "name": "Subir o ancinho"
+      },
+      "mqtt_start_drop": {
+        "name": "Baixar o ancinho"
+      },
+      "reset_deodorant": {
+        "name": "Repor o bloco desodorizante"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Atualizações na nuvem",
+        "description": "Uma ligação MQTT permanente por conta. O REST atualiza periodicamente as definições e as visitas.",
+        "data": {
+          "scan_interval": "Intervalo REST (segundos, 60–3600)",
+          "records_per_fetch": "Registos por caixa e fluxo (20–200)",
+          "mqtt_enabled": "Ativar push MQTT e comandos"
+        }
+      }
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "eu": "Europa (UE)",
+        "na": "América do Norte / servidor global da Meowant",
+        "asia": "Ásia (Japão / Coreia do Sul)",
+        "ru": "Rússia",
+        "global": "Global",
+        "cn": "China"
+      }
+    }
+  },
+  "exceptions": {
+    "command_unavailable": {
+      "message": "Este comando não está disponível neste momento."
+    },
+    "state_changed": {
+      "message": "O estado do dispositivo mudou, por isso o movimento não foi enviado."
+    },
+    "command_failed": {
+      "message": "O comando do fabricante falhou. Consulte o diagnóstico de ligação."
+    },
+    "auto_clean_unknown": {
+      "message": "A definição de limpeza automática ainda não é conhecida. Aguarde pela próxima atualização com êxito."
+    },
+    "threshold_exceeds_capacity": {
+      "message": "O limite excede a capacidade comunicada pela caixa de areia."
+    },
+    "permission_required": {
+      "message": "Esta definição requer a permissão do proprietário do dispositivo."
+    },
+    "vendor_unreachable": {
+      "message": "Não foi possível contactar o fabricante ao alterar esta definição."
+    },
+    "api_error": {
+      "message": "O fabricante recusou a alteração: {detail}"
+    }
+  }
+}

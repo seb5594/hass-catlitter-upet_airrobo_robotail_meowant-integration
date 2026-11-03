@@ -1,0 +1,421 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cat Litter Hub",
+        "menu_options": {
+          "migrate": "Mevcut UPET kurulumunu devral",
+          "provider": "Yeni hesap ekle"
+        }
+      },
+      "migrate": {
+        "title": "Mevcut kurulumu devral",
+        "description": "Önceki UPET entegrasyonundaki \"{title}\" ({count} devralınacak) cihazları, varlıkları, geçmişi ve ayarlarıyla birlikte devralınır. Önce bir Home Assistant yedeği oluşturun. Eski entegrasyon klasörü kaldırılmış ve Home Assistant yeniden başlatılmış olmalıdır."
+      },
+      "provider": {
+        "title": "Cat Litter Hub",
+        "description": "Hesabın oluşturulduğu uygulamayı seçin. Kedi tuvaletinin üzerinde yazan marka farklı olabilir.",
+        "data": {
+          "provider": "Hesap sağlayıcı / uygulama"
+        }
+      },
+      "account": {
+        "title": "{provider}: hesap ve sunucu",
+        "description": "Hesap bölgesini ve uygulamada seçilen ülkeyi seçin. Home Assistant ayarlarınıza göre öneri: {suggestion}. Bu yalnızca bir öneridir; belirleyici olan uygulamadaki hesap bölgesidir. Meowant, diğer ülkelerdeki hesaplar için de NA/küresel sunucuyu kullanır.",
+        "data": {
+          "region": "Hesap sunucu bölgesi",
+          "country": "Hesap ülkesi (uygulama)",
+          "username": "Hesap",
+          "password": "Parola"
+        }
+      }
+    },
+    "error": {
+      "invalid_input": "Geçerli bir ülke, hesap ve parola girin.",
+      "invalid_auth": "Giriş reddedildi. Uygulamayı/sağlayıcıyı, hesap bölgesini, ülkeyi ve parolayı kontrol edin. Yanlış bölge de yanlış parola olarak görünür.",
+      "cannot_connect": "Sağlayıcıya ulaşılamadı. Daha sonra tekrar deneyin.",
+      "missing_devices": "Yeni ayarlar daha önce bağlı tüm kedi tuvaletlerini döndürmüyor. Hesap bölgesini kontrol edin.",
+      "account_changed": "Farklı bir hesap için başka bir yapılandırma girdisi oluşturun."
+    },
+    "abort": {
+      "already_configured": "Bu bulut hesabı zaten yapılandırılmış.",
+      "reauth_successful": "Hesap kimlik bilgileri güncellendi.",
+      "reconfigure_successful": "Hesap ayarları güncellendi.",
+      "legacy_still_installed": "Önceki UPET entegrasyonu hâlâ çalışıyor. Klasörünü custom_components içinden kaldırın, Home Assistant'ı yeniden başlatın ve tekrar deneyin."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "box_status": {
+        "name": "Tuvalet durumu",
+        "state": {
+          "standby": "Beklemede",
+          "running": "Çalışıyor",
+          "paused": "Duraklatıldı"
+        }
+      },
+      "box_use_times": {
+        "name": "Kullanım sayısı"
+      },
+      "waste_bin_level": {
+        "name": "Atık haznesi doluluğu"
+      },
+      "waste_bin_last_reset": {
+        "name": "Haznenin son sıfırlanması"
+      },
+      "box_full_max": {
+        "name": "Hazne azami kapasitesi"
+      },
+      "box_full_alert": {
+        "name": "Hazne uyarı eşiği"
+      },
+      "deodorant_remaining_days": {
+        "name": "Koku bloğu: kalan gün"
+      },
+      "cat_weight": {
+        "name": "Ağırlık"
+      },
+      "cat_visits": {
+        "name": "Ziyaretler (eski)"
+      },
+      "cat_cost_time": {
+        "name": "Ortalama kullanım süresi (eski)"
+      },
+      "firmware_version": {
+        "name": "Bellenim sürümü"
+      },
+      "auto_clean_delay_current": {
+        "name": "Otomatik temizlik gecikmesi"
+      },
+      "wifi_name": {
+        "name": "Wi-Fi adı"
+      },
+      "empty_waste_bin_reminder_days": {
+        "name": "Boşaltma hatırlatıcısı günleri",
+        "state": {
+          "off": "Kapalı",
+          "every_day": "Her gün",
+          "weekdays": "Hafta içi",
+          "weekend": "Hafta sonu",
+          "custom": "Özel günler"
+        }
+      },
+      "mqtt_work_mode": {
+        "name": "MQTT çalışma modu"
+      },
+      "mqtt_work_state": {
+        "name": "MQTT çalışma durumu"
+      },
+      "mqtt_work_cause": {
+        "name": "MQTT durum nedeni"
+      },
+      "last_rest_update": {
+        "name": "Son REST güncellemesi"
+      },
+      "last_mqtt_update": {
+        "name": "Son MQTT güncellemesi"
+      },
+      "remaining_bin_uses": {
+        "name": "Hazne kapasitesine kalan kullanım"
+      },
+      "last_visit": {
+        "name": "Son ziyaret"
+      },
+      "mqtt_pet_position": {
+        "name": "Kedinin konumu",
+        "state": {
+          "inside": "Tuvaletin içinde",
+          "away": "Tuvaletin dışında"
+        }
+      },
+      "cat_last_visit_duration": {
+        "name": "Son ziyaret süresi"
+      },
+      "cat_pee_visits_24h": {
+        "name": "24 saatteki çiş (tahmini)"
+      },
+      "cat_poo_visits_24h": {
+        "name": "24 saatteki kaka (tahmini)"
+      },
+      "cat_last_pee": {
+        "name": "Son çiş (tahmini)"
+      },
+      "cat_last_poo": {
+        "name": "Son kaka (tahmini)"
+      },
+      "cat_last_visit": {
+        "name": "Son ziyaret"
+      },
+      "cat_visits_24h": {
+        "name": "24 saatteki ziyaretler"
+      },
+      "cat_duration_24h": {
+        "name": "24 saatte tuvalette geçen süre"
+      },
+      "cat_average_duration_24h": {
+        "name": "24 saatte ortalama ziyaret süresi"
+      },
+      "cat_maximum_duration_24h": {
+        "name": "24 saatteki en uzun ziyaret"
+      },
+      "cat_weight_change": {
+        "name": "Önceki ziyaretten bu yana ağırlık değişimi"
+      },
+      "visits_today": {
+        "name": "Bugünkü ziyaretler"
+      },
+      "cleans_today": {
+        "name": "Bugünkü temizlikler"
+      },
+      "last_clean": {
+        "name": "Son temizlik"
+      },
+      "cleans_since_bin_reset": {
+        "name": "Hazne sıfırlandığından beri temizlikler"
+      },
+      "last_used_by": {
+        "name": "Son kullanan"
+      },
+      "scheduled_cleans": {
+        "name": "Planlı temizlikler"
+      },
+      "cat_visits_today": {
+        "name": "Bugünkü ziyaretler"
+      },
+      "cat_last_visit_weight": {
+        "name": "Son ziyaretteki ağırlık"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "Çevrimiçi"
+      },
+      "deodorant_expired": {
+        "name": "Koku bloğunun süresi doldu"
+      },
+      "sensor_switch": {
+        "name": "Sensör etkin"
+      },
+      "camera_switch": {
+        "name": "Kamera etkin"
+      },
+      "control_board_switch": {
+        "name": "Çocuk kilidi"
+      },
+      "cat_inside": {
+        "name": "Kedi tuvalette"
+      },
+      "cat_nearby": {
+        "name": "Kedi yakında"
+      },
+      "cover_open": {
+        "name": "Kapak açık"
+      },
+      "drum_not_in_place": {
+        "name": "Tambur yerinde değil"
+      },
+      "drum_stuck": {
+        "name": "Tambur sıkıştı"
+      },
+      "scale_fault": {
+        "name": "Terazi arızası"
+      },
+      "camera_fault": {
+        "name": "Kamera arızası"
+      },
+      "light": {
+        "name": "Işık"
+      },
+      "firmware_updating": {
+        "name": "Bellenim güncelleniyor"
+      },
+      "mqtt_connected": {
+        "name": "MQTT bağlı"
+      },
+      "waste_bin_full": {
+        "name": "Hazne eşiğine ulaşıldı"
+      },
+      "history_truncated": {
+        "name": "Geçmiş alma sınırına ulaşıldı"
+      }
+    },
+    "number": {
+      "auto_clean_delay": {
+        "name": "Otomatik temizlik gecikmesi"
+      },
+      "cat_poo_duration_threshold": {
+        "name": "Kaka için süre eşiği (tahmin)"
+      },
+      "box_full_alert_threshold": {
+        "name": "Hazne şu kadar sonra dolu"
+      }
+    },
+    "switch": {
+      "deodorant_alert": {
+        "name": "Koku bloğu uyarısı"
+      },
+      "do_not_disturb": {
+        "name": "Rahatsız etmeyin"
+      },
+      "light_schedule": {
+        "name": "Işık zamanlaması"
+      },
+      "empty_waste_bin_reminder": {
+        "name": "Hazneyi boşaltma hatırlatıcısı"
+      },
+      "auto_clean": {
+        "name": "Otomatik temizlik"
+      },
+      "child_lock": {
+        "name": "Çocuk kilidi"
+      },
+      "shake_mode": {
+        "name": "Sallama modu"
+      },
+      "box_full_alert": {
+        "name": "Dolu hazne uyarısı"
+      },
+      "foreign_object_detection": {
+        "name": "Yabancı cisim algılama"
+      },
+      "reminder_monday": {
+        "name": "Pazartesi hatırlatıcısı"
+      },
+      "reminder_tuesday": {
+        "name": "Salı hatırlatıcısı"
+      },
+      "reminder_wednesday": {
+        "name": "Çarşamba hatırlatıcısı"
+      },
+      "reminder_thursday": {
+        "name": "Perşembe hatırlatıcısı"
+      },
+      "reminder_friday": {
+        "name": "Cuma hatırlatıcısı"
+      },
+      "reminder_saturday": {
+        "name": "Cumartesi hatırlatıcısı"
+      },
+      "reminder_sunday": {
+        "name": "Pazar hatırlatıcısı"
+      }
+    },
+    "time": {
+      "do_not_disturb_start": {
+        "name": "Rahatsız etmeyin başlangıcı"
+      },
+      "do_not_disturb_end": {
+        "name": "Rahatsız etmeyin bitişi"
+      },
+      "light_schedule_start": {
+        "name": "Işık zamanlaması başlangıcı"
+      },
+      "light_schedule_end": {
+        "name": "Işık zamanlaması bitişi"
+      },
+      "empty_waste_bin_reminder_time": {
+        "name": "Boşaltma hatırlatıcısı saati"
+      }
+    },
+    "select": {
+      "empty_waste_bin_reminder_days_select": {
+        "name": "Boşaltma hatırlatıcısı günleri",
+        "state": {
+          "off": "Kapalı",
+          "every_day": "Her gün",
+          "weekdays": "Hafta içi",
+          "weekend": "Hafta sonu"
+        }
+      }
+    },
+    "button": {
+      "rest_request": {
+        "name": "REST isteği"
+      },
+      "mqtt_request_state": {
+        "name": "Durum iste"
+      },
+      "reset_waste_bin": {
+        "name": "Atık haznesini sıfırla"
+      },
+      "mqtt_start_clean_up": {
+        "name": "Temizliği başlat"
+      },
+      "mqtt_pause_clean_up": {
+        "name": "Temizliği duraklat"
+      },
+      "mqtt_resume_clean_up": {
+        "name": "Temizliğe devam et"
+      },
+      "mqtt_start_flatten": {
+        "name": "Kumu düzleştir"
+      },
+      "mqtt_pause_flatten": {
+        "name": "Düzleştirmeyi duraklat"
+      },
+      "mqtt_resume_flatten": {
+        "name": "Düzleştirmeye devam et"
+      },
+      "mqtt_start_rise": {
+        "name": "Tırmığı kaldır"
+      },
+      "mqtt_start_drop": {
+        "name": "Tırmığı indir"
+      },
+      "reset_deodorant": {
+        "name": "Koku bloğunu sıfırla"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Bulut güncellemeleri",
+        "description": "Hesap başına tek kalıcı MQTT bağlantısı. REST ayarları ve ziyaretleri düzenli olarak yeniler.",
+        "data": {
+          "scan_interval": "REST aralığı (saniye, 60–3600)",
+          "records_per_fetch": "Tuvalet ve akış başına kayıt (20–200)",
+          "mqtt_enabled": "MQTT push ve komutları etkinleştir"
+        }
+      }
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "eu": "Avrupa (AB)",
+        "na": "Kuzey Amerika / Meowant küresel sunucusu",
+        "asia": "Asya (Japonya / Güney Kore)",
+        "ru": "Rusya",
+        "global": "Küresel",
+        "cn": "Çin"
+      }
+    }
+  },
+  "exceptions": {
+    "command_unavailable": {
+      "message": "Bu komut şu anda kullanılamıyor."
+    },
+    "state_changed": {
+      "message": "Cihaz durumu değişti, bu nedenle hareket gönderilmedi."
+    },
+    "command_failed": {
+      "message": "Üretici komutu başarısız oldu. Bağlantı tanılamasına bakın."
+    },
+    "auto_clean_unknown": {
+      "message": "Otomatik temizlik ayarı henüz bilinmiyor. Sonraki başarılı güncellemeyi bekleyin."
+    },
+    "threshold_exceeds_capacity": {
+      "message": "Eşik, tuvaletin bildirdiği kapasiteyi aşıyor."
+    },
+    "permission_required": {
+      "message": "Bu ayar için cihaz sahibinin izni gerekir."
+    },
+    "vendor_unreachable": {
+      "message": "Bu ayar değiştirilirken üreticiye ulaşılamadı."
+    },
+    "api_error": {
+      "message": "Üretici değişikliği reddetti: {detail}"
+    }
+  }
+}

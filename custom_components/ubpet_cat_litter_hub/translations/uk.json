@@ -1,0 +1,421 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cat Litter Hub",
+        "menu_options": {
+          "migrate": "Перейняти наявне налаштування UPET",
+          "provider": "Додати новий обліковий запис"
+        }
+      },
+      "migrate": {
+        "title": "Перейняти наявне налаштування",
+        "description": "«{title}» зі попередньої інтеграції UPET (залишилося перейняти: {count}) переноситься разом із пристроями, об'єктами, історією та налаштуваннями. Спершу створіть резервну копію Home Assistant. Папка старої інтеграції має бути вже видалена, а Home Assistant перезапущено."
+      },
+      "provider": {
+        "title": "Cat Litter Hub",
+        "description": "Виберіть застосунок, у якому створено обліковий запис. Бренд на самому лотку може відрізнятися.",
+        "data": {
+          "provider": "Постачальник облікового запису / застосунок"
+        }
+      },
+      "account": {
+        "title": "{provider}: обліковий запис і сервер",
+        "description": "Виберіть регіон облікового запису та країну, вибрану в застосунку. Пропозиція за налаштуваннями Home Assistant: {suggestion}. Це лише пропозиція; вирішальним є регіон облікового запису в застосунку. Meowant використовує сервер NA/глобальний навіть для облікових записів з інших країн.",
+        "data": {
+          "region": "Регіон сервера облікового запису",
+          "country": "Країна облікового запису (застосунок)",
+          "username": "Обліковий запис",
+          "password": "Пароль"
+        }
+      }
+    },
+    "error": {
+      "invalid_input": "Вкажіть коректні країну, обліковий запис і пароль.",
+      "invalid_auth": "Вхід відхилено. Перевірте застосунок/постачальника, регіон облікового запису, країну та пароль. Неправильний регіон також виглядає як неправильний пароль.",
+      "cannot_connect": "Не вдалося зв'язатися з постачальником. Спробуйте пізніше.",
+      "missing_devices": "Нові налаштування не повертають усі раніше підключені лотки. Перевірте регіон облікового запису.",
+      "account_changed": "Створіть ще один запис конфігурації для іншого облікового запису."
+    },
+    "abort": {
+      "already_configured": "Цей хмарний обліковий запис уже налаштовано.",
+      "reauth_successful": "Дані облікового запису оновлено.",
+      "reconfigure_successful": "Налаштування облікового запису оновлено.",
+      "legacy_still_installed": "Попередня інтеграція UPET досі працює. Видаліть її папку з custom_components, перезапустіть Home Assistant і повторіть спробу."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "box_status": {
+        "name": "Стан лотка",
+        "state": {
+          "standby": "Очікування",
+          "running": "Працює",
+          "paused": "Пауза"
+        }
+      },
+      "box_use_times": {
+        "name": "Кількість використань лотка"
+      },
+      "waste_bin_level": {
+        "name": "Рівень заповнення контейнера для відходів"
+      },
+      "waste_bin_last_reset": {
+        "name": "Останнє скидання контейнера"
+      },
+      "box_full_max": {
+        "name": "Максимальна місткість контейнера"
+      },
+      "box_full_alert": {
+        "name": "Поріг попередження контейнера"
+      },
+      "deodorant_remaining_days": {
+        "name": "Блок-ароматизатор: залишилося днів"
+      },
+      "cat_weight": {
+        "name": "Вага"
+      },
+      "cat_visits": {
+        "name": "Відвідування (застар.)"
+      },
+      "cat_cost_time": {
+        "name": "Середня тривалість використання (застар.)"
+      },
+      "firmware_version": {
+        "name": "Версія прошивки"
+      },
+      "auto_clean_delay_current": {
+        "name": "Затримка автоочищення"
+      },
+      "wifi_name": {
+        "name": "Назва мережі Wi-Fi"
+      },
+      "empty_waste_bin_reminder_days": {
+        "name": "Дні нагадування про спорожнення",
+        "state": {
+          "off": "Вимк.",
+          "every_day": "Щодня",
+          "weekdays": "Будні",
+          "weekend": "Вихідні",
+          "custom": "Власні дні"
+        }
+      },
+      "mqtt_work_mode": {
+        "name": "Режим роботи MQTT"
+      },
+      "mqtt_work_state": {
+        "name": "Стан роботи MQTT"
+      },
+      "mqtt_work_cause": {
+        "name": "Причина стану MQTT"
+      },
+      "last_rest_update": {
+        "name": "Останнє оновлення REST"
+      },
+      "last_mqtt_update": {
+        "name": "Останнє оновлення MQTT"
+      },
+      "remaining_bin_uses": {
+        "name": "Використань до заповнення контейнера"
+      },
+      "last_visit": {
+        "name": "Останнє відвідування"
+      },
+      "mqtt_pet_position": {
+        "name": "Положення кота",
+        "state": {
+          "inside": "У лотку",
+          "away": "Поза лотком"
+        }
+      },
+      "cat_last_visit_duration": {
+        "name": "Тривалість останнього відвідування"
+      },
+      "cat_pee_visits_24h": {
+        "name": "Сечовипускання за 24 години (оцінка)"
+      },
+      "cat_poo_visits_24h": {
+        "name": "Дефекації за 24 години (оцінка)"
+      },
+      "cat_last_pee": {
+        "name": "Останнє сечовипускання (оцінка)"
+      },
+      "cat_last_poo": {
+        "name": "Остання дефекація (оцінка)"
+      },
+      "cat_last_visit": {
+        "name": "Останнє відвідування"
+      },
+      "cat_visits_24h": {
+        "name": "Відвідування за 24 години"
+      },
+      "cat_duration_24h": {
+        "name": "Час у лотку за 24 години"
+      },
+      "cat_average_duration_24h": {
+        "name": "Середня тривалість відвідування за 24 години"
+      },
+      "cat_maximum_duration_24h": {
+        "name": "Найдовше відвідування за 24 години"
+      },
+      "cat_weight_change": {
+        "name": "Зміна ваги з попереднього відвідування"
+      },
+      "visits_today": {
+        "name": "Відвідування сьогодні"
+      },
+      "cleans_today": {
+        "name": "Очищення сьогодні"
+      },
+      "last_clean": {
+        "name": "Останнє очищення"
+      },
+      "cleans_since_bin_reset": {
+        "name": "Очищення від скидання контейнера"
+      },
+      "last_used_by": {
+        "name": "Останній користувач"
+      },
+      "scheduled_cleans": {
+        "name": "Заплановані очищення"
+      },
+      "cat_visits_today": {
+        "name": "Відвідування сьогодні"
+      },
+      "cat_last_visit_weight": {
+        "name": "Вага під час останнього відвідування"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "У мережі"
+      },
+      "deodorant_expired": {
+        "name": "Блок-ароматизатор закінчився"
+      },
+      "sensor_switch": {
+        "name": "Датчик увімкнено"
+      },
+      "camera_switch": {
+        "name": "Камеру увімкнено"
+      },
+      "control_board_switch": {
+        "name": "Захист від дітей"
+      },
+      "cat_inside": {
+        "name": "Кіт у лотку"
+      },
+      "cat_nearby": {
+        "name": "Кіт поруч"
+      },
+      "cover_open": {
+        "name": "Кришку відкрито"
+      },
+      "drum_not_in_place": {
+        "name": "Барабан не на місці"
+      },
+      "drum_stuck": {
+        "name": "Барабан заблоковано"
+      },
+      "scale_fault": {
+        "name": "Несправність ваг"
+      },
+      "camera_fault": {
+        "name": "Несправність камери"
+      },
+      "light": {
+        "name": "Підсвітка"
+      },
+      "firmware_updating": {
+        "name": "Триває оновлення прошивки"
+      },
+      "mqtt_connected": {
+        "name": "MQTT підключено"
+      },
+      "waste_bin_full": {
+        "name": "Досягнуто поріг контейнера"
+      },
+      "history_truncated": {
+        "name": "Досягнуто ліміт отримання історії"
+      }
+    },
+    "number": {
+      "auto_clean_delay": {
+        "name": "Затримка автоочищення"
+      },
+      "cat_poo_duration_threshold": {
+        "name": "Поріг тривалості для дефекації (оцінка)"
+      },
+      "box_full_alert_threshold": {
+        "name": "Контейнер повний через"
+      }
+    },
+    "switch": {
+      "deodorant_alert": {
+        "name": "Сповіщення про блок-ароматизатор"
+      },
+      "do_not_disturb": {
+        "name": "Не турбувати"
+      },
+      "light_schedule": {
+        "name": "Розклад підсвітки"
+      },
+      "empty_waste_bin_reminder": {
+        "name": "Нагадування про спорожнення контейнера"
+      },
+      "auto_clean": {
+        "name": "Автоочищення"
+      },
+      "child_lock": {
+        "name": "Захист від дітей"
+      },
+      "shake_mode": {
+        "name": "Режим струшування"
+      },
+      "box_full_alert": {
+        "name": "Сповіщення про повний контейнер"
+      },
+      "foreign_object_detection": {
+        "name": "Виявлення сторонніх предметів"
+      },
+      "reminder_monday": {
+        "name": "Нагадування в понеділок"
+      },
+      "reminder_tuesday": {
+        "name": "Нагадування у вівторок"
+      },
+      "reminder_wednesday": {
+        "name": "Нагадування в середу"
+      },
+      "reminder_thursday": {
+        "name": "Нагадування в четвер"
+      },
+      "reminder_friday": {
+        "name": "Нагадування в п'ятницю"
+      },
+      "reminder_saturday": {
+        "name": "Нагадування в суботу"
+      },
+      "reminder_sunday": {
+        "name": "Нагадування в неділю"
+      }
+    },
+    "time": {
+      "do_not_disturb_start": {
+        "name": "Початок режиму «Не турбувати»"
+      },
+      "do_not_disturb_end": {
+        "name": "Кінець режиму «Не турбувати»"
+      },
+      "light_schedule_start": {
+        "name": "Початок розкладу підсвітки"
+      },
+      "light_schedule_end": {
+        "name": "Кінець розкладу підсвітки"
+      },
+      "empty_waste_bin_reminder_time": {
+        "name": "Час нагадування про спорожнення"
+      }
+    },
+    "select": {
+      "empty_waste_bin_reminder_days_select": {
+        "name": "Дні нагадування про спорожнення",
+        "state": {
+          "off": "Вимк.",
+          "every_day": "Щодня",
+          "weekdays": "Будні",
+          "weekend": "Вихідні"
+        }
+      }
+    },
+    "button": {
+      "rest_request": {
+        "name": "Запит REST"
+      },
+      "mqtt_request_state": {
+        "name": "Запитати стан"
+      },
+      "reset_waste_bin": {
+        "name": "Скинути контейнер для відходів"
+      },
+      "mqtt_start_clean_up": {
+        "name": "Почати очищення"
+      },
+      "mqtt_pause_clean_up": {
+        "name": "Призупинити очищення"
+      },
+      "mqtt_resume_clean_up": {
+        "name": "Відновити очищення"
+      },
+      "mqtt_start_flatten": {
+        "name": "Вирівняти наповнювач"
+      },
+      "mqtt_pause_flatten": {
+        "name": "Призупинити вирівнювання"
+      },
+      "mqtt_resume_flatten": {
+        "name": "Відновити вирівнювання"
+      },
+      "mqtt_start_rise": {
+        "name": "Підняти граблі"
+      },
+      "mqtt_start_drop": {
+        "name": "Опустити граблі"
+      },
+      "reset_deodorant": {
+        "name": "Скинути блок-ароматизатор"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Хмарні оновлення",
+        "description": "Одне постійне з'єднання MQTT на обліковий запис. REST періодично оновлює налаштування та відвідування.",
+        "data": {
+          "scan_interval": "Інтервал REST (секунди, 60–3600)",
+          "records_per_fetch": "Записів на лоток і потік (20–200)",
+          "mqtt_enabled": "Увімкнути push MQTT і команди"
+        }
+      }
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "eu": "Європа (ЄС)",
+        "na": "Північна Америка / глобальний сервер Meowant",
+        "asia": "Азія (Японія / Південна Корея)",
+        "ru": "Росія",
+        "global": "Глобально",
+        "cn": "Китай"
+      }
+    }
+  },
+  "exceptions": {
+    "command_unavailable": {
+      "message": "Ця команда зараз недоступна."
+    },
+    "state_changed": {
+      "message": "Стан пристрою змінився, тому рух не було надіслано."
+    },
+    "command_failed": {
+      "message": "Команду виробника не виконано. Дивіться діагностику з'єднання."
+    },
+    "auto_clean_unknown": {
+      "message": "Налаштування автоочищення ще невідоме. Дочекайтеся наступного успішного оновлення."
+    },
+    "threshold_exceeds_capacity": {
+      "message": "Поріг перевищує місткість, повідомлену лотком."
+    },
+    "permission_required": {
+      "message": "Для цього налаштування потрібен дозвіл власника пристрою."
+    },
+    "vendor_unreachable": {
+      "message": "Виробник був недоступний під час зміни цього налаштування."
+    },
+    "api_error": {
+      "message": "Виробник відхилив зміну: {detail}"
+    }
+  }
+}

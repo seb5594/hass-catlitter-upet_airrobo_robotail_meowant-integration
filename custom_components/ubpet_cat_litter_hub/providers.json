@@ -1,0 +1,90 @@
+{
+  "regions": {
+    "eu": {
+      "host": "https://apis-eu.airrobo-home.com",
+      "countries": [
+        "AL", "AD", "AT", "BY", "BH", "BE", "BA", "BG", "HR", "CY", "CZ", "DK", "EE", "FO", "FI", "FR", "GE", "DE",
+        "GI", "GR", "HU", "IS", "IE", "IT", "KW", "XK", "LV", "LI", "LT", "LU", "MT", "MD", "MC", "ME", "NL", "MK",
+        "NO", "PT", "PL", "QA", "RO", "SE", "CH", "SA", "SM", "RS", "SK", "SI", "ES", "TR", "UA", "GB", "AE", "VA"
+      ]
+    },
+    "na": {
+      "host": "https://apis.airrobo-home.com",
+      "countries": [
+        "US", "CA", "MX", "PR", "BR", "AR", "CL", "CO", "PE", "UY", "EC", "VE", "BO", "PY", "CR", "PA", "GT", "HN",
+        "SV", "NI", "BZ", "DO", "CU", "HT", "JM", "TT", "BS", "BB", "GY", "SR"
+      ]
+    },
+    "asia": {
+      "host": "https://apis-jp.airrobo-home.com",
+      "countries": ["JP", "KR"]
+    },
+    "ru": {
+      "host": "https://apis-ru.airrobo-home.com",
+      "countries": ["RU"]
+    }
+  },
+  "timezone_rules": [
+    ["Europe/Moscow", "ru"],
+    ["Europe/Kaliningrad", "ru"],
+    ["Asia/Tokyo", "asia"],
+    ["Asia/Seoul", "asia"],
+    ["Asia/Dubai", "eu"],
+    ["Asia/Riyadh", "eu"],
+    ["Asia/Kuwait", "eu"],
+    ["Asia/Qatar", "eu"],
+    ["Asia/Bahrain", "eu"],
+    ["Asia/Baghdad", "eu"],
+    ["Asia/Tehran", "eu"],
+    ["Asia/Tbilisi", "eu"],
+    ["Asia/Yerevan", "eu"],
+    ["Asia/Baku", "eu"],
+    ["Asia/Jerusalem", "eu"],
+    ["Asia/Beirut", "eu"],
+    ["Asia/Amman", "eu"],
+    ["Europe/", "eu"],
+    ["Africa/", "eu"],
+    ["Atlantic/", "eu"],
+    ["America/", "na"],
+    ["US/", "na"],
+    ["Canada/", "na"],
+    ["Asia/", "asia"],
+    ["Australia/", "asia"],
+    ["Pacific/", "asia"]
+  ],
+  "default_region": "eu",
+  "providers": {
+    "upet": {
+      "label": "UPET / UBPet",
+      "app": "upet",
+      "regions": ["eu", "na", "asia", "ru"],
+      "region_apps": {"na": "airpet"}
+    },
+    "airpet": {
+      "label": "AIR PET / AIRROBO",
+      "app": "airpet",
+      "regions": ["eu", "na", "asia", "ru"]
+    },
+    "robotail": {
+      "label": "Robotail",
+      "app": "robotail",
+      "regions": ["eu", "na", "asia", "ru"]
+    },
+    "meowant": {
+      "label": "Meowant",
+      "app": "meowant",
+      "regions": ["na"]
+    },
+    "airpet_ubtrobot": {
+      "label": "AIR PET (ubtrobot.com, experimental)",
+      "app": "airpet",
+      "regions": ["eu", "na", "global", "cn"],
+      "hosts": {
+        "eu": "https://apis-eu.ubtrobot.com",
+        "na": "https://apis-na.ubtrobot.com",
+        "global": "https://apis.ubtrobot.com",
+        "cn": "https://airpet.ubtrobot.com"
+      }
+    }
+  }
+}

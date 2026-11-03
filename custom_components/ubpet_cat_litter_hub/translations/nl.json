@@ -1,0 +1,421 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cat Litter Hub",
+        "menu_options": {
+          "migrate": "Bestaande UPET-configuratie overnemen",
+          "provider": "Nieuw account toevoegen"
+        }
+      },
+      "migrate": {
+        "title": "Bestaande configuratie overnemen",
+        "description": "‘{title}’ uit de vorige UPET-integratie ({count} nog over te nemen) wordt overgenomen met apparaten, entiteiten, geschiedenis en instellingen. Maak eerst een back-up van Home Assistant. De map van de oude integratie moet al verwijderd en Home Assistant opnieuw gestart zijn."
+      },
+      "provider": {
+        "title": "Cat Litter Hub",
+        "description": "Kies de app waarmee het account is aangemaakt. Het merk op de kattenbak kan afwijken.",
+        "data": {
+          "provider": "Accountaanbieder / app"
+        }
+      },
+      "account": {
+        "title": "{provider}: account en server",
+        "description": "Kies de accountregio en het in de app gekozen land. Suggestie op basis van je Home Assistant-instellingen: {suggestion}. Dit is slechts een suggestie; de accountregio in de app is bepalend. Meowant gebruikt ook voor accounts in andere landen de NA/globale server.",
+        "data": {
+          "region": "Serverregio van het account",
+          "country": "Accountland (app)",
+          "username": "Account",
+          "password": "Wachtwoord"
+        }
+      }
+    },
+    "error": {
+      "invalid_input": "Voer een geldig land, account en wachtwoord in.",
+      "invalid_auth": "Aanmelding geweigerd. Controleer app/aanbieder, accountregio, land en wachtwoord. Een verkeerde regio verschijnt ook als verkeerd wachtwoord.",
+      "cannot_connect": "De aanbieder is niet bereikbaar. Probeer het later opnieuw.",
+      "missing_devices": "De nieuwe instellingen leveren niet alle eerder gekoppelde kattenbakken op. Controleer de accountregio.",
+      "account_changed": "Maak een nieuwe configuratie-invoer voor een ander account."
+    },
+    "abort": {
+      "already_configured": "Dit cloudaccount is al ingesteld.",
+      "reauth_successful": "Accountgegevens bijgewerkt.",
+      "reconfigure_successful": "Accountinstellingen bijgewerkt.",
+      "legacy_still_installed": "De vorige UPET-integratie draait nog. Verwijder de map uit custom_components, herstart Home Assistant en probeer het opnieuw."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "box_status": {
+        "name": "Status van de kattenbak",
+        "state": {
+          "standby": "Stand-by",
+          "running": "Actief",
+          "paused": "Gepauzeerd"
+        }
+      },
+      "box_use_times": {
+        "name": "Gebruiksaantal"
+      },
+      "waste_bin_level": {
+        "name": "Vulniveau afvalbak"
+      },
+      "waste_bin_last_reset": {
+        "name": "Laatste reset afvalbak"
+      },
+      "box_full_max": {
+        "name": "Maximale capaciteit afvalbak"
+      },
+      "box_full_alert": {
+        "name": "Waarschuwingsdrempel afvalbak"
+      },
+      "deodorant_remaining_days": {
+        "name": "Geurblok: resterende dagen"
+      },
+      "cat_weight": {
+        "name": "Gewicht"
+      },
+      "cat_visits": {
+        "name": "Bezoeken (oud)"
+      },
+      "cat_cost_time": {
+        "name": "Gemiddelde gebruiksduur (oud)"
+      },
+      "firmware_version": {
+        "name": "Firmwareversie"
+      },
+      "auto_clean_delay_current": {
+        "name": "Vertraging automatische reiniging"
+      },
+      "wifi_name": {
+        "name": "Wifi-naam"
+      },
+      "empty_waste_bin_reminder_days": {
+        "name": "Dagen van de herinnering afvalbak legen",
+        "state": {
+          "off": "Uit",
+          "every_day": "Elke dag",
+          "weekdays": "Werkdagen",
+          "weekend": "Weekend",
+          "custom": "Eigen dagen"
+        }
+      },
+      "mqtt_work_mode": {
+        "name": "MQTT-werkmodus"
+      },
+      "mqtt_work_state": {
+        "name": "MQTT-werkstatus"
+      },
+      "mqtt_work_cause": {
+        "name": "MQTT-statusoorzaak"
+      },
+      "last_rest_update": {
+        "name": "Laatste REST-update"
+      },
+      "last_mqtt_update": {
+        "name": "Laatste MQTT-update"
+      },
+      "remaining_bin_uses": {
+        "name": "Gebruiken tot capaciteit afvalbak"
+      },
+      "last_visit": {
+        "name": "Laatste bezoek"
+      },
+      "mqtt_pet_position": {
+        "name": "Positie van de kat",
+        "state": {
+          "inside": "In de kattenbak",
+          "away": "Niet in de kattenbak"
+        }
+      },
+      "cat_last_visit_duration": {
+        "name": "Duur laatste bezoek"
+      },
+      "cat_pee_visits_24h": {
+        "name": "Plassen in 24 uur (geschat)"
+      },
+      "cat_poo_visits_24h": {
+        "name": "Poepen in 24 uur (geschat)"
+      },
+      "cat_last_pee": {
+        "name": "Laatste keer plassen (geschat)"
+      },
+      "cat_last_poo": {
+        "name": "Laatste keer poepen (geschat)"
+      },
+      "cat_last_visit": {
+        "name": "Laatste bezoek"
+      },
+      "cat_visits_24h": {
+        "name": "Bezoeken in 24 uur"
+      },
+      "cat_duration_24h": {
+        "name": "Tijd in de kattenbak in 24 uur"
+      },
+      "cat_average_duration_24h": {
+        "name": "Gemiddelde bezoekduur in 24 uur"
+      },
+      "cat_maximum_duration_24h": {
+        "name": "Langste bezoek in 24 uur"
+      },
+      "cat_weight_change": {
+        "name": "Gewichtsverandering sinds vorig bezoek"
+      },
+      "visits_today": {
+        "name": "Bezoeken vandaag"
+      },
+      "cleans_today": {
+        "name": "Reinigingen vandaag"
+      },
+      "last_clean": {
+        "name": "Laatste reiniging"
+      },
+      "cleans_since_bin_reset": {
+        "name": "Reinigingen sinds reset afvalbak"
+      },
+      "last_used_by": {
+        "name": "Laatst gebruikt door"
+      },
+      "scheduled_cleans": {
+        "name": "Geplande reinigingen"
+      },
+      "cat_visits_today": {
+        "name": "Bezoeken vandaag"
+      },
+      "cat_last_visit_weight": {
+        "name": "Gewicht bij laatste bezoek"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "Online"
+      },
+      "deodorant_expired": {
+        "name": "Geurblok verlopen"
+      },
+      "sensor_switch": {
+        "name": "Sensor ingeschakeld"
+      },
+      "camera_switch": {
+        "name": "Camera ingeschakeld"
+      },
+      "control_board_switch": {
+        "name": "Kinderslot"
+      },
+      "cat_inside": {
+        "name": "Kat in de kattenbak"
+      },
+      "cat_nearby": {
+        "name": "Kat in de buurt"
+      },
+      "cover_open": {
+        "name": "Deksel open"
+      },
+      "drum_not_in_place": {
+        "name": "Trommel niet op zijn plek"
+      },
+      "drum_stuck": {
+        "name": "Trommel vastgelopen"
+      },
+      "scale_fault": {
+        "name": "Weegschaalfout"
+      },
+      "camera_fault": {
+        "name": "Camerafout"
+      },
+      "light": {
+        "name": "Licht"
+      },
+      "firmware_updating": {
+        "name": "Firmware wordt bijgewerkt"
+      },
+      "mqtt_connected": {
+        "name": "MQTT verbonden"
+      },
+      "waste_bin_full": {
+        "name": "Drempel afvalbak bereikt"
+      },
+      "history_truncated": {
+        "name": "Limiet voor ophalen geschiedenis bereikt"
+      }
+    },
+    "number": {
+      "auto_clean_delay": {
+        "name": "Vertraging automatische reiniging"
+      },
+      "cat_poo_duration_threshold": {
+        "name": "Duurdrempel voor poepen (schatting)"
+      },
+      "box_full_alert_threshold": {
+        "name": "Afvalbak vol na"
+      }
+    },
+    "switch": {
+      "deodorant_alert": {
+        "name": "Waarschuwing geurblok"
+      },
+      "do_not_disturb": {
+        "name": "Niet storen"
+      },
+      "light_schedule": {
+        "name": "Lichtschema"
+      },
+      "empty_waste_bin_reminder": {
+        "name": "Herinnering afvalbak legen"
+      },
+      "auto_clean": {
+        "name": "Automatische reiniging"
+      },
+      "child_lock": {
+        "name": "Kinderslot"
+      },
+      "shake_mode": {
+        "name": "Schudmodus"
+      },
+      "box_full_alert": {
+        "name": "Waarschuwing volle afvalbak"
+      },
+      "foreign_object_detection": {
+        "name": "Detectie van vreemde voorwerpen"
+      },
+      "reminder_monday": {
+        "name": "Herinnering op maandag"
+      },
+      "reminder_tuesday": {
+        "name": "Herinnering op dinsdag"
+      },
+      "reminder_wednesday": {
+        "name": "Herinnering op woensdag"
+      },
+      "reminder_thursday": {
+        "name": "Herinnering op donderdag"
+      },
+      "reminder_friday": {
+        "name": "Herinnering op vrijdag"
+      },
+      "reminder_saturday": {
+        "name": "Herinnering op zaterdag"
+      },
+      "reminder_sunday": {
+        "name": "Herinnering op zondag"
+      }
+    },
+    "time": {
+      "do_not_disturb_start": {
+        "name": "Begin niet storen"
+      },
+      "do_not_disturb_end": {
+        "name": "Einde niet storen"
+      },
+      "light_schedule_start": {
+        "name": "Begin lichtschema"
+      },
+      "light_schedule_end": {
+        "name": "Einde lichtschema"
+      },
+      "empty_waste_bin_reminder_time": {
+        "name": "Tijdstip herinnering afvalbak legen"
+      }
+    },
+    "select": {
+      "empty_waste_bin_reminder_days_select": {
+        "name": "Dagen van de herinnering afvalbak legen",
+        "state": {
+          "off": "Uit",
+          "every_day": "Elke dag",
+          "weekdays": "Werkdagen",
+          "weekend": "Weekend"
+        }
+      }
+    },
+    "button": {
+      "rest_request": {
+        "name": "REST-aanvraag"
+      },
+      "mqtt_request_state": {
+        "name": "Status opvragen"
+      },
+      "reset_waste_bin": {
+        "name": "Afvalbak resetten"
+      },
+      "mqtt_start_clean_up": {
+        "name": "Reiniging starten"
+      },
+      "mqtt_pause_clean_up": {
+        "name": "Reiniging pauzeren"
+      },
+      "mqtt_resume_clean_up": {
+        "name": "Reiniging hervatten"
+      },
+      "mqtt_start_flatten": {
+        "name": "Strooisel gladstrijken"
+      },
+      "mqtt_pause_flatten": {
+        "name": "Gladstrijken pauzeren"
+      },
+      "mqtt_resume_flatten": {
+        "name": "Gladstrijken hervatten"
+      },
+      "mqtt_start_rise": {
+        "name": "Hark omhoog"
+      },
+      "mqtt_start_drop": {
+        "name": "Hark omlaag"
+      },
+      "reset_deodorant": {
+        "name": "Geurblok resetten"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Cloud-updates",
+        "description": "Eén permanente MQTT-verbinding per account. REST vernieuwt periodiek instellingen en bezoeken.",
+        "data": {
+          "scan_interval": "REST-interval (seconden, 60–3600)",
+          "records_per_fetch": "Records per kattenbak en stroom (20–200)",
+          "mqtt_enabled": "MQTT-push en commando's inschakelen"
+        }
+      }
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "eu": "Europa (EU)",
+        "na": "Noord-Amerika / wereldwijde Meowant-server",
+        "asia": "Azië (Japan / Zuid-Korea)",
+        "ru": "Rusland",
+        "global": "Wereldwijd",
+        "cn": "China"
+      }
+    }
+  },
+  "exceptions": {
+    "command_unavailable": {
+      "message": "Dit commando is momenteel niet beschikbaar."
+    },
+    "state_changed": {
+      "message": "De apparaatstatus is gewijzigd, dus de beweging is niet verstuurd."
+    },
+    "command_failed": {
+      "message": "Het fabrikantcommando is mislukt. Zie de verbindingsdiagnose."
+    },
+    "auto_clean_unknown": {
+      "message": "De instelling voor automatische reiniging is nog niet bekend. Wacht op de volgende geslaagde update."
+    },
+    "threshold_exceeds_capacity": {
+      "message": "De drempel overschrijdt de door de kattenbak gemelde capaciteit."
+    },
+    "permission_required": {
+      "message": "Voor deze instelling is toestemming van de apparaateigenaar nodig."
+    },
+    "vendor_unreachable": {
+      "message": "De fabrikant was niet bereikbaar bij het wijzigen van deze instelling."
+    },
+    "api_error": {
+      "message": "De fabrikant heeft de wijziging geweigerd: {detail}"
+    }
+  }
+}

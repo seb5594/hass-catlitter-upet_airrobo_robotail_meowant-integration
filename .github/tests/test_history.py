@@ -13,7 +13,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def load(name):
-    spec = importlib.util.spec_from_file_location("pure_" + name, ROOT / "custom_components/ubpet" / f"{name}.py")
+    spec = importlib.util.spec_from_file_location(
+        "pure_" + name, ROOT / "custom_components/ubpet_cat_litter_hub" / f"{name}.py"
+    )
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)

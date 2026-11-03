@@ -1,0 +1,421 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cat Litter Hub",
+        "menu_options": {
+          "migrate": "既存のUPET設定を引き継ぐ",
+          "provider": "新しいアカウントを追加"
+        }
+      },
+      "migrate": {
+        "title": "既存の設定を引き継ぐ",
+        "description": "以前のUPET連携の「{title}」（引き継ぎ待ち：{count}件）を、デバイス・エンティティ・履歴・設定ごと引き継ぎます。先にHome Assistantのバックアップを作成してください。古い連携のフォルダを削除し、Home Assistantを再起動済みである必要があります。"
+      },
+      "provider": {
+        "title": "Cat Litter Hub",
+        "description": "アカウントを作成したアプリを選択してください。トイレ本体に印刷されたブランドと異なる場合があります。",
+        "data": {
+          "provider": "アカウントのプロバイダー／アプリ"
+        }
+      },
+      "account": {
+        "title": "{provider}：アカウントとサーバー",
+        "description": "アカウントのリージョンと、アプリで選択した国を選んでください。Home Assistantの設定に基づく候補：{suggestion}。あくまで候補であり、アプリ上のアカウントのリージョンが優先されます。Meowantは他国のアカウントでもNA／グローバルサーバーを使用します。",
+        "data": {
+          "region": "アカウントのサーバーリージョン",
+          "country": "アカウントの国（アプリ）",
+          "username": "アカウント",
+          "password": "パスワード"
+        }
+      }
+    },
+    "error": {
+      "invalid_input": "有効な国、アカウント、パスワードを入力してください。",
+      "invalid_auth": "ログインが拒否されました。アプリ／プロバイダー、アカウントのリージョン、国、パスワードを確認してください。リージョンが違う場合もパスワード誤りとして表示されます。",
+      "cannot_connect": "プロバイダーに接続できませんでした。後でもう一度お試しください。",
+      "missing_devices": "新しい設定では、以前接続していたトイレがすべて返されません。アカウントのリージョンを確認してください。",
+      "account_changed": "別のアカウントには、別の設定エントリを作成してください。"
+    },
+    "abort": {
+      "already_configured": "このクラウドアカウントはすでに設定されています。",
+      "reauth_successful": "アカウントの認証情報を更新しました。",
+      "reconfigure_successful": "アカウント設定を更新しました。",
+      "legacy_still_installed": "以前のUPET連携がまだ動作しています。custom_componentsからそのフォルダを削除し、Home Assistantを再起動してからもう一度お試しください。"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "box_status": {
+        "name": "トイレの状態",
+        "state": {
+          "standby": "待機中",
+          "running": "動作中",
+          "paused": "一時停止中"
+        }
+      },
+      "box_use_times": {
+        "name": "使用回数"
+      },
+      "waste_bin_level": {
+        "name": "排泄物ボックスの残量"
+      },
+      "waste_bin_last_reset": {
+        "name": "ボックスの最終リセット"
+      },
+      "box_full_max": {
+        "name": "ボックスの最大容量"
+      },
+      "box_full_alert": {
+        "name": "ボックスの警告しきい値"
+      },
+      "deodorant_remaining_days": {
+        "name": "消臭ブロック：残り日数"
+      },
+      "cat_weight": {
+        "name": "体重"
+      },
+      "cat_visits": {
+        "name": "訪問（旧）"
+      },
+      "cat_cost_time": {
+        "name": "平均使用時間（旧）"
+      },
+      "firmware_version": {
+        "name": "ファームウェアバージョン"
+      },
+      "auto_clean_delay_current": {
+        "name": "自動清掃の遅延"
+      },
+      "wifi_name": {
+        "name": "Wi-Fi名"
+      },
+      "empty_waste_bin_reminder_days": {
+        "name": "ボックス清掃リマインダーの曜日",
+        "state": {
+          "off": "オフ",
+          "every_day": "毎日",
+          "weekdays": "平日",
+          "weekend": "週末",
+          "custom": "カスタム曜日"
+        }
+      },
+      "mqtt_work_mode": {
+        "name": "MQTT動作モード"
+      },
+      "mqtt_work_state": {
+        "name": "MQTT動作状態"
+      },
+      "mqtt_work_cause": {
+        "name": "MQTT状態の原因"
+      },
+      "last_rest_update": {
+        "name": "最終REST更新"
+      },
+      "last_mqtt_update": {
+        "name": "最終MQTT更新"
+      },
+      "remaining_bin_uses": {
+        "name": "ボックス容量までの残り使用回数"
+      },
+      "last_visit": {
+        "name": "最後の訪問"
+      },
+      "mqtt_pet_position": {
+        "name": "猫の位置",
+        "state": {
+          "inside": "トイレの中",
+          "away": "トイレの外"
+        }
+      },
+      "cat_last_visit_duration": {
+        "name": "最後の訪問の長さ"
+      },
+      "cat_pee_visits_24h": {
+        "name": "24時間のおしっこ（推定）"
+      },
+      "cat_poo_visits_24h": {
+        "name": "24時間のうんち（推定）"
+      },
+      "cat_last_pee": {
+        "name": "最後のおしっこ（推定）"
+      },
+      "cat_last_poo": {
+        "name": "最後のうんち（推定）"
+      },
+      "cat_last_visit": {
+        "name": "最後の訪問"
+      },
+      "cat_visits_24h": {
+        "name": "24時間の訪問回数"
+      },
+      "cat_duration_24h": {
+        "name": "24時間のトイレ滞在時間"
+      },
+      "cat_average_duration_24h": {
+        "name": "24時間の平均訪問時間"
+      },
+      "cat_maximum_duration_24h": {
+        "name": "24時間で最長の訪問"
+      },
+      "cat_weight_change": {
+        "name": "前回訪問からの体重変化"
+      },
+      "visits_today": {
+        "name": "今日の訪問回数"
+      },
+      "cleans_today": {
+        "name": "今日の清掃回数"
+      },
+      "last_clean": {
+        "name": "最後の清掃"
+      },
+      "cleans_since_bin_reset": {
+        "name": "ボックスリセット後の清掃回数"
+      },
+      "last_used_by": {
+        "name": "最後に使用した猫"
+      },
+      "scheduled_cleans": {
+        "name": "予約された清掃"
+      },
+      "cat_visits_today": {
+        "name": "今日の訪問回数"
+      },
+      "cat_last_visit_weight": {
+        "name": "最後の訪問時の体重"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "オンライン"
+      },
+      "deodorant_expired": {
+        "name": "消臭ブロックの期限切れ"
+      },
+      "sensor_switch": {
+        "name": "センサー有効"
+      },
+      "camera_switch": {
+        "name": "カメラ有効"
+      },
+      "control_board_switch": {
+        "name": "チャイルドロック"
+      },
+      "cat_inside": {
+        "name": "猫がトイレの中"
+      },
+      "cat_nearby": {
+        "name": "猫が近くにいる"
+      },
+      "cover_open": {
+        "name": "カバーが開いている"
+      },
+      "drum_not_in_place": {
+        "name": "ドラムが所定の位置にない"
+      },
+      "drum_stuck": {
+        "name": "ドラムが動かない"
+      },
+      "scale_fault": {
+        "name": "体重計の異常"
+      },
+      "camera_fault": {
+        "name": "カメラの異常"
+      },
+      "light": {
+        "name": "ライト"
+      },
+      "firmware_updating": {
+        "name": "ファームウェア更新中"
+      },
+      "mqtt_connected": {
+        "name": "MQTT接続済み"
+      },
+      "waste_bin_full": {
+        "name": "ボックスのしきい値に到達"
+      },
+      "history_truncated": {
+        "name": "履歴取得の上限に到達"
+      }
+    },
+    "number": {
+      "auto_clean_delay": {
+        "name": "自動清掃の遅延"
+      },
+      "cat_poo_duration_threshold": {
+        "name": "うんちの時間しきい値（推定）"
+      },
+      "box_full_alert_threshold": {
+        "name": "ボックスが満杯になるまで"
+      }
+    },
+    "switch": {
+      "deodorant_alert": {
+        "name": "消臭ブロックのアラート"
+      },
+      "do_not_disturb": {
+        "name": "おやすみモード"
+      },
+      "light_schedule": {
+        "name": "ライトのスケジュール"
+      },
+      "empty_waste_bin_reminder": {
+        "name": "ボックス清掃リマインダー"
+      },
+      "auto_clean": {
+        "name": "自動清掃"
+      },
+      "child_lock": {
+        "name": "チャイルドロック"
+      },
+      "shake_mode": {
+        "name": "シェイクモード"
+      },
+      "box_full_alert": {
+        "name": "ボックス満杯アラート"
+      },
+      "foreign_object_detection": {
+        "name": "異物検知"
+      },
+      "reminder_monday": {
+        "name": "月曜日のリマインダー"
+      },
+      "reminder_tuesday": {
+        "name": "火曜日のリマインダー"
+      },
+      "reminder_wednesday": {
+        "name": "水曜日のリマインダー"
+      },
+      "reminder_thursday": {
+        "name": "木曜日のリマインダー"
+      },
+      "reminder_friday": {
+        "name": "金曜日のリマインダー"
+      },
+      "reminder_saturday": {
+        "name": "土曜日のリマインダー"
+      },
+      "reminder_sunday": {
+        "name": "日曜日のリマインダー"
+      }
+    },
+    "time": {
+      "do_not_disturb_start": {
+        "name": "おやすみモードの開始"
+      },
+      "do_not_disturb_end": {
+        "name": "おやすみモードの終了"
+      },
+      "light_schedule_start": {
+        "name": "ライトスケジュールの開始"
+      },
+      "light_schedule_end": {
+        "name": "ライトスケジュールの終了"
+      },
+      "empty_waste_bin_reminder_time": {
+        "name": "ボックス清掃リマインダーの時刻"
+      }
+    },
+    "select": {
+      "empty_waste_bin_reminder_days_select": {
+        "name": "ボックス清掃リマインダーの曜日",
+        "state": {
+          "off": "オフ",
+          "every_day": "毎日",
+          "weekdays": "平日",
+          "weekend": "週末"
+        }
+      }
+    },
+    "button": {
+      "rest_request": {
+        "name": "RESTリクエスト"
+      },
+      "mqtt_request_state": {
+        "name": "状態をリクエスト"
+      },
+      "reset_waste_bin": {
+        "name": "排泄物ボックスをリセット"
+      },
+      "mqtt_start_clean_up": {
+        "name": "清掃を開始"
+      },
+      "mqtt_pause_clean_up": {
+        "name": "清掃を一時停止"
+      },
+      "mqtt_resume_clean_up": {
+        "name": "清掃を再開"
+      },
+      "mqtt_start_flatten": {
+        "name": "砂をならす"
+      },
+      "mqtt_pause_flatten": {
+        "name": "ならしを一時停止"
+      },
+      "mqtt_resume_flatten": {
+        "name": "ならしを再開"
+      },
+      "mqtt_start_rise": {
+        "name": "レーキを上げる"
+      },
+      "mqtt_start_drop": {
+        "name": "レーキを下げる"
+      },
+      "reset_deodorant": {
+        "name": "消臭ブロックをリセット"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "クラウド更新",
+        "description": "アカウントごとに常時接続のMQTTを1本使用します。RESTは設定と訪問を定期的に更新します。",
+        "data": {
+          "scan_interval": "RESTの間隔（秒、60〜3600）",
+          "records_per_fetch": "トイレ・ストリームごとのレコード数（20〜200）",
+          "mqtt_enabled": "MQTTプッシュとコマンドを有効にする"
+        }
+      }
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "eu": "ヨーロッパ（EU）",
+        "na": "北米／Meowantのグローバルサーバー",
+        "asia": "アジア（日本／韓国）",
+        "ru": "ロシア",
+        "global": "グローバル",
+        "cn": "中国"
+      }
+    }
+  },
+  "exceptions": {
+    "command_unavailable": {
+      "message": "このコマンドは現在利用できません。"
+    },
+    "state_changed": {
+      "message": "デバイスの状態が変わったため、動作は送信されませんでした。"
+    },
+    "command_failed": {
+      "message": "メーカーのコマンドに失敗しました。接続の診断を確認してください。"
+    },
+    "auto_clean_unknown": {
+      "message": "自動清掃の設定がまだ不明です。次の更新が成功するまでお待ちください。"
+    },
+    "threshold_exceeds_capacity": {
+      "message": "しきい値がトイレの報告する容量を超えています。"
+    },
+    "permission_required": {
+      "message": "この設定にはデバイス所有者の権限が必要です。"
+    },
+    "vendor_unreachable": {
+      "message": "この設定の変更中にメーカーへ接続できませんでした。"
+    },
+    "api_error": {
+      "message": "メーカーが変更を拒否しました：{detail}"
+    }
+  }
+}
