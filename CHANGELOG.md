@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026.11.03.3
+
+- The dashboard cards accept `entity` (any entity of the litter box or cat) as an alternative to `device_id`.
+
 ## 2026.11.03.2
 
 - **Dashboard cards**, registered automatically: `ubpet-litter-box-card` (status, cat presence, waste bin, info chips, actions, statistics) and `ubpet-cat-card` (weight and visit statistics). Sections, chips, actions and statistics are selectable and orderable in a visual editor.

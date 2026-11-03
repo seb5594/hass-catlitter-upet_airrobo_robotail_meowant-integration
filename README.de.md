@@ -70,6 +70,7 @@ Zwei Karten werden beim Laden der Integration automatisch registriert; es muss k
 ```yaml
 type: custom:ubpet-litter-box-card
 device_id: <Katzenklo-Gerät>        # im Editor wählbar
+# entity: sensor.katzenklo_betriebsstatus  # Alternative zu device_id: irgendeine Entität des Geräts
 name: Katzenklo                     # optional
 image: /local/katzenklo.png         # optional: Bild
 sections: [status, presence, bin, chips, actions, stats]   # Reihenfolge und Sichtbarkeit
@@ -80,7 +81,7 @@ stats: [cleans_today, last_clean, last_used_by]
 
 ```yaml
 type: custom:ubpet-cat-card
-device_id: <Katzen-Gerät>
+device_id: <Katzen-Gerät>           # oder: entity: sensor.balu_gewicht
 show_picture: true
 stats: [cat_last_visit_duration, visits_split, cat_last_poo, cat_last_pee]
 ```

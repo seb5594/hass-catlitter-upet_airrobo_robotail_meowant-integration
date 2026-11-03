@@ -96,8 +96,10 @@ function entityIndex(hass) {
 
 /** Everything a card needs to read one device. */
 function context(hass, config) {
-  const ids = entityIndex(hass).get(config.device_id) || {};
-  const device = (hass.devices || {})[config.device_id];
+  // `entity` (any entity of the device) is an easier alternative to the device ID.
+  const deviceId = config.device_id || (hass.entities || {})[config.entity]?.device_id;
+  const ids = entityIndex(hass).get(deviceId) || {};
+  const device = (hass.devices || {})[deviceId];
   const deviceName = device?.name_by_user || device?.name || "";
   const entity = (domain, key) => {
     const id = ids[`${domain}:${key}`];

@@ -85,6 +85,7 @@ Two cards are registered automatically when the integration loads; no resource h
 ```yaml
 type: custom:ubpet-litter-box-card
 device_id: <litter box device>      # chosen in the editor
+# entity: sensor.litter_box_status  # alternative to device_id: any entity of the device
 name: Cat litter box                # optional
 image: /local/litter-box.png        # optional picture
 sections: [status, presence, bin, chips, actions, stats]   # order and visibility
@@ -95,7 +96,7 @@ stats: [cleans_today, last_clean, last_used_by]
 
 ```yaml
 type: custom:ubpet-cat-card
-device_id: <cat device>
+device_id: <cat device>             # or: entity: sensor.balu_weight
 show_picture: true
 stats: [cat_last_visit_duration, visits_split, cat_last_poo, cat_last_pee]
 ```
