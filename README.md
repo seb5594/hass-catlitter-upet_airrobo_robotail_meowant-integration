@@ -20,7 +20,7 @@
 </p>
 <!-- header:end -->
 
-<p align="center"><b>English</b> · <a href="README.de.md">Deutsch</a></p>
+<p align="center"><b>🇬🇧 English</b> · <a href="README.de.md">🇩🇪 Deutsch</a></p>
 
 A Home Assistant integration for smart cat litter boxes that share the UBPet / AIRROBO cloud API: **UPET, UBPet, AIR PET, AIRROBO, Robotail and Meowant**. Several accounts, providers and account regions run side by side in one integration, each with its own connection.
 

@@ -4,7 +4,7 @@
   <img src="custom_components/ubpet_cat_litter_hub/brand/logo@2x.png" alt="Cat Litter Hub" width="160" height="160">
 </p>
 
-<p align="center"><a href="README.md">English</a> · <b>Deutsch</b></p>
+<p align="center"><a href="README.md">🇬🇧 English</a> · <b>🇩🇪 Deutsch</b></p>
 
 
 Eine Home-Assistant-Integration für smarte Katzenklos, die dieselbe Cloud-API nutzen: **UPET, UBPet, AIR PET, AIRROBO, Robotail und Meowant**. Mehrere Konten, Anbieter und Kontoregionen laufen nebeneinander in einer Integration, jedes mit eigener Verbindung.
