@@ -91,7 +91,10 @@ async def test_registry_rows_move_with_ids_unchanged(hass):
     assert moved.device_id == device.id
     moved_device = dr.async_get(hass).async_get(device.id)
     assert moved_device.identifiers == {(DOMAIN, SERIAL), (DOMAIN, f"cat_{legacy.entry_id}_7")}
-    assert moved_device.config_entries == {entry.entry_id}
+    if hasattr(moved_device, "config_entry_id"):
+        assert moved_device.config_entry_id == entry.entry_id
+    else:
+        assert moved_device.config_entries == {entry.entry_id}
 
 
 async def test_adoption_is_idempotent(hass):
