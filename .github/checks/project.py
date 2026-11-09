@@ -12,7 +12,7 @@ component = ROOT / "custom_components/ubpet_cat_litter_hub"
 manifest = json.loads((component / "manifest.json").read_text(encoding="utf-8"))
 assert re.fullmatch(r"\d{4}\.\d{2}\.\d{2}\.[1-9]\d*", manifest["version"]), "Version: JJJJ.MM.TT.Build"
 assert manifest["domain"] == component.name == "ubpet_cat_litter_hub"
-assert manifest["requirements"] == ["paho-mqtt==2.1.0"]
+assert manifest["requirements"] == ["paho-mqtt>=2.1.0"]
 english = json.loads((component / "strings.json").read_text(encoding="utf-8"))
 assert english == json.loads((component / "translations/en.json").read_text(encoding="utf-8")), (
     "en.json != strings.json"

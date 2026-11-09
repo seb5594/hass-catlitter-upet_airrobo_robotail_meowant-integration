@@ -14,7 +14,7 @@
   "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration/issues",
   "requirements": [
-    "paho-mqtt==2.1.0"
+    "paho-mqtt>=2.1.0"
   ],
   "version": "2026.11.03.2"
 }
