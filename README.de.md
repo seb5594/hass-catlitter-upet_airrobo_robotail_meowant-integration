@@ -9,7 +9,7 @@
 
 Eine Home-Assistant-Integration für smarte Katzenklos, die dieselbe Cloud-API nutzen: **UPET, UBPet, AIR PET, AIRROBO, Robotail und Meowant**. Mehrere Konten, Anbieter und Kontoregionen laufen nebeneinander in einer Integration, jedes mit eigener Verbindung.
 
-**Stand: 2026.11.03.1 · Hardwaretest mit dieser Version noch offen.** Die Software wird automatisiert geprüft (Unit-Tests, Tests mit echten Home-Assistant-Klassen, Übernahme alter Einträge mit echten Registries). Eine passende API allein beweist aber nicht, dass jedes Modell jede Funktion unterstützt; was am C20 und an Robotail noch zu prüfen ist, steht in [TESTEN.md](docs/TESTING.md).
+**Am UBPet C20 getestet:** Der Maintainer hat [`v2026.11.03.2`](https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration/releases/tag/v2026.11.03.2) erfolgreich an einem echten Gerät getestet. Für `2026.11.09.1` sind die automatisierten Home-Assistant-Kompatibilitätstests mit simulierter Cloud-Verbindung bestanden. Ein erneuter Gerätetest steht aus. Details stehen in der [Testdokumentation](docs/TESTING.md).
 
 ## Was die Integration kann
 
@@ -28,7 +28,7 @@ Eine Home-Assistant-Integration für smarte Katzenklos, die dieselbe Cloud-API n
 
 ## Installation
 
-Für neue Konten brauchst du einen App-Signaturschlüssel, den du für die gewählte App und Region verwenden darfst. Gib ihn bei der Einrichtung ein. Bestehende Einträge behalten ihren in Home Assistant gespeicherten Schlüssel.
+Beim Update einer bestehenden Cat-Litter-Hub-Installation bleiben die Home-Assistant-Einträge erhalten und verwenden den bereits gespeicherten Schlüssel weiter. Für neue Einträge oder einen Wechsel der App oder Region brauchst du einen App-Signaturschlüssel, den du für dieses Profil verwenden darfst.
 
 Home Assistant Core **ab 2023.6.0**, siehe [hacs.json](hacs.json). Den Stand der tatsächlich geprüften Versionen beschreibt [TESTEN.md](docs/TESTING.md).
 
@@ -50,7 +50,7 @@ Die frühere eigenständige `robotail`-Domain wird nicht automatisch umgeschrieb
 
 1. Die **App des Kontos** auswählen. Der Aufdruck auf dem Katzenklo ist dafür nicht ausschlaggebend.
 2. Die **Serverregion des Kontos** und das bei der Registrierung verwendete Land angeben. Die Vorauswahl ist ein Vorschlag, maßgeblich ist die Region in der App.
-3. Konto und Passwort eingeben. Das Passwort wird unverändert übernommen und für den proprietären Login intern gehasht.
+3. Konto, Passwort und App-Signaturschlüssel eingeben. Das Passwort wird unverändert übernommen und für den proprietären Login intern gehasht.
 4. Für einen weiteren Anbieter oder ein weiteres Konto erneut **Eintrag hinzufügen** wählen.
 
 | Auswahl | Backend | Einordnung |

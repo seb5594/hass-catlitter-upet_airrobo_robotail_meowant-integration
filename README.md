@@ -25,7 +25,7 @@
 
 A Home Assistant integration for smart cat litter boxes that share the UBPet / AIRROBO cloud API: **UPET, UBPet, AIR PET, AIRROBO, Robotail and Meowant**. Several accounts, providers and account regions run side by side in one integration, each with its own connection.
 
-**Status: 2026.11.03.1 · hardware test with this version still open.** The software is checked automatically (unit tests, tests with real Home Assistant classes, adoption of old entries with real registries). A matching API alone does not prove that every model supports every function; what still has to be verified on the C20 and on Robotail is listed in [TESTING.md](docs/TESTING.md).
+**Tested on a UBPet C20:** the maintainer successfully tested [`v2026.11.03.2`](https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration/releases/tag/v2026.11.03.2) on real hardware. Release `2026.11.09.1` passed the automated Home Assistant compatibility checks with simulated cloud traffic. A new hardware test of this release is pending. See [TESTING.md](docs/TESTING.md).
 
 ## What it does
 
@@ -44,7 +44,7 @@ A Home Assistant integration for smart cat litter boxes that share the UBPet / A
 
 ## Installation
 
-New accounts need a signing key you are authorized to use for the selected vendor app and region. Enter it in the account form. Existing entries retain the key already stored in Home Assistant.
+When updating an existing Cat Litter Hub installation, keep your Home Assistant entries. They continue to use the signing key already stored for the account. New entries and switches to a different app or region require a signing key you are authorized to use for that profile.
 
 Home Assistant Core **2023.6.0 or newer**, see [hacs.json](hacs.json). The state of the versions actually tested is described in [TESTING.md](docs/TESTING.md).
 
@@ -66,7 +66,7 @@ The former standalone `robotail` domain is not rewritten automatically; create a
 
 1. Select the **app of the account**. The print on the litter box is not decisive.
 2. Enter the **server region of the account** and the country used at registration. The pre-selection is a suggestion; the region in the app is what counts.
-3. Enter account and password. The password is taken over unchanged and hashed internally for the proprietary login.
+3. Enter the account, password and app signing key. The password is taken over unchanged and hashed internally for the proprietary login.
 4. For another provider or account, choose **Add entry** again.
 
 | Choice | Backend | Notes |
