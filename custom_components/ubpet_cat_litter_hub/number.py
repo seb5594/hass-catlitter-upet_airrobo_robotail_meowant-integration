@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Any
-
 from homeassistant.components.number import NumberEntity, NumberEntityDescription, NumberMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTime
@@ -9,6 +7,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .box_config import seconds_to_minutes
 from .compat import translated_error
 from .const import DOMAIN
 from .coordinator import UbpetDataUpdateCoordinator
@@ -52,19 +51,15 @@ class UbpetAutoCleanDelayNumber(UbpetDeviceEntity, NumberEntity):
 
     def __init__(self, coordinator: UbpetDataUpdateCoordinator, entry_id: str, serial: str) -> None:
         super().__init__(coordinator)
-        self._serial = serial
-        self._attr_unique_id = f"{entry_id}_{serial}_auto_clean_delay"
+        self._bind_box(entry_id, serial, self.entity_description.key)
 
     @property
     def native_value(self) -> int | float | None:
-        item = self.coordinator.data.get("devices", {}).get(self._serial)
-        if not item:
-            return None
-        return _seconds_to_minutes(item.get("config", {}).get("lazyTime"))
+        return seconds_to_minutes(self._box_config.get("lazyTime"))
 
     async def async_set_native_value(self, value: float) -> None:
         minutes = int(round(value))
-        enabled = self.coordinator.data.get("devices", {}).get(self._serial, {}).get("config", {}).get("sensorSwitch")
+        enabled = self._box_config.get("sensorSwitch")
         if enabled not in (0, 1):
             raise translated_error("auto_clean_unknown", "Auto clean state is unknown; wait for a successful update")
         await async_write(
@@ -75,17 +70,6 @@ class UbpetAutoCleanDelayNumber(UbpetDeviceEntity, NumberEntity):
             enabled == 1,
         )
         self.coordinator.schedule_refresh(15)
-
-
-def _seconds_to_minutes(value: Any) -> int | float | None:
-    if value is None:
-        return None
-    try:
-        seconds = float(value)
-    except (TypeError, ValueError):
-        return None
-    minutes = seconds / 60
-    return int(minutes) if minutes.is_integer() else minutes
 
 
 class UbpetCatThresholdNumber(UbpetCatEntity, NumberEntity):
@@ -104,8 +88,7 @@ class UbpetCatThresholdNumber(UbpetCatEntity, NumberEntity):
 
     def __init__(self, coordinator, entry_id, cat_id):
         super().__init__(coordinator)
-        self._cat_id = cat_id
-        self._attr_unique_id = f"{entry_id}_cat_{cat_id}_poo_duration_threshold"
+        self._bind_cat(entry_id, cat_id, "poo_duration_threshold")
 
     @property
     def native_value(self):
@@ -127,10 +110,6 @@ class UbpetWasteThresholdNumber(UbpetAutoCleanDelayNumber):
         native_max_value=100,
         native_step=1,
     )
-
-    def __init__(self, coordinator, entry_id, serial):
-        super().__init__(coordinator, entry_id, serial)
-        self._attr_unique_id = f"{entry_id}_{serial}_box_full_alert_threshold"
 
     @property
     def native_max_value(self):

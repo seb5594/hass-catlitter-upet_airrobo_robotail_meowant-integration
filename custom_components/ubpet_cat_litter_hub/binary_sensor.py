@@ -13,6 +13,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .box_config import box_value
 from .compat import description_is_frozen
 from .const import DOMAIN
 from .coordinator import UbpetDataUpdateCoordinator
@@ -25,55 +26,26 @@ class UbpetBinarySensorDescription(BinarySensorEntityDescription):
     value_fn: Callable[[dict[str, Any]], Any]
 
 
-BINARY_SENSORS: tuple[UbpetBinarySensorDescription, ...] = (
+def _read_status(group, field, *, as_switch=False):
+    def extract(box):
+        value = box_value(box, group, field)
+        return value == 1 if as_switch and value is not None else value
+
+    return extract
+
+
+BINARY_SENSORS = tuple(
     UbpetBinarySensorDescription(
-        key="online",
-        name="Online",
-        icon="mdi:wifi",
-        translation_key="online",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda item: item["online"].get("online"),
-    ),
-    UbpetBinarySensorDescription(
-        key="deodorant_expired",
-        name="Deodorant expired",
-        icon="mdi:air-filter",
-        translation_key="deodorant_expired",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda item: item["deodorant"].get("expired"),
-    ),
-    UbpetBinarySensorDescription(
-        key="sensor_switch",
-        name="Sensor enabled",
-        icon="mdi:motion-sensor",
-        translation_key="sensor_switch",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda item: (
-            item["config"].get("sensorSwitch") == 1 if item["config"].get("sensorSwitch") is not None else None
-        ),
-    ),
-    UbpetBinarySensorDescription(
-        key="camera_switch",
-        name="Camera enabled",
-        icon="mdi:camera",
-        translation_key="camera_switch",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda item: (
-            item["config"].get("cameraSwitch") == 1 if item["config"].get("cameraSwitch") is not None else None
-        ),
-    ),
-    UbpetBinarySensorDescription(
-        key="control_board_switch",
-        name="Child lock",
-        icon="mdi:lock",
-        translation_key="control_board_switch",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda item: (
-            item["config"].get("controlBoardSwitch") == 1
-            if item["config"].get("controlBoardSwitch") is not None
-            else None
-        ),
-    ),
+        key=key, translation_key=key, name=name, icon=icon,
+        entity_category=EntityCategory.DIAGNOSTIC, value_fn=_read_status(group, field, as_switch=flag),
+    )
+    for key, name, icon, group, field, flag in (
+        ("online", "Online", "mdi:wifi", "online", "online", False),
+        ("deodorant_expired", "Deodorant expired", "mdi:air-filter", "deodorant", "expired", False),
+        ("sensor_switch", "Sensor enabled", "mdi:motion-sensor", "config", "sensorSwitch", True),
+        ("camera_switch", "Camera enabled", "mdi:camera", "config", "cameraSwitch", True),
+        ("control_board_switch", "Child lock", "mdi:lock", "config", "controlBoardSwitch", True),
+    )
 )
 
 
@@ -184,16 +156,12 @@ class UbpetDeviceBinarySensor(UbpetDeviceEntity, BinarySensorEntity):
         description: UbpetBinarySensorDescription,
     ) -> None:
         super().__init__(coordinator)
-        self._serial = serial
+        self._bind_box(entry_id, serial, description.key)
         self.entity_description = description
-        self._attr_unique_id = f"{entry_id}_{serial}_{description.key}"
 
     @property
     def is_on(self) -> bool | None:
         if self.entity_description.key == "mqtt_connected":
             return self.coordinator.transport.connected
-        item = self.coordinator.data.get("devices", {}).get(self._serial)
-        if not item:
-            return None
-        value = self.entity_description.value_fn(item)
+        value = self.entity_description.value_fn(self._device_item) if self._device_item else None
         return None if value is None else bool(value)

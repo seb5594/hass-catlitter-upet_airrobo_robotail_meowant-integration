@@ -1,681 +1,206 @@
+"""Run the client against an in-memory HTTP endpoint."""
 from __future__ import annotations
 
 import hashlib
-import importlib.util
 import json
-import sys
-import unittest
-from pathlib import Path
-from unittest.mock import patch
-
-API_PATH = Path(__file__).resolve().parents[2] / "custom_components" / "ubpet_cat_litter_hub" / "api.py"
-spec = importlib.util.spec_from_file_location("ubpet_api", API_PATH)
-api = importlib.util.module_from_spec(spec)
-assert spec.loader is not None
-sys.modules[spec.name] = api
-spec.loader.exec_module(api)
-
-
-class FakeResponse:
-    def __init__(self, status: int, payload):
-        self.status = status
-        self._payload = payload
-
-    def read(self) -> bytes:
-        if isinstance(self._payload, bytes):
-            return self._payload
-        return json.dumps(self._payload).encode("utf-8")
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc, tb):
-        return False
-
-
-class UrlopenRecorder:
-    def __init__(self, responses):
-        self.responses = list(responses)
-        self.requests = []
-
-    def __call__(self, req, timeout=20):
-        self.requests.append(req)
-        if not self.responses:
-            raise AssertionError("No fake response queued")
-        response = self.responses.pop(0)
-        return FakeResponse(response[0], response[1])
-
-    def payloads(self):
-        return [json.loads(req.data.decode("utf-8")) if req.data else None for req in self.requests]
-
-
-class ApiUnitTests(unittest.TestCase):
-    def make_client(self, account="user@example.com", password="secret", area_code=""):
-        return api.UbpetClient(
-            account=account,
-            password=password,
-            app_key="app-key",
-            device_id="device-id",
-            base_url="https://example.test",
-            app_id="test-app-id",
-            product="test-product",
-            area_code=area_code,
-        )
-
-    def test_password_is_always_md5_hashed_for_login(self):
-        recorder = UrlopenRecorder(
-            [
-                (
-                    200,
-                    {
-                        "token": {"token": "token-1", "refreshToken": "refresh-1", "expireAt": 9999999999999},
-                        "user": {"userId": 123},
-                    },
-                )
-            ]
-        )
-
-        with patch.object(api.urllib.request, "urlopen", recorder):
-            auth = self.make_client(password="plain-password").login()
-
-        self.assertEqual(auth.token, "token-1")
-        payload = recorder.payloads()[0]
-        self.assertEqual(payload["password"], hashlib.md5(b"plain-password").hexdigest())
-        self.assertNotEqual(payload["password"], "plain-password")
-        self.assertEqual(payload["areaCode"], "")
-        self.assertNotIn("appId", payload)
-
-    def test_login_accepts_standard_data_envelope(self):
-        recorder = UrlopenRecorder(
-            [
-                (
-                    200,
-                    {
-                        "code": 0,
-                        "message": "success",
-                        "data": {
-                            "token": {
-                                "token": "wrapped-token",
-                                "refreshToken": "wrapped-refresh",
-                                "expireAt": 9999999999999,
-                            },
-                            "user": {"userId": 321},
-                        },
-                    },
-                )
-            ]
-        )
-
-        with patch.object(api.urllib.request, "urlopen", recorder):
-            auth = self.make_client().login()
-
-        self.assertEqual(auth.token, "wrapped-token")
-        self.assertEqual(auth.refresh_token, "wrapped-refresh")
-        self.assertEqual(auth.user_id, 321)
-
-    def test_login_sends_region_without_authenticated_product_header(self):
-        recorder = UrlopenRecorder(
-            [
-                (
-                    200,
-                    {
-                        "token": {"token": "token-1", "refreshToken": None, "expireAt": 9999999999999},
-                        "user": {"userId": 123},
-                    },
-                )
-            ]
-        )
-
-        with patch.object(api.urllib.request, "urlopen", recorder):
-            self.make_client(area_code="RU").login()
-
-        headers = {key.lower(): value for key, value in recorder.requests[0].headers.items()}
-        self.assertNotIn("product", headers)
-        self.assertEqual(
-            recorder.payloads()[0],
-            {
-                "account": "user@example.com",
-                "password": hashlib.md5(b"secret").hexdigest(),
-                "accountType": "1",
-                "areaCode": "RU",
-            },
-        )
-
-    def test_email_login_tries_email_account_type_first_then_falls_back(self):
-        recorder = UrlopenRecorder(
-            [
-                (200, {"code": 2004, "message": "user not found"}),
-                (
-                    200,
-                    {
-                        "token": {"token": "token-2", "refreshToken": None, "expireAt": 9999999999999},
-                        "user": {"userId": 456},
-                    },
-                ),
-            ]
-        )
-
-        with patch.object(api.urllib.request, "urlopen", recorder):
-            auth = self.make_client(account="email@example.com").login()
-
-        self.assertEqual(auth.user_id, 456)
-        self.assertEqual([payload["accountType"] for payload in recorder.payloads()], ["1", "0"])
-
-    def test_phone_login_tries_phone_account_type_first(self):
-        recorder = UrlopenRecorder(
-            [
-                (
-                    200,
-                    {
-                        "token": {"token": "token-3", "refreshToken": None, "expireAt": 9999999999999},
-                        "user": {"userId": 789},
-                    },
-                )
-            ]
-        )
-
-        with patch.object(api.urllib.request, "urlopen", recorder):
-            self.make_client(account="380001112233").login()
-
-        self.assertEqual(recorder.payloads()[0]["accountType"], "0")
-
-    def test_authenticated_device_request_sends_auth_headers(self):
-        recorder = UrlopenRecorder(
-            [
-                (
-                    200,
-                    {
-                        "token": {"token": "auth-token", "refreshToken": None, "expireAt": 9999999999999},
-                        "user": {"userId": 100},
-                    },
-                ),
-                (
-                    200,
-                    {
-                        "code": 0,
-                        "data": [
-                            {
-                                "serialNumber": "SN123",
-                                "deviceStatus": 1,
-                                "deviceName": "Smart Cat Litter Box",
-                            }
-                        ],
-                    },
-                ),
-                (200, {"code": 0, "data": {}}),
-            ]
-        )
-
-        with patch.object(api.urllib.request, "urlopen", recorder):
-            devices = self.make_client().get_devices()
-
-        self.assertEqual(devices[0]["serialNumber"], "SN123")
-        headers = {key.lower(): value for key, value in recorder.requests[1].headers.items()}
-        self.assertEqual(headers["authorization"], "auth-token")
-        self.assertEqual(headers["product"], "test-product")
-        self.assertEqual(headers["x-ubt-appid"], "test-app-id")
-        self.assertEqual(headers["x-ubt-deviceid"], "device-id")
-        self.assertIn(" v2", headers["x-ubt-sign"])
-
-    def test_authenticated_request_relogs_once_after_401(self):
-        recorder = UrlopenRecorder(
-            [
-                (
-                    200,
-                    {
-                        "token": {"token": "revoked-token", "refreshToken": None, "expireAt": 9999999999999},
-                        "user": {"userId": 100},
-                    },
-                ),
-                (401, {"code": None, "message": "No message available"}),
-                (
-                    200,
-                    {
-                        "token": {"token": "fresh-token", "refreshToken": None, "expireAt": 9999999999999},
-                        "user": {"userId": 100},
-                    },
-                ),
-                (200, {"code": 0, "data": [{"serialNumber": "SN123"}]}),
-            ]
-        )
-
-        with patch.object(api.urllib.request, "urlopen", recorder):
-            devices = self.make_client().get_devices()
-
-        self.assertEqual(devices, [{"serialNumber": "SN123"}])
-        self.assertEqual(len(recorder.requests), 4)
-        first_headers = {key.lower(): value for key, value in recorder.requests[1].headers.items()}
-        retry_headers = {key.lower(): value for key, value in recorder.requests[3].headers.items()}
-        self.assertEqual(first_headers["authorization"], "revoked-token")
-        self.assertEqual(retry_headers["authorization"], "fresh-token")
-
-    def test_authenticated_request_does_not_loop_when_retry_is_401(self):
-        recorder = UrlopenRecorder(
-            [
-                (
-                    200,
-                    {
-                        "token": {"token": "revoked-token", "refreshToken": None, "expireAt": 9999999999999},
-                        "user": {"userId": 100},
-                    },
-                ),
-                (401, {"message": "revoked"}),
-                (
-                    200,
-                    {
-                        "token": {"token": "retry-token", "refreshToken": None, "expireAt": 9999999999999},
-                        "user": {"userId": 100},
-                    },
-                ),
-                (401, {"message": "still unauthorized"}),
-            ]
-        )
-
-        with patch.object(api.urllib.request, "urlopen", recorder):
-            with self.assertRaises(api.UbpetApiError) as raised:
-                self.make_client().get_devices()
-
-        self.assertEqual(raised.exception.status, 401)
-        self.assertEqual(len(recorder.requests), 4)
-
-    def test_set_auto_clean_delay_sends_switch_update_payload_in_seconds(self):
-        recorder = UrlopenRecorder(
-            [
-                (
-                    200,
-                    {
-                        "token": {"token": "auth-token", "refreshToken": None, "expireAt": 9999999999999},
-                        "user": {"userId": 100},
-                    },
-                ),
-                (200, {"code": 0, "message": "success", "data": None, "success": True}),
-            ]
-        )
-
-        with patch.object(api.urllib.request, "urlopen", recorder):
-            self.make_client().set_auto_clean_delay("SN123", 10)
-
-        self.assertEqual(recorder.requests[1].selector, "/catbox-server/box/config/switch/update")
-        self.assertEqual(recorder.requests[1].get_method(), "PUT")
-        self.assertEqual(
-            recorder.payloads()[1],
-            {
-                "serialNumber": "SN123",
-                "functionType": 2,
-                "controlSwitch": 1,
-                "optionInt": 600,
-            },
-        )
-
-    def test_set_auto_clean_enabled_sends_switch_payload_with_existing_delay(self):
-        recorder = UrlopenRecorder(
-            [
-                (
-                    200,
-                    {
-                        "token": {"token": "auth-token", "refreshToken": None, "expireAt": 9999999999999},
-                        "user": {"userId": 100},
-                    },
-                ),
-                (200, {"code": 0, "message": "success", "data": None, "success": True}),
-            ]
-        )
-
-        with patch.object(api.urllib.request, "urlopen", recorder):
-            self.make_client().set_auto_clean_enabled("SN123", False, 480)
-
-        self.assertEqual(recorder.requests[1].selector, "/catbox-server/box/config/switch/update")
-        self.assertEqual(recorder.requests[1].get_method(), "PUT")
-        self.assertEqual(
-            recorder.payloads()[1],
-            {
-                "serialNumber": "SN123",
-                "functionType": 2,
-                "controlSwitch": 0,
-                "optionInt": 480,
-            },
-        )
-
-    def test_reset_box_use_times_sends_confirmed_payload(self):
-        recorder = UrlopenRecorder(
-            [
-                (
-                    200,
-                    {
-                        "token": {"token": "auth-token", "refreshToken": None, "expireAt": 9999999999999},
-                        "user": {"userId": 100},
-                    },
-                ),
-                (200, {"code": 0, "message": "success", "data": "reset success", "success": True}),
-            ]
-        )
-
-        with patch.object(api.urllib.request, "urlopen", recorder):
-            self.make_client().reset_box_use_times("SN123")
-
-        self.assertEqual(recorder.requests[1].selector, "/catbox-server/box/config/box-use-times/reset")
-        self.assertEqual(recorder.requests[1].get_method(), "PUT")
-        self.assertEqual(
-            recorder.payloads()[1],
-            {
-                "boxUseTimes": 0,
-                "serialNumber": "SN123",
-            },
-        )
-
-    def test_set_deodorant_alert_sends_deodorant_switch_payload(self):
-        recorder = UrlopenRecorder(
-            [
-                (
-                    200,
-                    {
-                        "token": {"token": "auth-token", "refreshToken": None, "expireAt": 9999999999999},
-                        "user": {"userId": 100},
-                    },
-                ),
-                (200, {"code": 0, "message": "success", "data": None, "success": True}),
-            ]
-        )
-
-        with patch.object(api.urllib.request, "urlopen", recorder):
-            self.make_client().set_deodorant_alert("SN123", True)
-
-        self.assertEqual(recorder.requests[1].selector, "/catbox-server/app/deodorant-block/switch")
-        self.assertEqual(recorder.requests[1].get_method(), "POST")
-        self.assertEqual(
-            recorder.payloads()[1],
-            {
-                "serialNumber": "SN123",
-                "alertSwitch": 1,
-            },
-        )
-
-    def test_get_box_records_sends_record_query_payload(self):
-        recorder = UrlopenRecorder(
-            [
-                (
-                    200,
-                    {
-                        "token": {"token": "auth-token", "refreshToken": None, "expireAt": 9999999999999},
-                        "user": {"userId": 100},
-                    },
-                ),
-                (
-                    200,
-                    {
-                        "code": 0,
-                        "data": {
-                            "records": [
-                                {
-                                    "eventType": 3,
-                                    "eventTime": 1780553570000,
-                                    "timeStr": "2026-06-04 14:12:50",
-                                }
-                            ]
-                        },
-                    },
-                ),
-            ]
-        )
-
-        with patch.object(api.urllib.request, "urlopen", recorder):
-            records = self.make_client().get_box_records("SN123", 0, 1)
-
-        self.assertEqual(records[0]["eventType"], 3)
-        self.assertEqual(recorder.requests[1].selector, "/catbox-server/web/box/record/new")
-        self.assertEqual(recorder.requests[1].get_method(), "POST")
-        self.assertEqual(
-            recorder.payloads()[1],
-            {
-                "eventTime": "0",
-                "serialNumber": "SN123",
-                "size": 1,
-                "messageType": 0,
-            },
-        )
-
-    def test_get_im_credentials_sends_type_2_payload(self):
-        recorder = UrlopenRecorder(
-            [
-                (
-                    200,
-                    {
-                        "token": {"token": "auth-token", "refreshToken": None, "expireAt": 9999999999999},
-                        "user": {"userId": 100},
-                    },
-                ),
-                (
-                    200,
-                    {
-                        "code": 0,
-                        "data": {
-                            "clientId": "client-id",
-                            "mqttUserName": "mqtt-user",
-                            "mqttPassword": "mqtt-pass",
-                            "pubTopic": "pub/topic",
-                            "subTopic": "sub/topic",
-                            "uid": "account-uid",
-                        },
-                    },
-                ),
-            ]
-        )
-
-        with patch.object(api.urllib.request, "urlopen", recorder):
-            credentials = self.make_client().get_im_credentials()
-
-        self.assertEqual(credentials["clientId"], "client-id")
-        self.assertEqual(recorder.requests[1].selector, "/v1/ubtechinc-im-manager/im/login")
-        self.assertEqual(recorder.requests[1].get_method(), "POST")
-        self.assertEqual(recorder.payloads()[1], {"type": 2})
-
-    def test_get_im_friends_returns_contact_list(self):
-        recorder = UrlopenRecorder(
-            [
-                (
-                    200,
-                    {
-                        "token": {"token": "auth-token", "refreshToken": None, "expireAt": 9999999999999},
-                        "user": {"userId": 100},
-                    },
-                ),
-                (
-                    200,
-                    {
-                        "code": 0,
-                        "data": [
-                            {
-                                "userName": "SN123",
-                                "userId": "device-uid",
-                                "onlineStatus": 1,
-                            }
-                        ],
-                    },
-                ),
-                (200, {"code": 0, "data": {}}),
-            ]
-        )
-
-        with patch.object(api.urllib.request, "urlopen", recorder):
-            friends = self.make_client().get_im_friends()
-
-        self.assertEqual(friends[0]["userName"], "SN123")
-        self.assertEqual(recorder.requests[1].selector, "/v1/ubtechinc-im-manager/im/friends")
-        self.assertEqual(recorder.requests[1].get_method(), "GET")
-
-    def test_set_time_point_sends_time_point_payload(self):
-        recorder = UrlopenRecorder(
-            [
-                (
-                    200,
-                    {
-                        "token": {"token": "auth-token", "refreshToken": None, "expireAt": 9999999999999},
-                        "user": {"userId": 100},
-                    },
-                ),
-                (200, {"code": 0, "message": "success", "data": None, "success": True}),
-            ]
-        )
-
-        with patch.object(api.urllib.request, "urlopen", recorder):
-            self.make_client().set_time_point(
-                "SN123",
-                config_id=6874,
-                function_type=1,
-                open_switch=1,
-                time_hour=19,
-                time_minute=30,
-                option_int=28,
-            )
-
-        self.assertEqual(recorder.requests[1].selector, "/catbox-server/box/config/timePoint/update")
-        self.assertEqual(recorder.requests[1].get_method(), "PUT")
-        self.assertEqual(
-            recorder.payloads()[1],
-            {
-                "serialNumber": "SN123",
-                "configId": 6874,
-                "functionType": 1,
-                "openSwitch": 1,
-                "timeHour": 19,
-                "timeMinute": 30,
-                "optionInt": 28,
-            },
-        )
-
-    def test_set_time_period_sends_time_period_payload(self):
-        recorder = UrlopenRecorder(
-            [
-                (
-                    200,
-                    {
-                        "token": {"token": "auth-token", "refreshToken": None, "expireAt": 9999999999999},
-                        "user": {"userId": 100},
-                    },
-                ),
-                (200, {"code": 0, "message": "success", "data": None, "success": True}),
-            ]
-        )
-
-        with patch.object(api.urllib.request, "urlopen", recorder):
-            self.make_client().set_time_period(
-                "SN123",
-                config_id=10940,
-                function_type=1,
-                open_switch=1,
-                start_hour=23,
-                start_minute=0,
-                end_hour=6,
-                end_minute=30,
-            )
-
-        self.assertEqual(recorder.requests[1].selector, "/catbox-server/box/config/timePeriod/update")
-        self.assertEqual(recorder.requests[1].get_method(), "PUT")
-        self.assertEqual(
-            recorder.payloads()[1],
-            {
-                "serialNumber": "SN123",
-                "functionType": 1,
-                "openSwitch": 1,
-                "configId": 10940,
-                "startTimeHour": 23,
-                "startTimeMinute": 0,
-                "endTimeHour": 6,
-                "endTimeMinute": 30,
-            },
-        )
-
-    def test_signer_matches_recovered_algorithm_with_fixed_time_and_nonce(self):
-        signer = api.UbtV2Signer("app-key")
-        with (
-            patch.object(api.time, "time", return_value=1234567890),
-            patch.object(api.random, "choice", return_value="A"),
-        ):
-            signature = signer.sign(device_id="device-id")
-
-        digest = hashlib.md5("1234567890app-keyAAAAAAAAAAdevice-id".encode("utf-8")).hexdigest()
-        self.assertEqual(signature, f"{digest} 1234567890 AAAAAAAAAA v2")
-
-    def test_dashboard_keeps_required_device_when_optional_endpoint_fails(self):
-        client = self.make_client()
-        client.auth = api.UbpetAuth(token="token", refresh_token=None, expires_at_ms=9999999999999, user_id=1)
-        client.get_devices = lambda: [{"serialNumber": "SN123", "deviceName": "Box"}]
-        client.get_all_config = lambda serial: {"wifiName": "wifi"}
-        client.get_box_use_times = lambda serial: {"boxUseTimes": 10}
-        client.get_deodorant_status = lambda serial: (_ for _ in ()).throw(api.UbpetApiError(500, {"code": 1}))
-        client.get_device_online = lambda serial: {"online": True}
-        client.get_cats = lambda: [{"catInfoId": 5, "nickname": "Cat"}]
-        client.get_box_records = lambda *args: []
-        client.get_capabilities = lambda *args: {"values": []}
-
-        data = client.get_dashboard()
-
-        self.assertEqual(data["devices"]["SN123"]["device"]["deviceName"], "Box")
-        self.assertEqual(data["devices"]["SN123"]["config"]["wifiName"], "wifi")
-        self.assertEqual(data["devices"]["SN123"]["deodorant"], {})
-        self.assertEqual(data["cats"][0]["nickname"], "Cat")
-
-    def test_require_helpers_reject_bad_shapes(self):
-        with self.assertRaises(api.UbpetApiError):
-            api._require_dict({"code": 0, "data": []})
-        with self.assertRaises(api.UbpetApiError):
-            api._require_list({"code": 0, "data": {}})
-
-
-if __name__ == "__main__":
-    unittest.main()
-
-
-def load_diagnostics_module():
-    import types
-
-    hass_module = types.ModuleType("homeassistant")
-    config_entries_module = types.ModuleType("homeassistant.config_entries")
-    core_module = types.ModuleType("homeassistant.core")
-    config_entries_module.ConfigEntry = object
-    core_module.HomeAssistant = object
-    sys.modules.setdefault("homeassistant", hass_module)
-    sys.modules.setdefault("homeassistant.config_entries", config_entries_module)
-    sys.modules.setdefault("homeassistant.core", core_module)
-
-    package = types.ModuleType("ubpet_diagnostics_test")
-    package.__path__ = [str(API_PATH.parent)]
-    sys.modules["ubpet_diagnostics_test"] = package
-    const_module = types.ModuleType("ubpet_diagnostics_test.const")
-    const_module.DOMAIN = "ubpet_cat_litter_hub"
-    sys.modules["ubpet_diagnostics_test.const"] = const_module
-
-    path = Path(__file__).resolve().parents[2] / "custom_components" / "ubpet_cat_litter_hub" / "diagnostics.py"
-    diag_spec = importlib.util.spec_from_file_location("ubpet_diagnostics_test.diagnostics", path)
-    diagnostics = importlib.util.module_from_spec(diag_spec)
-    assert diag_spec.loader is not None
-    sys.modules[diag_spec.name] = diagnostics
-    diag_spec.loader.exec_module(diagnostics)
-    return diagnostics
-
-
-class DiagnosticsUnitTests(unittest.TestCase):
-    def test_redact_removes_credentials_and_identifiers_but_keeps_config_values(self):
-        diagnostics = load_diagnostics_module()
-
-        payload = {
-            "account": "user@example.com",
-            "password": "secret",
-            "device_id": "device-id",
-            "config": {
-                "wifiName": "My_IoT",
-                "gmtTimeZone": "GMT+03:00",
-                "boxFunctionVOList": [{"firmwareVersion": "main_v1"}],
-            },
-            "cats": [{"nickname": "Cat", "icon": "https://private.example/cat.jpg"}],
-        }
-
-        redacted = diagnostics._redact(payload)
-
-        self.assertEqual(redacted["account"], diagnostics.REDACTED)
-        self.assertEqual(redacted["password"], diagnostics.REDACTED)
-        self.assertEqual(redacted["device_id"], diagnostics.REDACTED)
-        self.assertEqual(redacted["config"]["wifiName"], diagnostics.REDACTED)
-        self.assertEqual(redacted["config"]["gmtTimeZone"], "GMT+03:00")
-        self.assertEqual(redacted["cats"][0]["nickname"], diagnostics.REDACTED)
-        self.assertEqual(redacted["cats"][0]["icon"], diagnostics.REDACTED)
+from collections import deque
+from contextlib import contextmanager
+from types import SimpleNamespace
+
+import pytest
+from test_history import load, privacy
+
+api = load("api")
+
+
+def session(token="first"):
+    return {
+        "token": {"token": token, "refreshToken": "refresh", "expireAt": 9999999999999},
+        "user": {"userId": 42},
+    }
+
+
+@pytest.fixture
+def client():
+    return api.UbpetClient(
+        account="demo@example.test", password="fixture-pass", app_key="fixture-app-key",
+        device_id="fixture-install", base_url="https://eu.example.test", app_id="fixture-app",
+        product="fixture-model", area_code="DE",
+    )
+
+
+@pytest.fixture
+def server(monkeypatch):
+    calls = []
+    replies = deque()
+
+    @contextmanager
+    def accept(request, *, timeout):
+        assert timeout > 0
+        calls.append((
+            request.get_method(), request.selector,
+            json.loads(request.data) if request.data is not None else None,
+            {name.lower(): value for name, value in request.header_items()},
+        ))
+        status, data = replies.popleft()
+        yield SimpleNamespace(status=status, read=lambda: json.dumps(data).encode())
+
+    monkeypatch.setattr(api.urllib.request, "urlopen", accept)
+    return calls, replies
+
+
+@pytest.mark.parametrize("wrapped", [True, False])
+def test_login_reads_both_response_formats(client, server, wrapped):
+    calls, replies = server
+    reply = session()
+    replies.append((200, {"code": 0, "data": reply} if wrapped else reply))
+    auth = client.login()
+    assert (auth.token, auth.user_id, auth.refresh_token) == ("first", 42, "refresh")
+    verb, path, body, headers = calls[0]
+    assert (verb, path) == ("PUT", "/user-service-rest/v2/user/login")
+    assert body == {
+        "account": "demo@example.test", "password": hashlib.md5(b"fixture-pass").hexdigest(),
+        "accountType": "1", "areaCode": "DE",
+    }
+    assert "product" not in headers and "authorization" not in headers
+
+
+@pytest.mark.parametrize(("account", "order"), [("a@example.test", ["1", "0"]), ("33123456", ["0", "1"])])
+def test_account_type_fallback(client, server, account, order):
+    calls, replies = server
+    client.account = account
+    replies.extend([(200, {"code": 2004}), (200, session())])
+    assert client.login().token == "first"
+    assert [call[2]["accountType"] for call in calls] == order
+
+
+@pytest.mark.parametrize("second_status", [200, 401])
+def test_only_one_retry_uses_a_fresh_token(client, server, second_status):
+    calls, replies = server
+    devices = [{"serialNumber": "fixture-box"}]
+    replies.extend([(200, session()), (401, {}), (200, session("renewed")), (second_status, {"data": devices})])
+    if second_status == 200:
+        assert client.get_devices() == devices
+    else:
+        with pytest.raises(api.UbpetApiError) as rejected:
+            client.get_devices()
+        assert rejected.value.status == 401
+    assert [call[3].get("authorization") for call in calls] == [None, "first", None, "renewed"]
+    assert calls[1][1] == "/user-service-rest/v2/robot/common/device/list"
+    device_headers = calls[1][3]
+    assert device_headers["product"] == "fixture-model"
+    assert device_headers["x-ubt-appid"] == "fixture-app"
+    assert device_headers["x-ubt-deviceid"] == "fixture-install"
+    assert device_headers["x-ubt-sign"].endswith(" v2")
+
+
+_CONFIG = "/catbox-server/box/config/"
+_SWITCH = _CONFIG + "switch/update"
+_DEODORANT = "/catbox-server/app/deodorant-block/"
+_IM = "/v1/ubtechinc-im-manager/im/"
+_SERIAL = "fixture-box"
+
+
+@pytest.mark.parametrize(("command", "args", "kwargs", "method", "path", "fields"), [
+    ("set_auto_clean_delay", (10,), {}, "PUT", _SWITCH, {
+        "functionType": 2, "controlSwitch": 1, "optionInt": 600,
+    }),
+    ("set_auto_clean_enabled", (False, 480), {}, "PUT", _SWITCH, {
+        "functionType": 2, "controlSwitch": 0, "optionInt": 480,
+    }),
+    ("reset_box_use_times", (), {}, "PUT", _CONFIG + "box-use-times/reset", {"boxUseTimes": 0}),
+    ("set_deodorant_alert", (True,), {}, "POST", _DEODORANT + "switch", {"alertSwitch": 1}),
+    ("set_time_point", (), {
+        "config_id": 8, "function_type": 1, "open_switch": 1, "time_hour": 19, "time_minute": 30, "option_int": 28,
+    }, "PUT", _CONFIG + "timePoint/update", {
+        "configId": 8, "functionType": 1, "openSwitch": 1, "timeHour": 19, "timeMinute": 30, "optionInt": 28,
+    }),
+    ("set_time_period", (), {
+        "config_id": 9, "function_type": 1, "open_switch": 1,
+        "start_hour": 23, "start_minute": 0, "end_hour": 6, "end_minute": 30,
+    }, "PUT", _CONFIG + "timePeriod/update", {
+        "configId": 9, "functionType": 1, "openSwitch": 1,
+        "startTimeHour": 23, "startTimeMinute": 0, "endTimeHour": 6, "endTimeMinute": 30,
+    }),
+])
+def test_configuration_write_contract(client, server, command, args, kwargs, method, path, fields):
+    calls, replies = server
+    replies.extend([(200, session()), (200, {"code": 0, "data": None})])
+    getattr(client, command)(_SERIAL, *args, **kwargs)
+    assert calls[1][:3] == (method, path, dict(fields, serialNumber=_SERIAL))
+
+
+def test_visit_query_filters_non_records(client, server):
+    calls, replies = server
+    visit = {"eventType": 3, "eventTime": 1780553570000}
+    replies.extend([(200, session()), (200, {"data": {"records": [visit, None]}})])
+    assert client.get_box_records(_SERIAL, 0, 2) == [visit]
+    assert calls[1][:3] == (
+        "POST", "/catbox-server/web/box/record/new",
+        {"eventTime": "0", "serialNumber": _SERIAL, "size": 2, "messageType": 0},
+    )
+
+
+def test_device_messaging_login_and_contacts(client, server):
+    calls, replies = server
+    credentials = {"clientId": "fixture-client", "subTopic": "fixture/in", "pubTopic": "fixture/out"}
+    contacts = [{"userId": "fixture-uid", "userName": _SERIAL}]
+    replies.extend([(200, session()), (200, {"data": credentials}), (200, {"data": contacts})])
+    assert client.get_im_credentials() == credentials
+    assert client.get_im_friends() == contacts
+    assert calls[1][:3] == ("POST", _IM + "login", {"type": 2})
+    assert calls[2][:3] == ("GET", _IM + "friends", None)
+
+
+def test_signature_bytes(monkeypatch):
+    monkeypatch.setattr(api.time, "time", lambda: 1234567890)
+    monkeypatch.setattr(api.random, "choice", lambda _: "A")
+    actual = api.UbtV2Signer("app-key").sign(device_id="device-id")
+    expected = hashlib.md5(b"1234567890app-keyAAAAAAAAAAdevice-id").hexdigest()
+    assert actual == expected + " 1234567890 AAAAAAAAAA v2"
+
+
+def test_optional_failure_leaves_device_and_marks_section_stale(client, monkeypatch):
+    client.auth = api.UbpetAuth("token", None, None, 42)
+    fixtures = {
+        "get_devices": [{"serialNumber": _SERIAL, "deviceName": "Box"}],
+        "get_all_config": {"wifiName": "fixture-network"},
+        "get_box_use_times": {"boxUseTimes": 10},
+        "get_device_online": {"online": True},
+        "get_cats": [{"catInfoId": 5, "nickname": "Cat"}],
+        "get_box_records": [],
+        "get_capabilities": {"values": []},
+    }
+    for method, value in fixtures.items():
+        monkeypatch.setattr(client, method, lambda *_, result=value: result)
+
+    def unavailable(_):
+        raise api.UbpetApiError(500, {"code": 1})
+
+    monkeypatch.setattr(client, "get_deodorant_status", unavailable)
+    state = client.get_dashboard()
+    box = state["devices"][_SERIAL]
+    assert box["device"]["deviceName"] == "Box"
+    assert box["config"]["wifiName"] == "fixture-network"
+    assert box["deodorant"] == {} and not box["fresh"]["deodorant"]
+    assert state["cats"][0]["nickname"] == "Cat"
+
+
+@pytest.mark.parametrize(("shape", "wrong"), [(dict, []), (list, {})])
+def test_reject_response_shape(client, server, shape, wrong):
+    _, replies = server
+    replies.extend([(200, session()), (200, {"data": wrong})])
+    operation = client.get_im_credentials if shape is dict else client.get_devices
+    with pytest.raises(api.UbpetApiError):
+        operation()
+
+
+def test_diagnostics_hide_identifiers_but_keep_firmware():
+    clean = privacy.redact({
+        "account": "person@example.test", "password": "fixture-secret", "device_id": "fixture-id",
+        "config": {"wifiName": "fixture-network", "gmtTimeZone": "GMT+03:00", "firmwareVersion": "v1"},
+        "cats": [{"nickname": "Cat", "icon": "https://private.example.test/cat.png"}],
+    })
+    assert {clean[k] for k in ("account", "password", "device_id")} == {"REDACTED"}
+    assert clean["config"] == {"wifiName": "REDACTED", "gmtTimeZone": "GMT+03:00", "firmwareVersion": "v1"}
+    assert clean["cats"] == [{"nickname": "REDACTED", "icon": "REDACTED"}]

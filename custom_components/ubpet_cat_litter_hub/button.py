@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
-from typing import Any
 
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
 from homeassistant.config_entries import ConfigEntry
@@ -16,11 +14,8 @@ from .const import DOMAIN
 from .coordinator import UbpetDataUpdateCoordinator
 from .entities import UbpetDeviceEntity, setup_discovery
 
-_LOGGER = logging.getLogger(__name__)
-
 REST_REQUEST_SERVICE = "__rest_request"
 RESET_WASTE_BIN_SERVICE = "__reset_waste_bin"
-DIAGNOSTIC_SERVICES = {"request_state", REST_REQUEST_SERVICE}
 MOVEMENT_SERVICES = {"start_clean_up", "start_flatten", "start_rise", "start_drop", "resume_clean_up", "resume_flatten"}
 
 
@@ -29,114 +24,57 @@ class UbpetMqttButtonDescription(ButtonEntityDescription):
     service_id: str
 
 
-MQTT_BUTTONS: tuple[UbpetMqttButtonDescription, ...] = (
-    UbpetMqttButtonDescription(
-        key="rest_request",
-        name="REST request",
-        icon="mdi:cloud-refresh",
-        translation_key="rest_request",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        service_id=REST_REQUEST_SERVICE,
-    ),
-    UbpetMqttButtonDescription(
-        key="mqtt_request_state",
-        name="Request state",
-        icon="mdi:refresh",
-        translation_key="mqtt_request_state",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        service_id="request_state",
-    ),
-    UbpetMqttButtonDescription(
-        key="reset_waste_bin",
-        name="Reset waste bin",
-        icon="mdi:delete-empty",
-        translation_key="reset_waste_bin",
-        entity_category=EntityCategory.CONFIG,
-        service_id=RESET_WASTE_BIN_SERVICE,
-    ),
-    UbpetMqttButtonDescription(
-        key="mqtt_start_clean_up",
-        name="Start clean",
-        icon="mdi:broom",
-        translation_key="mqtt_start_clean_up",
-        service_id="start_clean_up",
-    ),
-    UbpetMqttButtonDescription(
-        key="mqtt_pause_clean_up",
-        name="Pause clean",
-        icon="mdi:pause",
-        translation_key="mqtt_pause_clean_up",
-        service_id="pause_clean_up",
-    ),
-    UbpetMqttButtonDescription(
-        key="mqtt_resume_clean_up",
-        name="Resume clean",
-        icon="mdi:play",
-        translation_key="mqtt_resume_clean_up",
-        service_id="resume_clean_up",
-    ),
-    UbpetMqttButtonDescription(
-        key="mqtt_start_flatten",
-        name="Flatten",
-        icon="mdi:format-align-middle",
-        translation_key="mqtt_start_flatten",
-        service_id="start_flatten",
-    ),
-    UbpetMqttButtonDescription(
-        key="mqtt_pause_flatten",
-        name="Pause flatten",
-        icon="mdi:pause",
-        translation_key="mqtt_pause_flatten",
-        service_id="pause_flatten",
-    ),
-    UbpetMqttButtonDescription(
-        key="mqtt_resume_flatten",
-        name="Resume flatten",
-        icon="mdi:play",
-        translation_key="mqtt_resume_flatten",
-        service_id="resume_flatten",
-    ),
-    UbpetMqttButtonDescription(
-        key="mqtt_start_rise",
-        entity_registry_enabled_default=False,
-        name="Raise litter rake",
-        icon="mdi:arrow-up-bold",
-        translation_key="mqtt_start_rise",
-        service_id="start_rise",
-    ),
-    UbpetMqttButtonDescription(
-        key="mqtt_start_drop",
-        entity_registry_enabled_default=False,
-        name="Lower litter rake",
-        icon="mdi:arrow-down-bold",
-        translation_key="mqtt_start_drop",
-        service_id="start_drop",
-    ),
-)
+_DIAG = EntityCategory.DIAGNOSTIC
+_CONFIG = EntityCategory.CONFIG
+_RESET_DEODORANT = "__reset_deodorant"
 
-
-MQTT_BUTTONS += (
+# The key is also the registry suffix and the translation key.
+MQTT_BUTTONS = tuple(
     UbpetMqttButtonDescription(
-        key="reset_deodorant",
-        name="Reset deodorant",
-        translation_key="reset_deodorant",
-        icon="mdi:air-filter",
-        entity_category=EntityCategory.CONFIG,
-        service_id="__reset_deodorant",
-    ),
+        key=key, translation_key=key, name=name, icon=icon, service_id=service,
+        entity_category=category, entity_registry_enabled_default=enabled,
+    )
+    for key, name, icon, service, category, enabled in (
+        ("rest_request", "REST request", "mdi:cloud-refresh", REST_REQUEST_SERVICE, _DIAG, True),
+        ("mqtt_request_state", "Request state", "mdi:refresh", "request_state", _DIAG, True),
+        ("reset_waste_bin", "Reset waste bin", "mdi:delete-empty", RESET_WASTE_BIN_SERVICE, _CONFIG, True),
+        ("mqtt_start_clean_up", "Start clean", "mdi:broom", "start_clean_up", None, True),
+        ("mqtt_pause_clean_up", "Pause clean", "mdi:pause", "pause_clean_up", None, True),
+        ("mqtt_resume_clean_up", "Resume clean", "mdi:play", "resume_clean_up", None, True),
+        ("mqtt_start_flatten", "Flatten", "mdi:format-align-middle", "start_flatten", None, True),
+        ("mqtt_pause_flatten", "Pause flatten", "mdi:pause", "pause_flatten", None, True),
+        ("mqtt_resume_flatten", "Resume flatten", "mdi:play", "resume_flatten", None, True),
+        ("mqtt_start_rise", "Raise litter rake", "mdi:arrow-up-bold", "start_rise", None, False),
+        ("mqtt_start_drop", "Lower litter rake", "mdi:arrow-down-bold", "start_drop", None, False),
+        ("reset_deodorant", "Reset deodorant", "mdi:air-filter", _RESET_DEODORANT, _CONFIG, True),
+    )
 )
+_REST_COMMANDS = {REST_REQUEST_SERVICE, RESET_WASTE_BIN_SERVICE, _RESET_DEODORANT}
+_REQUIRED_STATE = {
+    "start_clean_up": (None, "PENDING"),
+    "start_flatten": (None, "PENDING"),
+    "start_rise": (None, "PENDING"),
+    "start_drop": ("RAKING_UP", "PAUSED"),
+    "pause_clean_up": ("CLEANING", "RUNNING"),
+    "resume_clean_up": ("CLEANING", "PAUSED"),
+    "pause_flatten": ("SMOOTHING", "RUNNING"),
+    "resume_flatten": ("SMOOTHING", "PAUSED"),
+}
+_INTERLOCKS = {
+    "toilet_state": (1,), "weigh_sensor": (1,), "motor_state": (1, 2, 3, 4),
+    "foreign_state": (1,), "lid_state": (1,), "box_state": (1,),
+}
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     coordinator: UbpetDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     def build():
-        entities: list[UbpetMqttCommandButton] = []
-        for serial in coordinator.data.get("devices", {}):
-            for description in MQTT_BUTTONS:
-                entity = UbpetMqttCommandButton(coordinator, coordinator.namespace, serial, description)
-                entities.append(entity)
-        return entities
+        return [
+            UbpetMqttCommandButton(coordinator, coordinator.namespace, serial, description)
+            for serial in coordinator.data.get("devices", {})
+            for description in MQTT_BUTTONS
+        ]
 
     setup_discovery(coordinator, entry, async_add_entities, build)
 
@@ -152,52 +90,41 @@ class UbpetMqttCommandButton(UbpetDeviceEntity, ButtonEntity):
         description: UbpetMqttButtonDescription,
     ) -> None:
         super().__init__(coordinator)
-        self._serial = serial
+        self._bind_box(entry_id, serial, description.key)
         self.entity_description = description
-        self._attr_unique_id = f"{entry_id}_{serial}_{description.key}"
 
     @property
     def available(self) -> bool:
         if not super().available:
             return False
-        service_id = self.entity_description.service_id
-        if service_id == REST_REQUEST_SERVICE or service_id in {RESET_WASTE_BIN_SERVICE, "__reset_deodorant"}:
+        command = self.entity_description.service_id
+        if command in _REST_COMMANDS:
             return True
-        if not self.coordinator.transport.connected:
+        transport = self.coordinator.transport
+        if not transport.connected:
             return False
-        if service_id == "request_state":
+        if command == "request_state":
             return True
-        item = self.coordinator.data.get("devices", {}).get(self._serial)
-        mode = _mqtt_work_mode(item)
-        state = effective_work_state(mode, _mqtt_work_state(item))
-        last_update = self.coordinator.last_mqtt_update_at(self._serial)
-        connected_since = self.coordinator.transport.connected_since
-        if state is None or last_update is None or connected_since is None or last_update < connected_since:
+
+        snapshot = (self._device_item or {}).get("mqtt_state")
+        seen = self.coordinator.last_mqtt_update_at(self._serial)
+        if not isinstance(snapshot, dict) or seen is None or transport.connected_since is None:
             return False
-        live = (item or {}).get("mqtt_state", {})
-        if service_id in MOVEMENT_SERVICES and (
-            live.get("cat_inside")
-            or live.get("toilet_state") == 1
-            or live.get("weigh_sensor") == 1
-            or live.get("motor_state") in (1, 2, 3, 4)
-            or live.get("foreign_state") == 1
-            or live.get("lid_state") == 1
-            or live.get("box_state") == 1
-        ):
+        if seen < transport.connected_since:
             return False
-        if service_id == "start_drop":
-            return mode == "RAKING_UP" and state == "PAUSED"
-        if service_id in {"start_clean_up", "start_flatten", "start_rise"}:
-            return state == "PENDING"
-        if service_id == "pause_clean_up":
-            return mode == "CLEANING" and state == "RUNNING"
-        if service_id == "resume_clean_up":
-            return mode == "CLEANING" and state == "PAUSED"
-        if service_id == "pause_flatten":
-            return mode == "SMOOTHING" and state == "RUNNING"
-        if service_id == "resume_flatten":
-            return mode == "SMOOTHING" and state == "PAUSED"
-        return True
+
+        mode = snapshot.get("w_mode_app_name")
+        raw_state = snapshot.get("w_state_app_name")
+        if not isinstance(raw_state, str):
+            return False
+        state = effective_work_state(mode if isinstance(mode, str) else None, raw_state)
+        if command in MOVEMENT_SERVICES:
+            if snapshot.get("cat_inside") or any(
+                snapshot.get(field) in unsafe_values for field, unsafe_values in _INTERLOCKS.items()
+            ):
+                return False
+        required_mode, required_state = _REQUIRED_STATE.get(command, (None, state))
+        return state == required_state and (required_mode is None or mode == required_mode)
 
     async def async_press(self) -> None:
         if not self.available:
@@ -223,23 +150,3 @@ class UbpetMqttCommandButton(UbpetDeviceEntity, ButtonEntity):
                 self.coordinator.schedule_refresh()
         except (OSError, RuntimeError) as err:
             raise translated_error("command_failed", "Vendor command failed; see connection diagnostics") from err
-
-
-def _mqtt_work_state(item: dict[str, Any] | None) -> str | None:
-    if not isinstance(item, dict):
-        return None
-    mqtt_state = item.get("mqtt_state")
-    if not isinstance(mqtt_state, dict):
-        return None
-    state = mqtt_state.get("w_state_app_name")
-    return state if isinstance(state, str) else None
-
-
-def _mqtt_work_mode(item: dict[str, Any] | None) -> str | None:
-    if not isinstance(item, dict):
-        return None
-    mqtt_state = item.get("mqtt_state")
-    if not isinstance(mqtt_state, dict):
-        return None
-    mode = mqtt_state.get("w_mode_app_name")
-    return mode if isinstance(mode, str) else None

@@ -24,50 +24,29 @@ class UbpetSwitchDescription(SwitchEntityDescription):
     function_type: int | None = None
 
 
-DEODORANT_ALERT = UbpetSwitchDescription(
-    key="deodorant_alert",
-    name="Deodorant alert",
-    icon="mdi:air-filter",
-    translation_key="deodorant_alert",
-    entity_category=EntityCategory.CONFIG,
+def _setting(key, name, icon, **period):
+    return UbpetSwitchDescription(
+        key=key, translation_key=key, name=name, icon=icon,
+        entity_category=EntityCategory.CONFIG, **period,
+    )
+
+
+DEODORANT_ALERT = _setting("deodorant_alert", "Deodorant alert", "mdi:air-filter")
+AUTO_CLEAN = _setting("auto_clean", "Auto clean", "mdi:broom")
+EMPTY_WASTE_BIN_REMINDER = _setting(
+    "empty_waste_bin_reminder", "Empty waste bin reminder", "mdi:bell-ring-outline",
+)
+PERIOD_SWITCHES = (
+    _setting("do_not_disturb", "Do not disturb", "mdi:minus-circle-outline",
+             config_list_key="disturbTimeConfigList", function_type=1),
+    _setting("light_schedule", "Light schedule", "mdi:lightbulb",
+             config_list_key="lightTimeConfigList", function_type=0),
 )
 
-AUTO_CLEAN = UbpetSwitchDescription(
-    key="auto_clean",
-    name="Auto clean",
-    icon="mdi:broom",
-    translation_key="auto_clean",
-    entity_category=EntityCategory.CONFIG,
-)
 
-EMPTY_WASTE_BIN_REMINDER = UbpetSwitchDescription(
-    key="empty_waste_bin_reminder",
-    name="Empty waste bin reminder",
-    icon="mdi:bell-ring-outline",
-    translation_key="empty_waste_bin_reminder",
-    entity_category=EntityCategory.CONFIG,
-)
-
-PERIOD_SWITCHES: tuple[UbpetSwitchDescription, ...] = (
-    UbpetSwitchDescription(
-        key="do_not_disturb",
-        name="Do not disturb",
-        icon="mdi:minus-circle-outline",
-        translation_key="do_not_disturb",
-        entity_category=EntityCategory.CONFIG,
-        config_list_key="disturbTimeConfigList",
-        function_type=1,
-    ),
-    UbpetSwitchDescription(
-        key="light_schedule",
-        name="Light schedule",
-        icon="mdi:lightbulb",
-        translation_key="light_schedule",
-        entity_category=EntityCategory.CONFIG,
-        config_list_key="lightTimeConfigList",
-        function_type=0,
-    ),
-)
+def _read_flag(values, key):
+    value = values.get(key)
+    return None if value is None else value == 1
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
@@ -100,8 +79,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 class UbpetBaseSwitch(UbpetDeviceEntity, SwitchEntity):
     def __init__(self, coordinator: UbpetDataUpdateCoordinator, entry_id: str, serial: str, key: str) -> None:
         super().__init__(coordinator)
-        self._serial = serial
-        self._attr_unique_id = f"{entry_id}_{serial}_{key}"
+        self._bind_box(entry_id, serial, key)
 
 
 class UbpetDeodorantAlertSwitch(UbpetBaseSwitch):
@@ -112,11 +90,7 @@ class UbpetDeodorantAlertSwitch(UbpetBaseSwitch):
 
     @property
     def is_on(self) -> bool | None:
-        item = self._device_item
-        if not item:
-            return None
-        value = item.get("deodorant", {}).get("alertSwitch")
-        return None if value is None else value == 1
+        return _read_flag((self._device_item or {}).get("deodorant", {}), "alertSwitch")
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         await self._set_deodorant_alert(True)
@@ -137,11 +111,7 @@ class UbpetAutoCleanSwitch(UbpetBaseSwitch):
 
     @property
     def is_on(self) -> bool | None:
-        item = self._device_item
-        if not item:
-            return None
-        value = item.get("config", {}).get("sensorSwitch")
-        return None if value is None else value == 1
+        return _read_flag(self._box_config, "sensorSwitch")
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         await self._set_auto_clean(True)
@@ -150,8 +120,7 @@ class UbpetAutoCleanSwitch(UbpetBaseSwitch):
         await self._set_auto_clean(False)
 
     async def _set_auto_clean(self, enabled: bool) -> None:
-        item = self._device_item or {}
-        lazy_time = item.get("config", {}).get("lazyTime")
+        lazy_time = self._box_config.get("lazyTime")
         if lazy_time is None:
             raise translated_error("auto_clean_unknown", "Auto clean state is unknown; wait for a successful update")
         await async_write(
@@ -172,8 +141,7 @@ class UbpetEmptyWasteBinReminderSwitch(UbpetReminderEntity, UbpetBaseSwitch):
 
     @property
     def is_on(self) -> bool | None:
-        value = (self._reminder_config or {}).get("openSwitch")
-        return None if value is None else value == 1
+        return _read_flag(self._reminder_config or {}, "openSwitch")
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         await self._write_reminder(open_switch=1)
@@ -226,13 +194,12 @@ class UbpetPeriodSwitch(UbpetPeriodEntity, UbpetBaseSwitch):
         serial: str,
         description: UbpetSwitchDescription,
     ) -> None:
-        super().__init__(coordinator, entry_id, serial, description.key)
         self.entity_description = description
+        super().__init__(coordinator, entry_id, serial, self.entity_description.key)
 
     @property
     def is_on(self) -> bool | None:
-        value = (self._period_config or {}).get("openSwitch")
-        return None if value is None else value == 1
+        return _read_flag(self._period_config or {}, "openSwitch")
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         await self._write_period(open_switch=1)

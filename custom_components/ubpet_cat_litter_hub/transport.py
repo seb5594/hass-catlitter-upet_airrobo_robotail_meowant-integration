@@ -119,7 +119,7 @@ class AccountTransport:
     def _receive(self, decoded):
         if self._stopped:
             return
-        if decoded.get("type_url", "").endswith(".ForceOfflineNotification"):
+        if (decoded.get("type_url") or "").endswith(".ForceOfflineNotification"):
             self._yielding = True
             # Block REST login immediately, before the supervisor schedules reconnect.
             self.api.auth_paused_until = time.monotonic() + 1800

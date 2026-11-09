@@ -33,11 +33,15 @@ class CatAvailability:
 
 
 class UbpetDeviceEntity(DeviceAvailability, CoordinatorEntity):
-    """Base of every entity that belongs to one litter box. Subclasses set ``_serial``."""
+    """A Home Assistant entity associated with a litter box."""
+
+    def _bind_box(self, namespace: str, serial: str, key: str) -> None:
+        self._serial = serial
+        self._attr_unique_id = "_".join((namespace, serial, key))
 
     @property
     def _device_item(self) -> dict[str, Any] | None:
-        return self.coordinator.data.get("devices", {}).get(self._serial)
+        return (self.coordinator.data or {}).get("devices", {}).get(self._serial)
 
     @property
     def _box_config(self) -> dict[str, Any]:
@@ -58,12 +62,15 @@ class UbpetDeviceEntity(DeviceAvailability, CoordinatorEntity):
 class UbpetCatEntity(CatAvailability, CoordinatorEntity):
     """Base of every entity that belongs to one cat. Subclasses set ``_cat_id``."""
 
+    def _bind_cat(self, namespace: str, cat_id: str, key: str) -> None:
+        self._cat_id = cat_id
+        self._attr_unique_id = "_".join((namespace, "cat", cat_id, key))
+
     @property
     def _cat_data(self) -> dict[str, Any] | None:
-        for cat in self.coordinator.data.get("cats", []):
-            if str(cat.get("catInfoId")) == self._cat_id:
-                return cat
-        return None
+        cats = (self.coordinator.data or {}).get("cats", [])
+        matches = (cat for cat in cats if str(cat.get("catInfoId")) == self._cat_id)
+        return next(matches, None)
 
     @property
     def device_info(self) -> DeviceInfo:

@@ -1,251 +1,94 @@
+"""Check the vendor wire contract using fixed command and telemetry examples."""
 from __future__ import annotations
 
-import importlib.util
-import sys
-import unittest
-from pathlib import Path
-from unittest import mock
+import pytest
+from test_history import load
 
-MQTT_PATH = Path(__file__).resolve().parents[2] / "custom_components" / "ubpet_cat_litter_hub" / "mqtt.py"
-spec = importlib.util.spec_from_file_location("ubpet_mqtt", MQTT_PATH)
-mqtt = importlib.util.module_from_spec(spec)
-assert spec.loader is not None
-sys.modules[spec.name] = mqtt
-spec.loader.exec_module(mqtt)
+wire = load("mqtt")
 
 
-def parse_packet(packet: bytes) -> tuple[int, int, bytes]:
-    remaining = 0
-    multiplier = 1
-    index = 1
-    while True:
-        digit = packet[index]
-        index += 1
-        remaining += (digit & 0x7F) * multiplier
-        if not (digit & 0x80):
-            break
-        multiplier *= 128
-    return packet[0] >> 4, packet[0] & 0x0F, packet[index : index + remaining]
+@pytest.mark.parametrize(("service", "mode", "action"), [
+    ("start_clean_up", 1, 1), ("pause_clean_up", 1, 2), ("resume_clean_up", 1, 3),
+    ("start_flatten", 3, 1), ("pause_flatten", 3, 2), ("resume_flatten", 3, 3),
+    ("start_rise", 7, 1), ("start_drop", 8, 1),
+])
+def test_motion_commands(service, mode, action):
+    message = wire.resolve_service_payload(service, seq=12)
+    assert message.op_body == bytes((8, mode, 16, action))
+    assert wire.summarize_risp_frame(message.risp_frame) == {
+        "risp_cmd": 1019, "risp_seq": 12, "risp_attr": 1,
+        "risp_data_len": 4, "risp_body_hex": message.op_body.hex(),
+        "op_mode": mode, "op_state": action,
+    }
 
 
-class FakeConnection:
-    def __init__(self) -> None:
-        self.buffer = bytearray()
-        self.sent: list[tuple[int, int, bytes]] = []
-
-    def settimeout(self, timeout: float) -> None:
-        self.timeout = timeout
-
-    def recv(self, length: int) -> bytes:
-        if not self.buffer:
-            raise mqtt.socket.timeout()
-        out = bytes(self.buffer[:length])
-        del self.buffer[:length]
-        return out
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc, tb):
-        return False
-
-    def close(self) -> None:
-        pass
-
-    def sendall(self, packet: bytes) -> None:
-        packet_type, flags, payload = parse_packet(packet)
-        self.sent.append((packet_type, flags, payload))
-        if packet_type == 1:
-            self.buffer += mqtt.mqtt_packet(0x20, b"\x00\x00")
-        elif packet_type == 8:
-            packet_id = int.from_bytes(payload[:2], "big")
-            self.buffer += mqtt.mqtt_packet(0x90, packet_id.to_bytes(2, "big") + b"\x01")
+@pytest.mark.parametrize(("service", "frame"), [
+    ("request_state", "db09080210fd0728013801f6"),
+    ("start_clean_up", "db0b080210fb072004280138018b08011001de"),
+])
+def test_reference_command_bytes(service, frame):
+    message = wire.resolve_service_payload(service, seq=1)
+    expected = bytes.fromhex(frame)
+    assert message.risp_frame == expected
+    assert message.command_proto == bytes((8, 2, 18, len(expected))) + expected
 
 
-class FakeReplyConnection(FakeConnection):
-    def sendall(self, packet: bytes) -> None:
-        packet_type, flags, payload = parse_packet(packet)
-        self.sent.append((packet_type, flags, payload))
-        if packet_type == 1:
-            self.buffer += mqtt.mqtt_packet(0x20, b"\x00\x00")
-        elif packet_type == 8:
-            packet_id = int.from_bytes(payload[:2], "big")
-            self.buffer += mqtt.mqtt_packet(0x90, packet_id.to_bytes(2, "big") + b"\x01")
-        elif packet_type == 3:
-            self.buffer += mqtt.mqtt_packet(
-                0x32,
-                mqtt.mqtt_utf8("sub/topic") + (9).to_bytes(2, "big") + b"reply",
-            )
+@pytest.mark.parametrize("service", ["pause_drop", "resume_rise", "start_exchange_sand", "request_state_gid100"])
+def test_unknown_command_does_not_construct_a_frame(service):
+    with pytest.raises(ValueError, match="unknown MQTT"):
+        wire.resolve_service_payload(service, seq=4)
 
 
-def build_receipt_im_message(cid: str, status: str, cause: str = "") -> bytes:
-    receipt = mqtt.field_string(1, status) + mqtt.field_string(2, cause)
-    receipt_any = mqtt.encode_any(mqtt.ANY_RECEIPT_NOTIFICATION_TYPE_URL, receipt)
-    message_content = mqtt.encode_message_content("receipt", receipt_any)
-    return b"".join(
-        [
-            mqtt.field_string(1, cid),
-            mqtt.field_string(2, "100"),
-            mqtt.field_varint(3, 1700000000123),
-            mqtt.field_string(4, "device-uid"),
-            mqtt.field_string(5, "account-uid"),
-            mqtt.field_varint(6, 2),
-            mqtt.field_bytes(7, message_content),
-            mqtt.field_string(8, mqtt.MESSAGE_PROTOCOL_VERSION),
-        ]
+def test_telemetry_without_mode_and_state_uses_the_proto_defaults():
+    state = wire.summarize_all_state_body(bytes.fromhex("185a9001b6beafd106"))
+    assert (state["w_mode_app_name"], state["w_state_app_name"]) == ("IDLE", "PENDING")
+    assert (state["w_mode_name"], state["w_state_name"]) == ("idle", "idle")
+    assert state["w_cause"] == 90
+    assert state["timestamp"] == 1781260086
+
+
+def test_command_envelope_routes_to_the_device(monkeypatch):
+    monkeypatch.setattr(wire.time, "time", lambda: 1700000000.123)
+    monkeypatch.setattr(wire.random, "random", lambda: 0.234567)
+    request = wire.resolve_service_payload("request_state", seq=2, from_uid="account", to_uid="box", gid="105")
+    assert request.cid == "1700000000123+311110"
+    assert request.command_proto in request.im_message
+    decoded = wire.decode_mqtt_payload_safely(request.im_message)
+    assert (decoded["cid"], decoded["gid"]) == (request.cid, "105")
+    assert (decoded["from_uid"], decoded["to_uid"]) == ("account", "box")
+    assert decoded["protocol_version"] == "1.0.1"
+    assert (decoded["risp_cmd"], decoded["risp_seq"]) == (1021, 2)
+
+
+def test_message_counter_fills_the_low_20_bits(monkeypatch):
+    monkeypatch.setattr(wire, "_GID_COUNTER", 0)
+    monkeypatch.setattr(wire.time, "time", lambda: 1780900866.3)
+    assert wire.generate_gid(1780900866300) == "1867409906781388801"
+    assert wire.generate_gid() == "1867409906781388802"
+
+
+def _blob(number, data):
+    """Small fixture builder for the lengths used by this receipt."""
+    return bytes((8 * number + 2, len(data))) + data
+
+
+def test_broker_receipt_contains_vendor_result():
+    type_url = b"type.googleapis.com/rosa.im.protobuf.ReceiptNotification"
+    notice = _blob(1, b"receipt/success")
+    event = _blob(1, b"receipt") + _blob(2, _blob(1, type_url) + _blob(2, notice))
+    packet = _blob(1, b"message-17") + _blob(4, b"box") + _blob(5, b"account") + _blob(7, event)
+    summary = wire.decode_mqtt_payload_safely(packet)
+    assert (summary["cid"], summary["from_uid"], summary["to_uid"]) == ("message-17", "box", "account")
+    assert (summary["content_type"], summary["receipt_status"]) == ("receipt", "receipt/success")
+
+
+@pytest.mark.parametrize("packet", [b"\x3a\x10\x00", b"\x08\x80", b"\x07"])
+def test_malformed_wire_data_is_reported_without_a_callback_exception(packet):
+    assert "decode_error" in wire.decode_mqtt_payload_safely(packet)
+
+
+@pytest.mark.parametrize("url", ["https://eu.example.test/path", "eu.example.test/"])
+def test_mqtt_uses_the_regional_api_host(url):
+    assert wire.mqtt_endpoint(url, {"url": "ssl://ignored.example.test:21001"}) == (
+        "eu.example.test", 21000, "base_url",
     )
-
-
-class MqttCodecUnitTests(unittest.TestCase):
-    def test_operation_payload_hex_matches_recovered_handoff(self):
-        parts = mqtt.build_payload_parts(kind="operation", op_mode=1, op_state=1, seq=1)
-
-        self.assertEqual(parts.op_body.hex(), "08011001")
-        self.assertEqual(parts.risp_frame.hex(), "db0b080210fb072004280138018b08011001de")
-        self.assertEqual(parts.command_proto.hex(), "08021213db0b080210fb072004280138018b08011001de")
-
-    def test_all_state_payload_hex_matches_recovered_handoff(self):
-        parts = mqtt.build_payload_parts(kind="all-state", seq=1)
-
-        self.assertEqual(parts.op_body.hex(), "")
-        self.assertEqual(parts.risp_frame.hex(), "db09080210fd0728013801f6")
-        self.assertEqual(parts.command_proto.hex(), "0802120cdb09080210fd0728013801f6")
-
-    def test_all_state_response_decodes_app_state_names(self):
-        decoded = mqtt.summarize_all_state_body(bytes.fromhex("185a9001b6beafd106"))
-
-        self.assertEqual(decoded["w_mode"], 0)
-        self.assertEqual(decoded["w_mode_name"], "idle")
-        self.assertEqual(decoded["w_mode_app_name"], "IDLE")
-        self.assertEqual(decoded["w_state"], 0)
-        self.assertEqual(decoded["w_state_name"], "idle")
-        self.assertEqual(decoded["w_state_app_name"], "PENDING")
-        self.assertEqual(decoded["w_cause"], 90)
-        self.assertEqual(decoded["timestamp"], 1781260086)
-
-    def test_service_ids_map_to_app_operation_ordinals(self):
-        services = mqtt.SERVICE_ID_MAP
-
-        self.assertEqual(services["start_clean_up"]["op_mode_value"], 1)
-        self.assertEqual(services["start_clean_up"]["op_state_value"], 1)
-        self.assertEqual(services["pause_clean_up"]["op_mode_value"], 1)
-        self.assertEqual(services["pause_clean_up"]["op_state_value"], 2)
-        self.assertEqual(services["resume_clean_up"]["op_mode_value"], 1)
-        self.assertEqual(services["resume_clean_up"]["op_state_value"], 3)
-        self.assertEqual(services["start_flatten"]["op_mode_value"], 3)
-        self.assertEqual(services["start_flatten"]["op_state_value"], 1)
-        self.assertEqual(services["pause_flatten"]["op_mode_value"], 3)
-        self.assertEqual(services["pause_flatten"]["op_state_value"], 2)
-        self.assertEqual(services["resume_flatten"]["op_mode_value"], 3)
-        self.assertEqual(services["resume_flatten"]["op_state_value"], 3)
-        self.assertEqual(services["start_rise"]["op_mode_value"], 7)
-        self.assertEqual(services["start_rise"]["op_state_value"], 1)
-        self.assertEqual(services["start_drop"]["op_mode_value"], 8)
-        self.assertEqual(services["start_drop"]["op_state_value"], 1)
-        self.assertNotIn("start_clean_up_enum1", services)
-        self.assertNotIn("pause_clean_up_enum1", services)
-        self.assertNotIn("start_exchange_sand", services)
-        self.assertNotIn("pause_rise", services)
-        self.assertNotIn("resume_rise", services)
-        self.assertNotIn("pause_drop", services)
-        self.assertNotIn("resume_drop", services)
-        self.assertNotIn("start_clean_up_mode2_state2", services)
-        self.assertNotIn("start_clean_up_mode2_state1", services)
-        self.assertNotIn("request_state_gid100", services)
-        self.assertNotIn("start_clean_up_gid100", services)
-
-    def test_resolve_service_payload_builds_expected_clean_command(self):
-        self.assertEqual(mqtt.resolve_service_payload("start_clean_up", seq=1).op_body.hex(), "08011001")
-        self.assertEqual(mqtt.resolve_service_payload("pause_clean_up", seq=1).op_body.hex(), "08011002")
-        self.assertEqual(mqtt.resolve_service_payload("resume_clean_up", seq=1).op_body.hex(), "08011003")
-        self.assertEqual(
-            mqtt.resolve_service_payload("start_clean_up", seq=1).risp_frame.hex(),
-            "db0b080210fb072004280138018b08011001de",
-        )
-
-    def test_resolve_service_payload_builds_expected_rake_commands(self):
-        self.assertEqual(mqtt.resolve_service_payload("start_rise", seq=1).op_body.hex(), "08071001")
-        self.assertEqual(mqtt.resolve_service_payload("start_drop", seq=1).op_body.hex(), "08081001")
-
-    def test_resolve_service_payload_builds_expected_flatten_command(self):
-        self.assertEqual(mqtt.resolve_service_payload("start_flatten", seq=1).op_body.hex(), "08031001")
-        self.assertEqual(mqtt.resolve_service_payload("pause_flatten", seq=1).op_body.hex(), "08031002")
-        self.assertEqual(mqtt.resolve_service_payload("resume_flatten", seq=1).op_body.hex(), "08031003")
-
-    def test_im_message_wraps_command_proto_when_uids_are_supplied(self):
-        parts = mqtt.build_payload_parts(
-            kind="all-state",
-            seq=1,
-            from_uid="account-uid",
-            to_uid="device-uid",
-            cid="cid-1",
-            gid="100",
-            created_at_ms=1700000000123,
-        )
-
-        self.assertIsNotNone(parts.im_message)
-        self.assertIn(parts.command_proto.hex(), parts.im_message.hex())
-        self.assertIn(b"account-uid", parts.im_message)
-        self.assertIn(b"device-uid", parts.im_message)
-
-    def test_generated_cid_matches_app_timestamp_plus_suffix_shape(self):
-        with (
-            mock.patch.object(mqtt.time, "time", return_value=1700000000.123),
-            mock.patch.object(mqtt.random, "random", return_value=0.234567),
-        ):
-            parts = mqtt.build_payload_parts(
-                kind="all-state",
-                seq=1,
-                from_uid="account-uid",
-                to_uid="device-uid",
-            )
-
-        self.assertEqual(parts.cid, "1700000000123+311110")
-
-    def test_generated_gid_matches_app_timestamp_shape(self):
-        mqtt._GID_COUNTER = 0
-
-        self.assertEqual(mqtt.generate_gid(1780900866300), "1867409906781388801")
-
-    def test_generate_gid_increments_timestamp_shape_counter(self):
-        mqtt._GID_COUNTER = 0
-
-        with mock.patch.object(mqtt.time, "time", return_value=1780900866.300):
-            first = mqtt.generate_gid()
-            second = mqtt.generate_gid()
-
-        self.assertEqual(first, "1867409906781388801")
-        self.assertEqual(second, "1867409906781388802")
-
-    def test_decode_mqtt_payload_summarizes_receipt(self):
-        decoded = mqtt.decode_mqtt_payload_safely(build_receipt_im_message("cid-1", "receipt/success"))
-
-        self.assertEqual(decoded["cid"], "cid-1")
-        self.assertEqual(decoded["from_uid"], "device-uid")
-        self.assertEqual(decoded["to_uid"], "account-uid")
-        self.assertEqual(decoded["content_type"], "receipt")
-        self.assertEqual(decoded["receipt_status"], "receipt/success")
-
-    def test_mqtt_host_from_base_url_strips_scheme_and_path(self):
-        self.assertEqual(mqtt.mqtt_host_from_base_url("https://apis.airrobo-home.com/foo"), "apis.airrobo-home.com")
-        self.assertEqual(mqtt.mqtt_host_from_base_url("apis.airrobo-home.com/"), "apis.airrobo-home.com")
-
-    def test_mqtt_endpoint_uses_base_url_like_android_app(self):
-        self.assertEqual(
-            mqtt.mqtt_endpoint("https://apis-eu.airrobo-home.com", {"url": "ssl://broker.example.test:21001"}),
-            ("apis-eu.airrobo-home.com", 21000, "base_url"),
-        )
-        self.assertEqual(
-            mqtt.mqtt_endpoint("https://apis-eu.airrobo-home.com", {}),
-            ("apis-eu.airrobo-home.com", 21000, "base_url"),
-        )
-
-    def _decode_utf8(self, payload: bytes, offset: int = 0) -> tuple[str, int]:
-        length = int.from_bytes(payload[offset : offset + 2], "big")
-        start = offset + 2
-        end = start + length
-        return payload[start:end].decode("utf-8"), end
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -23,48 +23,32 @@ class UbpetTimeDescription(TimeEntityDescription):
     boundary: str
 
 
-TIME_ENTITIES: tuple[UbpetTimeDescription, ...] = (
+TIME_ENTITIES = tuple(
     UbpetTimeDescription(
-        key="do_not_disturb_start",
-        name="Do not disturb start",
-        icon="mdi:minus-circle-outline",
-        translation_key="do_not_disturb_start",
+        key=f"{feature}_{boundary}",
+        translation_key=f"{feature}_{boundary}",
+        name=f"{label} {boundary}",
+        icon=icon,
         entity_category=EntityCategory.CONFIG,
-        config_list_key="disturbTimeConfigList",
-        function_type=1,
-        boundary="start",
-    ),
-    UbpetTimeDescription(
-        key="do_not_disturb_end",
-        name="Do not disturb end",
-        icon="mdi:minus-circle-outline",
-        translation_key="do_not_disturb_end",
-        entity_category=EntityCategory.CONFIG,
-        config_list_key="disturbTimeConfigList",
-        function_type=1,
-        boundary="end",
-    ),
-    UbpetTimeDescription(
-        key="light_schedule_start",
-        name="Light schedule start",
-        icon="mdi:lightbulb",
-        translation_key="light_schedule_start",
-        entity_category=EntityCategory.CONFIG,
-        config_list_key="lightTimeConfigList",
-        function_type=0,
-        boundary="start",
-    ),
-    UbpetTimeDescription(
-        key="light_schedule_end",
-        name="Light schedule end",
-        icon="mdi:lightbulb",
-        translation_key="light_schedule_end",
-        entity_category=EntityCategory.CONFIG,
-        config_list_key="lightTimeConfigList",
-        function_type=0,
-        boundary="end",
-    ),
+        config_list_key=source,
+        function_type=function,
+        boundary=boundary,
+    )
+    for feature, label, source, function, icon in (
+        ("do_not_disturb", "Do not disturb", "disturbTimeConfigList", 1, "mdi:minus-circle-outline"),
+        ("light_schedule", "Light schedule", "lightTimeConfigList", 0, "mdi:lightbulb"),
+    )
+    for boundary in ("start", "end")
 )
+
+
+def _clock_value(config, hour_key, minute_key):
+    if not config:
+        return None
+    try:
+        return time(*[int(config.get(key, 0)) for key in (hour_key, minute_key)])
+    except (TypeError, ValueError, OverflowError):
+        return None
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
@@ -95,21 +79,13 @@ class UbpetPeriodTime(UbpetPeriodEntity, TimeEntity):
         description: UbpetTimeDescription,
     ) -> None:
         super().__init__(coordinator)
-        self._serial = serial
+        self._bind_box(entry_id, serial, description.key)
         self.entity_description = description
-        self._attr_unique_id = f"{entry_id}_{serial}_{description.key}"
 
     @property
     def native_value(self) -> time | None:
-        config = self._period_config
-        if not config:
-            return None
-        hour_key = f"{self.entity_description.boundary}TimeHour"
-        minute_key = f"{self.entity_description.boundary}TimeMinute"
-        try:
-            return time(int(config.get(hour_key, 0)), int(config.get(minute_key, 0)))
-        except (TypeError, ValueError):
-            return None
+        side = self.entity_description.boundary
+        return _clock_value(self._period_config, side + "TimeHour", side + "TimeMinute")
 
     async def async_set_value(self, value: time) -> None:
         boundary = self.entity_description.boundary
@@ -130,18 +106,11 @@ class UbpetEmptyWasteBinReminderTime(UbpetReminderEntity, TimeEntity):
 
     def __init__(self, coordinator: UbpetDataUpdateCoordinator, entry_id: str, serial: str) -> None:
         super().__init__(coordinator)
-        self._serial = serial
-        self._attr_unique_id = f"{entry_id}_{serial}_empty_waste_bin_reminder_time"
+        self._bind_box(entry_id, serial, self.entity_description.key)
 
     @property
     def native_value(self) -> time | None:
-        config = self._reminder_config
-        if not config:
-            return None
-        try:
-            return time(int(config.get("timeHour", 0)), int(config.get("timeMinute", 0)))
-        except (TypeError, ValueError):
-            return None
+        return _clock_value(self._reminder_config, "timeHour", "timeMinute")
 
     async def async_set_value(self, value: time) -> None:
         await self._write_reminder(time_hour=value.hour, time_minute=value.minute)

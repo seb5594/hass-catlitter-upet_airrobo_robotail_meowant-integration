@@ -41,8 +41,7 @@ class UbpetEmptyWasteBinReminderDaysSelect(UbpetReminderEntity, SelectEntity):
 
     def __init__(self, coordinator: UbpetDataUpdateCoordinator, namespace: str, serial: str) -> None:
         super().__init__(coordinator)
-        self._serial = serial
-        self._attr_unique_id = f"{namespace}_{serial}_empty_waste_bin_reminder_days_select"
+        self._bind_box(namespace, serial, self.entity_description.key)
 
     @property
     def current_option(self) -> str | None:

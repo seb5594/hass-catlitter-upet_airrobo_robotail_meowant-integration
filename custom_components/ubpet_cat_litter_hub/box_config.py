@@ -67,3 +67,15 @@ def effective_work_state(mode: str | None, state: str | None) -> str | None:
     BLOCKED and PAUSED are never rewritten.
     """
     return "PENDING" if mode == "IDLE" and state == "RUNNING" else state
+
+
+def box_value(box: dict[str, Any], group: str, field: str) -> Any:
+    values = box.get(group)
+    return values.get(field) if isinstance(values, dict) else None
+
+
+def seconds_to_minutes(value: Any) -> float | None:
+    try:
+        return float(value) / 60
+    except (TypeError, ValueError, OverflowError):
+        return None

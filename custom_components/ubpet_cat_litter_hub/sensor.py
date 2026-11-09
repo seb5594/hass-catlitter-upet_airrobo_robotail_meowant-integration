@@ -14,11 +14,13 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .box_config import (
     CUSTOM_PRESET,
     REMINDER_PRESETS,
+    box_value,
     effective_work_state,
     empty_waste_bin_reminder_config,
     mask_days,
     mask_preset,
     reminder_mask,
+    seconds_to_minutes,
 )
 from .compat import description_is_frozen
 from .const import DOMAIN
@@ -47,179 +49,75 @@ def _pet_position(item: dict[str, Any]) -> str | None:
     return None if inside is None else ("inside" if inside else "away")
 
 
-DEVICE_SENSORS: tuple[UbpetSensorDescription, ...] = (
-    UbpetSensorDescription(
-        key="box_status",
-        name="Box status",
-        icon="mdi:list-status",
-        translation_key="box_status",
-        device_class=SensorDeviceClass.ENUM,
-        options=BOX_STATUSES,
-        value_fn=lambda item: _box_status(item),
+def _metric(key, name, icon, value, **metadata):
+    return UbpetSensorDescription(
+        key=key, translation_key=key, name=name, icon=icon, value_fn=value, **metadata,
+    )
+
+
+def _read(group, field, convert=None):
+    def extract(box):
+        value = box_value(box, group, field)
+        return value if convert is None else convert(value)
+
+    return extract
+
+
+_MEASUREMENT = SensorStateClass.MEASUREMENT
+_DIAGNOSTIC = EntityCategory.DIAGNOSTIC
+_TIMESTAMP = SensorDeviceClass.TIMESTAMP
+
+DEVICE_SENSORS = (
+    _metric("box_status", "Box status", "mdi:list-status", lambda box: _box_status(box),
+            device_class=SensorDeviceClass.ENUM, options=BOX_STATUSES),
+    _metric("empty_waste_bin_reminder_days", "Empty waste bin reminder days", "mdi:calendar-week",
+            _reminder_days_preset, entity_category=_DIAGNOSTIC, device_class=SensorDeviceClass.ENUM,
+            options=[*REMINDER_PRESETS, CUSTOM_PRESET]),
+    _metric("box_use_times", "Box use times", "mdi:counter", _read("box_use_times", "boxUseTimes"),
+            state_class=_MEASUREMENT),
+    _metric("waste_bin_level", "Waste bin level", "mdi:delete-outline", _read("box_use_times", "percentage"),
+            native_unit_of_measurement=PERCENTAGE, state_class=_MEASUREMENT),
+    _metric("waste_bin_last_reset", "Waste bin last reset", "mdi:history",
+            _read("box_use_times", "boxUseTimesResetTime", lambda value: _reset_time(value)),
+            entity_category=_DIAGNOSTIC, device_class=_TIMESTAMP),
+    _metric("box_full_max", "Box full max", "mdi:delete", _read("box_use_times", "boxFullMax"),
+            entity_category=_DIAGNOSTIC, state_class=_MEASUREMENT),
+    _metric("box_full_alert", "Box full alert", "mdi:alert-outline", _read("box_use_times", "boxFullAlert"),
+            entity_category=_DIAGNOSTIC, state_class=_MEASUREMENT),
+    _metric("deodorant_remaining_days", "Deodorant remaining days", "mdi:air-filter", _read("deodorant", "remainingDays"),
+            native_unit_of_measurement="d", state_class=_MEASUREMENT),
+    _metric("auto_clean_delay_current", "Auto clean delay", "mdi:broom", _read("config", "lazyTime", seconds_to_minutes),
+            native_unit_of_measurement=UnitOfTime.MINUTES, state_class=_MEASUREMENT),
+    _metric("firmware_version", "Firmware version", "mdi:chip", lambda box: _firmware_version(box.get("config") or {}),
+            entity_category=_DIAGNOSTIC),
+    _metric("wifi_name", "Wi-Fi name", "mdi:wifi", _read("config", "wifiName"), entity_category=_DIAGNOSTIC),
+    *(
+        _metric(key, label, icon, _read("mqtt_state", field), entity_category=_DIAGNOSTIC)
+        for key, label, icon, field in (
+            ("mqtt_work_mode", "MQTT work mode", "mdi:robot-vacuum", "w_mode_app_name"),
+            ("mqtt_work_state", "MQTT work state", "mdi:state-machine", "w_state_app_name"),
+            ("mqtt_work_cause", "MQTT work cause", "mdi:alert-circle-outline", "w_cause"),
+        )
     ),
-    UbpetSensorDescription(
-        key="empty_waste_bin_reminder_days",
-        name="Empty waste bin reminder days",
-        icon="mdi:calendar-week",
-        translation_key="empty_waste_bin_reminder_days",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        device_class=SensorDeviceClass.ENUM,
-        options=[*REMINDER_PRESETS, CUSTOM_PRESET],
-        value_fn=_reminder_days_preset,
-    ),
-    UbpetSensorDescription(
-        key="box_use_times",
-        name="Box use times",
-        icon="mdi:counter",
-        translation_key="box_use_times",
-        state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda item: item["box_use_times"].get("boxUseTimes"),
-    ),
-    UbpetSensorDescription(
-        key="waste_bin_level",
-        name="Waste bin level",
-        icon="mdi:delete-outline",
-        translation_key="waste_bin_level",
-        native_unit_of_measurement=PERCENTAGE,
-        state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda item: item["box_use_times"].get("percentage"),
-    ),
-    UbpetSensorDescription(
-        key="waste_bin_last_reset",
-        name="Waste bin last reset",
-        icon="mdi:history",
-        translation_key="waste_bin_last_reset",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        device_class=SensorDeviceClass.TIMESTAMP,
-        value_fn=lambda item: _milliseconds_to_datetime(item["box_use_times"].get("boxUseTimesResetTime")),
-    ),
-    UbpetSensorDescription(
-        key="box_full_max",
-        name="Box full max",
-        icon="mdi:delete",
-        translation_key="box_full_max",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda item: item["box_use_times"].get("boxFullMax"),
-    ),
-    UbpetSensorDescription(
-        key="box_full_alert",
-        name="Box full alert",
-        icon="mdi:alert-outline",
-        translation_key="box_full_alert",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda item: item["box_use_times"].get("boxFullAlert"),
-    ),
-    UbpetSensorDescription(
-        key="deodorant_remaining_days",
-        name="Deodorant remaining days",
-        icon="mdi:air-filter",
-        translation_key="deodorant_remaining_days",
-        native_unit_of_measurement="d",
-        state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda item: item["deodorant"].get("remainingDays"),
-    ),
-    UbpetSensorDescription(
-        key="auto_clean_delay_current",
-        name="Auto clean delay",
-        icon="mdi:broom",
-        translation_key="auto_clean_delay_current",
-        native_unit_of_measurement=UnitOfTime.MINUTES,
-        state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda item: _seconds_to_minutes(item["config"].get("lazyTime")),
-    ),
-    UbpetSensorDescription(
-        key="firmware_version",
-        name="Firmware version",
-        icon="mdi:chip",
-        translation_key="firmware_version",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda item: _firmware_version(item["config"]),
-    ),
-    UbpetSensorDescription(
-        key="wifi_name",
-        name="Wi-Fi name",
-        icon="mdi:wifi",
-        translation_key="wifi_name",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda item: item["config"].get("wifiName"),
-    ),
-    UbpetSensorDescription(
-        key="mqtt_work_mode",
-        name="MQTT work mode",
-        icon="mdi:robot-vacuum",
-        translation_key="mqtt_work_mode",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda item: _mqtt_state_value(item, "w_mode_app_name"),
-    ),
-    UbpetSensorDescription(
-        key="mqtt_work_state",
-        name="MQTT work state",
-        icon="mdi:state-machine",
-        translation_key="mqtt_work_state",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda item: _mqtt_state_value(item, "w_state_app_name"),
-    ),
-    UbpetSensorDescription(
-        key="mqtt_work_cause",
-        name="MQTT work cause",
-        icon="mdi:alert-circle-outline",
-        translation_key="mqtt_work_cause",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda item: _mqtt_state_value(item, "w_cause"),
-    ),
-    UbpetSensorDescription(
-        key="last_rest_update",
-        entity_registry_enabled_default=False,
-        name="Last REST update",
-        icon="mdi:cloud-check-outline",
-        translation_key="last_rest_update",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        device_class=SensorDeviceClass.TIMESTAMP,
-        value_fn=lambda item: _runtime_state_value(item, "last_rest_update_at"),
-    ),
-    UbpetSensorDescription(
-        key="last_mqtt_update",
-        entity_registry_enabled_default=False,
-        name="Last MQTT update",
-        icon="mdi:message-check-outline",
-        translation_key="last_mqtt_update",
-        entity_category=EntityCategory.DIAGNOSTIC,
-        device_class=SensorDeviceClass.TIMESTAMP,
-        value_fn=lambda item: _runtime_state_value(item, "last_mqtt_update_at"),
+    *(
+        _metric(key, label, icon, _read("runtime_state", field), device_class=_TIMESTAMP,
+                entity_category=_DIAGNOSTIC, entity_registry_enabled_default=False)
+        for key, label, icon, field in (
+            ("last_rest_update", "Last REST update", "mdi:cloud-check-outline", "last_rest_update_at"),
+            ("last_mqtt_update", "Last MQTT update", "mdi:message-check-outline", "last_mqtt_update_at"),
+        )
     ),
 )
 
-CAT_SENSORS: tuple[UbpetSensorDescription, ...] = (
-    UbpetSensorDescription(
-        key="cat_weight",
-        name="Weight",
-        icon="mdi:scale",
-        translation_key="cat_weight",
-        native_unit_of_measurement=UnitOfMass.KILOGRAMS,
-        device_class=SensorDeviceClass.WEIGHT,
-        state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda item: item.get("weight"),
-    ),
-    UbpetSensorDescription(
-        key="cat_visits",
-        name="Visits (legacy)",
-        icon="mdi:cat",
-        translation_key="cat_visits",
-        state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda item: item.get("number"),
-    ),
-    UbpetSensorDescription(
-        key="cat_cost_time",
-        name="Average usage duration (legacy)",
-        icon="mdi:timer-outline",
-        translation_key="cat_cost_time",
-        native_unit_of_measurement=UnitOfTime.SECONDS,
-        device_class=SensorDeviceClass.DURATION,
-        state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda item: item.get("costTime"),
-    ),
+CAT_SENSORS = (
+    _metric("cat_weight", "Weight", "mdi:scale", lambda cat: cat.get("weight"),
+            native_unit_of_measurement=UnitOfMass.KILOGRAMS, device_class=SensorDeviceClass.WEIGHT,
+            state_class=_MEASUREMENT),
+    _metric("cat_visits", "Visits (legacy)", "mdi:cat", lambda cat: cat.get("number"),
+            state_class=_MEASUREMENT),
+    _metric("cat_cost_time", "Average usage duration (legacy)", "mdi:timer-outline", lambda cat: cat.get("costTime"),
+            native_unit_of_measurement=UnitOfTime.SECONDS, device_class=SensorDeviceClass.DURATION,
+            state_class=_MEASUREMENT),
 )
 
 
@@ -471,9 +369,8 @@ class UbpetDeviceSensor(UbpetDeviceEntity, SensorEntity):
         self, coordinator: UbpetDataUpdateCoordinator, entry_id: str, serial: str, description: UbpetSensorDescription
     ) -> None:
         super().__init__(coordinator)
-        self._serial = serial
+        self._bind_box(entry_id, serial, description.key)
         self.entity_description = description
-        self._attr_unique_id = f"{entry_id}_{serial}_{description.key}"
 
     @property
     def native_value(self) -> Any:
@@ -481,26 +378,19 @@ class UbpetDeviceSensor(UbpetDeviceEntity, SensorEntity):
             return self.coordinator.last_rest_update_at
         if self.entity_description.key == "last_mqtt_update":
             return self.coordinator.last_mqtt_update_at(self._serial)
-        item = self.coordinator.data.get("devices", {}).get(self._serial)
-        if not item:
-            return None
-        return self.entity_description.value_fn(item)
+        return self.entity_description.value_fn(item) if (item := self._device_item) else None
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
-        item = self.coordinator.data.get("devices", {}).get(self._serial)
-        if not item:
-            return None
-        return {
-            "serial_number": self._serial,
-            **self._extra_status_attributes(item),
-        }
+        if item := self._device_item:
+            return dict(self._extra_status_attributes(item), serial_number=self._serial)
+        return None
 
     def _extra_status_attributes(self, item: dict[str, Any]) -> dict[str, Any]:
         if self.entity_description.key == "box_status":
             return {
                 "device_status_code": item.get("device", {}).get("deviceStatus"),
-                "mqtt_work_state": _mqtt_state_value(item, "w_state_app_name"),
+                "mqtt_work_state": box_value(item, "mqtt_state", "w_state_app_name"),
             }
         if self.entity_description.key.startswith("mqtt_"):
             mqtt_state = item.get("mqtt_state")
@@ -532,16 +422,13 @@ class UbpetCatSensor(UbpetCatEntity, SensorEntity):
         self, coordinator: UbpetDataUpdateCoordinator, entry_id: str, cat_id: str, description: UbpetSensorDescription
     ) -> None:
         super().__init__(coordinator)
-        self._cat_id = cat_id
+        self._bind_cat(entry_id, cat_id, description.key)
         self.entity_description = description
-        self._attr_unique_id = f"{entry_id}_cat_{cat_id}_{description.key}"
 
     @property
     def native_value(self) -> Any:
         cat = self._cat_data
-        if cat is None:
-            return None
-        return self.entity_description.value_fn(cat)
+        return None if cat is None else self.entity_description.value_fn(cat)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
@@ -572,65 +459,30 @@ class UbpetCatSensor(UbpetCatEntity, SensorEntity):
 
 
 def _firmware_version(config: dict[str, Any]) -> str | None:
-    versions = sorted(
-        {part.get("firmwareVersion") for part in (config.get("boxFunctionVOList") or []) if part.get("firmwareVersion")}
-    )
-    return ", ".join(versions) if versions else None
+    modules = config.get("boxFunctionVOList") or ()
+    releases = {
+        part["firmwareVersion"] for part in modules
+        if isinstance(part, dict) and isinstance(part.get("firmwareVersion"), str) and part["firmwareVersion"]
+    }
+    return ", ".join(sorted(releases)) or None
 
 
-def _seconds_to_minutes(value: Any) -> int | float | None:
-    if value is None:
-        return None
+def _reset_time(value: Any) -> datetime | None:
     try:
-        seconds = float(value)
-    except (TypeError, ValueError):
+        epoch_ms = int(value)
+        return datetime.fromtimestamp(epoch_ms / 1000, UTC) if epoch_ms > 0 else None
+    except (OSError, OverflowError, TypeError, ValueError):
         return None
-    minutes = seconds / 60
-    return int(minutes) if minutes.is_integer() else minutes
-
-
-def _milliseconds_to_datetime(value: Any) -> datetime | None:
-    if value in (None, ""):
-        return None
-    try:
-        milliseconds = int(value)
-    except (TypeError, ValueError):
-        return None
-    if milliseconds <= 0:
-        return None
-    return datetime.fromtimestamp(milliseconds / 1000, UTC)
 
 
 def _box_status(item: dict[str, Any]) -> str | None:
-    mqtt_status = _box_status_from_mqtt(item)
-    if mqtt_status is not None:
-        return mqtt_status
-    device_status = item.get("device", {}).get("deviceStatus")
-    if device_status is None:
-        return None
+    mode = box_value(item, "mqtt_state", "w_mode_app_name")
+    state = box_value(item, "mqtt_state", "w_state_app_name")
+    live = {"PENDING": "standby", "RUNNING": "running", "PAUSED": "paused"}
+    if (effective := effective_work_state(mode, state)) in live:
+        return live[effective]
     try:
-        status = int(device_status)
-    except (TypeError, ValueError):
+        rest_code = int(box_value(item, "device", "deviceStatus"))
+    except (TypeError, ValueError, OverflowError):
         return None
-    return {1: "standby", 3: "paused"}.get(status, "running")
-
-
-def _box_status_from_mqtt(item: dict[str, Any]) -> str | None:
-    state = effective_work_state(
-        _mqtt_state_value(item, "w_mode_app_name"), _mqtt_state_value(item, "w_state_app_name")
-    )
-    return {"PENDING": "standby", "RUNNING": "running", "PAUSED": "paused"}.get(state)
-
-
-def _mqtt_state_value(item: dict[str, Any], key: str) -> Any:
-    mqtt_state = item.get("mqtt_state")
-    if not isinstance(mqtt_state, dict):
-        return None
-    return mqtt_state.get(key)
-
-
-def _runtime_state_value(item: dict[str, Any], key: str) -> Any:
-    runtime_state = item.get("runtime_state")
-    if not isinstance(runtime_state, dict):
-        return None
-    return runtime_state.get(key)
+    return "standby" if rest_code == 1 else "paused" if rest_code == 3 else "running"

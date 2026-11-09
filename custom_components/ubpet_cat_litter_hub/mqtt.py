@@ -1,619 +1,310 @@
+"""Encode and inspect device messages carried over the account MQTT session."""
 from __future__ import annotations
 
 import random
 import time
 from dataclasses import dataclass
-from typing import Any
-from urllib.parse import urlparse
+from threading import Lock
+from urllib.parse import urlsplit
 
 MESSAGE_PROTOCOL_VERSION = "1.0.1"
 ANY_BYTES_VALUE_TYPE_URL = "type.googleapis.com/google.protobuf.BytesValue"
 ANY_RECEIPT_NOTIFICATION_TYPE_URL = "type.googleapis.com/rosa.im.protobuf.ReceiptNotification"
-DEFAULT_MQTT_PORT = 21000
-DEFAULT_MQTT_KEEPALIVE = 20
-RISP_SEQ_MAX = 0x7FFF
-COMMAND_PROTO_PROTYPE_RISP = 2
+_ONLINE_NOTIFICATION = "type.googleapis.com/rosa.im.protobuf.OnlineStatusNotification"
+_STATE = 1021
+_OPERATION = 1019
+_COUNTER_LOCK = Lock()
+_sequence = random.randint(1, 10000)
+_GID_COUNTER = random.randrange(1 << 20)
 
-RISP_START_BYTE = 0xDB
-RISP_DEV_AIRPET = 0x02
-RISP_CMD_OPERATION = 0x3FB
-RISP_CMD_ALL_STATE = 0x3FD
-RISP_CMD_ALL_STATE_RESPONSE = 0x3FD
-RISP_ATTR_REQUEST = 1
-RISP_HEADER_FIELD_NAMES = {
-    1: "dev",
-    2: "cmd",
-    3: "id",
-    4: "dataLen",
-    5: "attr",
-    6: "ack",
-    7: "seq",
+_OPERATIONS = {
+    "start_clean_up": (1, 1),
+    "pause_clean_up": (1, 2),
+    "resume_clean_up": (1, 3),
+    "start_flatten": (3, 1),
+    "pause_flatten": (3, 2),
+    "resume_flatten": (3, 3),
+    "start_rise": (7, 1),
+    "start_drop": (8, 1),
 }
-ALL_STATE_FIELD_NAMES = {
-    1: "w_mode",
-    2: "w_state",
-    3: "w_cause",
-    4: "toilet_state",
-    5: "foreign_state",
-    6: "weigh_state",
-    7: "lid_state",
-    8: "motor_state",
-    9: "key_state",
-    10: "object_state",
-    11: "camera_state",
-    12: "image_ctrl_state",
-    13: "pic_ctrl_state",
-    14: "update_state",
-    15: "hall_state",
-    16: "infrared_state",
-    17: "box_state",
-    18: "timestamp",
-    19: "weigh_sensor",
-    20: "led_state",
+SERVICE_ID_MAP = {
+    "request_state": {"kind": "all-state", "read_only": True},
+    **{
+        name: {"kind": "operation", "op_mode_value": mode, "op_state_value": action}
+        for name, (mode, action) in _OPERATIONS.items()
+    },
 }
-WORK_MODE_NAMES = {
-    0: "idle",
-    1: "reset",
-    2: "clean",
-    3: "smooth",
-    4: "clear",
-    5: "rakeup",
-}
-WORK_MODE_APP_NAMES = {
-    0: "IDLE",
-    1: "RESETTING",
-    2: "CLEANING",
-    3: "SMOOTHING",
-    4: "REPLACING",
-    5: "RAKING_UP",
-}
-WORK_STATE_NAMES = {
-    0: "idle",
-    1: "running",
-    2: "block",
-    3: "paused",
-}
-WORK_STATE_APP_NAMES = {
-    0: "PENDING",
-    1: "RUNNING",
-    2: "BLOCKED",
-    3: "PAUSED",
-}
-
-OP_MODE_VALUES = {
-    "clean": 1,
-    "smooth": 3,
-    "rise": 7,
-    "drop": 8,
-}
-OP_STATE_VALUES = {
-    "start": 1,
-    "pause": 2,
-    "resume": 3,
-}
-WORK_TYPE_TO_OP_MODE = {
-    "clean-up": "clean",
-    "flatten": "smooth",
-    "rise": "rise",
-    "drop": "drop",
-}
-WORK_ACTION_TO_OP_STATE = {
-    "start": "start",
-}
+_TELEMETRY = (
+    "w_mode", "w_state", "w_cause", "toilet_state", "foreign_state", "weigh_state",
+    "lid_state", "motor_state", "key_state", "object_state", "camera_state",
+    "image_ctrl_state", "pic_ctrl_state", "update_state", "hall_state",
+    "infrared_state", "box_state", "timestamp", "weigh_sensor", "led_state",
+)
+_MODES = (
+    ("idle", "IDLE"), ("reset", "RESETTING"), ("clean", "CLEANING"),
+    ("smooth", "SMOOTHING"), ("clear", "REPLACING"), ("rakeup", "RAKING_UP"),
+)
+_STATES = (("idle", "PENDING"), ("running", "RUNNING"), ("block", "BLOCKED"), ("paused", "PAUSED"))
 
 
-@dataclass(frozen=True, slots=True)
-class PayloadParts:
-    op_body: bytes
-    risp_frame: bytes
-    command_proto: bytes
-    im_message: bytes | None
-    cid: str | None
-    gid: str | None
-    created_at_ms: int | None
-    seq: int
-    dev: int
-    cmd: int
-    received_messages: tuple[dict[str, Any], ...] = ()
-
-    def as_dict(self) -> dict[str, Any]:
-        return {
-            "cid": self.cid,
-            "gid": self.gid,
-            "created_at_ms": self.created_at_ms,
-            "seq": self.seq,
-            "dev": self.dev,
-            "cmd": self.cmd,
-            "op_body_hex": self.op_body.hex(),
-            "risp_frame_hex": self.risp_frame.hex(),
-            "command_proto_hex": self.command_proto.hex(),
-            "im_message_hex": self.im_message.hex() if self.im_message is not None else None,
-            "received_count": len(self.received_messages),
-            "received_messages": list(self.received_messages),
-        }
-
-
-def service_id_for_work_command(work_type: str, work_action: str) -> str:
-    return f"{work_action}_{work_type.replace('-', '_')}"
-
-
-def service_id_map() -> dict[str, dict[str, Any]]:
-    services: dict[str, dict[str, Any]] = {
-        "request_state": {
-            "service": "request_state",
-            "kind": "all-state",
-            "read_only": True,
-        }
-    }
-    for work_type, op_mode_name in WORK_TYPE_TO_OP_MODE.items():
-        for work_action, op_state_name in WORK_ACTION_TO_OP_STATE.items():
-            service = service_id_for_work_command(work_type, work_action)
-            services[service] = {
-                "service": service,
-                "kind": "operation",
-                "work_type": work_type,
-                "work_action": work_action,
-                "op_mode": op_mode_name,
-                "op_mode_value": OP_MODE_VALUES[op_mode_name],
-                "op_state": op_state_name,
-                "op_state_value": OP_STATE_VALUES[op_state_name],
-            }
-    for work_type, op_mode_name in {"clean-up": "clean", "flatten": "smooth"}.items():
-        for work_action in ("pause", "resume"):
-            service = service_id_for_work_command(work_type, work_action)
-            services[service] = {
-                "service": service,
-                "kind": "operation",
-                "work_type": work_type,
-                "work_action": work_action,
-                "op_mode": op_mode_name,
-                "op_mode_value": OP_MODE_VALUES[op_mode_name],
-                "op_state": work_action,
-                "op_state_value": OP_STATE_VALUES[work_action],
-            }
-    return services
-
-
-SERVICE_ID_MAP = service_id_map()
-_NEXT_SEQ_VALUE = random.randint(1, 0x2710)
-_GID_COUNTER = random.randint(0, 0xFFFFF)
-
-
-def encode_varint(value: int) -> bytes:
-    if value < 0:
-        raise ValueError("varint value must be non-negative")
-    out = bytearray()
-    while True:
-        byte = value & 0x7F
-        value >>= 7
-        if value:
-            out.append(byte | 0x80)
-        else:
-            out.append(byte)
-            return bytes(out)
-
-
-def field_varint(number: int, value: int, *, omit_zero: bool = True) -> bytes:
-    if omit_zero and value == 0:
-        return b""
-    return encode_varint((number << 3) | 0) + encode_varint(value)
-
-
-def field_bytes(number: int, value: bytes, *, omit_empty: bool = True) -> bytes:
-    if omit_empty and not value:
-        return b""
-    return encode_varint((number << 3) | 2) + encode_varint(len(value)) + value
-
-
-def field_string(number: int, value: str, *, omit_empty: bool = True) -> bytes:
-    return field_bytes(number, value.encode("utf-8"), omit_empty=omit_empty)
-
-
-def crc8_app(data: bytes) -> int:
-    """Native libcrclib model: CRC-8/poly 0x07/init 0/xorout 0x55."""
-    crc = 0
-    for byte in data:
-        crc ^= byte
-        for _ in range(8):
-            if crc & 0x80:
-                crc = ((crc << 1) ^ 0x07) & 0xFF
-            else:
-                crc = (crc << 1) & 0xFF
-    return crc ^ 0x55
-
-
-def encode_airpet_operation(op_mode: int, op_state: int) -> bytes:
-    return field_varint(1, op_mode) + field_varint(2, op_state)
-
-
-def encode_risp_header(*, dev: int, cmd: int, attr: int, seq: int, data_len: int) -> bytes:
-    return b"".join(
-        [
-            field_varint(1, dev),
-            field_varint(2, cmd),
-            field_varint(4, data_len),
-            field_varint(5, attr),
-            field_varint(7, seq),
-        ]
+def _varint(value: int) -> bytes:
+    if not 0 <= value < 1 << 64:
+        raise ValueError("integer does not fit a protobuf varint")
+    groups = max(1, (value.bit_length() + 6) // 7)
+    return bytes(
+        ((value >> (index * 7)) & 127) + (128 if index < groups - 1 else 0)
+        for index in range(groups)
     )
+
+
+def field_varint(number: int, value: int) -> bytes:
+    return _varint(8 * number) + _varint(value) if value else b""
+
+
+def field_bytes(number: int, value: bytes) -> bytes:
+    return _varint(8 * number + 2) + _varint(len(value)) + value if value else b""
+
+
+def field_string(number: int, value: str) -> bytes:
+    return field_bytes(number, value.encode())
+
+
+def _message(*fields: int | str | bytes) -> bytes:
+    encoders = {int: field_varint, str: field_string, bytes: field_bytes}
+    return b"".join(encoders[type(value)](number, value) for number, value in enumerate(fields, 1))
+
+
+class _Reader:
+    def __init__(self, payload: bytes):
+        self.payload = payload
+        self.position = 0
+
+    def take(self, size: int) -> bytes:
+        end = self.position + size
+        if end > len(self.payload):
+            raise ValueError("truncated protobuf field")
+        value = self.payload[self.position:end]
+        self.position = end
+        return value
+
+    def unsigned(self) -> int:
+        result = 0
+        for shift in range(0, 70, 7):
+            octet = self.take(1)[0]
+            result |= (octet & 127) << shift
+            if octet < 128:
+                if result < 1 << 64:
+                    return result
+                break
+        raise ValueError("oversized protobuf varint")
+
+    def fields(self) -> dict[tuple[int, int], int | bytes]:
+        fields = {}
+        while self.position < len(self.payload):
+            number, wire = divmod(self.unsigned(), 8)
+            if not 1 <= number < 1 << 29:
+                raise ValueError("invalid protobuf field number")
+            if wire == 0:
+                value = self.unsigned()
+            elif wire == 2:
+                value = self.take(self.unsigned())
+            elif wire in (1, 5):
+                value = self.take(8 if wire == 1 else 4)
+            else:
+                raise ValueError(f"unsupported protobuf wire type {wire}")
+            fields[(number, wire)] = value
+        return fields
+
+
+def _crc_remainder(byte: int) -> int:
+    register = byte * 256
+    # Divide by x^8 + x^2 + x + 1 in GF(2).
+    for bit in range(15, 7, -1):
+        if register >> bit & 1:
+            register ^= 0x107 << (bit - 8)
+    return register
+
+
+_CRC_TABLE = tuple(map(_crc_remainder, range(256)))
+
+
+def _protected(payload: bytes) -> bytes:
+    remainder = 0
+    for octet in payload:
+        remainder = _CRC_TABLE[remainder ^ octet]
+    return payload + bytes((remainder ^ 0x55,))
 
 
 def build_risp_frame(*, dev: int, cmd: int, attr: int, seq: int, body: bytes) -> bytes:
-    header = encode_risp_header(dev=dev, cmd=cmd, attr=attr, seq=seq, data_len=len(body))
-    if len(header) > 0xFF:
-        raise ValueError("RISP header is too large for one-byte header length")
-    frame = bytearray([RISP_START_BYTE, len(header)])
-    frame += header
-    frame.append(crc8_app(header))
-    if body:
-        frame += body
-        frame.append(crc8_app(body))
-    return bytes(frame)
+    header = _message(dev, cmd, 0, len(body), attr, 0, seq)
+    return bytes((219, len(header))) + _protected(header) + (_protected(body) if body else b"")
 
 
-def encode_command_proto(risp_frame: bytes) -> bytes:
-    return field_varint(1, COMMAND_PROTO_PROTYPE_RISP) + field_bytes(2, risp_frame)
+def _labels(table, number):
+    if 0 <= number < len(table):
+        return table[number]
+    return f"unknown_{number}", f"UNKNOWN_{number}"
 
 
-def encode_bytes_value(value: bytes) -> bytes:
-    return field_bytes(1, value)
-
-
-def encode_any(type_url: str, value: bytes) -> bytes:
-    return field_string(1, type_url) + field_bytes(2, value)
-
-
-def encode_message_content(content_type: str, content_any: bytes) -> bytes:
-    return field_string(1, content_type) + field_bytes(2, content_any)
-
-
-def encode_im_message(
-    *,
-    command_proto: bytes,
-    from_uid: str,
-    to_uid: str,
-    cid: str,
-    gid: str,
-    created_at_ms: int,
-) -> bytes:
-    bytes_value = encode_bytes_value(command_proto)
-    any_value = encode_any(ANY_BYTES_VALUE_TYPE_URL, bytes_value)
-    message_content = encode_message_content("custom", any_value)
-    return b"".join(
-        [
-            field_string(1, cid),
-            field_string(2, gid),
-            field_varint(3, created_at_ms),
-            field_string(4, from_uid),
-            field_string(5, to_uid),
-            field_bytes(7, message_content),
-            field_string(8, MESSAGE_PROTOCOL_VERSION),
-        ]
+def summarize_all_state_body(body: bytes) -> dict:
+    fields = _Reader(body).fields()
+    state = {name: fields.get((i, 0), 0) for i, name in enumerate(_TELEMETRY, 1)}
+    mode, mode_label = _labels(_MODES, state["w_mode"])
+    action, action_label = _labels(_STATES, state["w_state"])
+    state.update(
+        w_mode_name=mode, w_mode_app_name=mode_label, w_state_name=action,
+        w_state_app_raw_name=action_label,
+        w_state_app_name="PENDING" if mode == "idle" and action == "running" else action_label,
     )
+    return state
 
 
-def build_payload_parts(
-    *,
-    kind: str,
-    op_mode: int = 0,
-    op_state: int = 0,
-    from_uid: str | None = None,
-    to_uid: str | None = None,
-    seq: int | None = None,
-    cid: str | None = None,
-    gid: str | None = None,
-    created_at_ms: int | None = None,
-) -> PayloadParts:
-    chosen_seq = seq if seq is not None else next_seq()
-    if kind == "operation":
-        body = encode_airpet_operation(op_mode, op_state)
-        cmd = RISP_CMD_OPERATION
-    elif kind == "all-state":
-        body = b""
-        cmd = RISP_CMD_ALL_STATE
-    else:
-        raise ValueError(f"unsupported payload kind: {kind}")
-
-    risp_frame = build_risp_frame(dev=RISP_DEV_AIRPET, cmd=cmd, attr=RISP_ATTR_REQUEST, seq=chosen_seq, body=body)
-    command_proto = encode_command_proto(risp_frame)
-    im_message = None
-    chosen_cid = cid
-    chosen_gid = gid
-    chosen_created_at_ms = created_at_ms
-    if from_uid is not None or to_uid is not None:
-        if not from_uid or not to_uid:
-            raise ValueError("from_uid and to_uid must be provided together")
-        chosen_cid = chosen_cid or generate_cid()
-        chosen_created_at_ms = chosen_created_at_ms or int(time.time() * 1000)
-        chosen_gid = chosen_gid or generate_gid(chosen_created_at_ms)
-        im_message = encode_im_message(
-            command_proto=command_proto,
-            from_uid=from_uid,
-            to_uid=to_uid,
-            cid=chosen_cid,
-            gid=chosen_gid,
-            created_at_ms=chosen_created_at_ms,
-        )
-
-    return PayloadParts(
-        op_body=body,
-        risp_frame=risp_frame,
-        command_proto=command_proto,
-        im_message=im_message,
-        cid=chosen_cid,
-        gid=chosen_gid,
-        created_at_ms=chosen_created_at_ms,
-        seq=chosen_seq,
-        dev=RISP_DEV_AIRPET,
-        cmd=cmd,
+def summarize_risp_frame(frame: bytes) -> dict:
+    reader = _Reader(frame)
+    marker, header_size = reader.take(2)
+    if marker != 219:
+        raise ValueError("invalid RISP frame marker")
+    header = reader.take(header_size)
+    if _protected(header)[-1:] != reader.take(1):
+        raise ValueError("RISP header checksum mismatch")
+    fields = _Reader(header).fields()
+    length = fields.get((4, 0), 0)
+    body = reader.take(length)
+    if length and _protected(body)[-1:] != reader.take(1):
+        raise ValueError("RISP body checksum mismatch")
+    command = fields.get((2, 0))
+    result = dict(
+        risp_cmd=command, risp_seq=fields.get((7, 0)), risp_attr=fields.get((5, 0)),
+        risp_data_len=length, risp_body_hex=body.hex(),
     )
+    if command in (_STATE, 1024):
+        result.update(summarize_all_state_body(body))
+    elif command == _OPERATION:
+        operation = _Reader(body).fields()
+        result.update(op_mode=operation.get((1, 0)), op_state=operation.get((2, 0)))
+    return result
 
 
-def next_seq() -> int:
-    global _NEXT_SEQ_VALUE
-    seq = _NEXT_SEQ_VALUE
-    _NEXT_SEQ_VALUE += 1
-    if _NEXT_SEQ_VALUE > RISP_SEQ_MAX:
-        _NEXT_SEQ_VALUE = 1
-    return seq
+def _texts(fields, mapping):
+    return {
+        name: fields[(number, 2)].decode("utf-8", errors="replace") if (number, 2) in fields else None
+        for name, number in mapping.items()
+    }
 
 
-def generate_cid() -> str:
-    suffix = int(((random.random() * 9) + 1) * 100000)
-    return f"{int(time.time() * 1000)}+{suffix}"
+def _decode(payload: bytes) -> dict:
+    envelope = _Reader(payload).fields()
+    result = _texts(envelope, {"cid": 1, "gid": 2, "from_uid": 4, "to_uid": 5, "protocol_version": 8})
+    result.update(created_at_ms=envelope.get((3, 0)), message_type=envelope.get((6, 0)))
+    if (7, 2) not in envelope:
+        return result
+    content = _Reader(envelope[(7, 2)]).fields()
+    result.update(_texts(content, {"content_type": 1}))
+    if (2, 2) not in content:
+        return result
+    tagged = _Reader(content[(2, 2)]).fields()
+    result.update(_texts(tagged, {"type_url": 1}))
+    kind = result["type_url"]
+    if (2, 2) not in tagged or kind not in (
+        _ONLINE_NOTIFICATION, ANY_RECEIPT_NOTIFICATION_TYPE_URL, ANY_BYTES_VALUE_TYPE_URL,
+    ):
+        return result
+    value = _Reader(tagged[(2, 2)]).fields()
+    if kind == _ONLINE_NOTIFICATION:
+        result.update(_texts(value, {"online_status": 1, "status_uid": 2}))
+    elif kind == ANY_RECEIPT_NOTIFICATION_TYPE_URL:
+        result.update(_texts(value, {"receipt_status": 1, "receipt_cause": 2}))
+    elif kind == ANY_BYTES_VALUE_TYPE_URL and (1, 2) in value:
+        command = _Reader(value[(1, 2)]).fields()
+        result["command_protype"] = command.get((1, 0))
+        if (2, 2) in command:
+            result.update(summarize_risp_frame(command[(2, 2)]))
+    return result
+
+
+def decode_mqtt_payload_safely(payload: bytes) -> dict:
+    try:
+        return _decode(payload)
+    except ValueError as exc:
+        return {"decode_error": str(exc)}
+
+
+@dataclass(frozen=True, slots=True)
+class OutboundCommand:
+    seq: int
+    op_body: bytes
+    risp_frame: bytes
+    command_proto: bytes
+    cid: str | None
+    im_message: bytes | None
 
 
 def generate_gid(created_at_ms: int | None = None) -> str:
     global _GID_COUNTER
-    timestamp_ms = created_at_ms or int(time.time() * 1000)
-    _GID_COUNTER = (_GID_COUNTER + 1) & 0xFFFFF
-    return str((timestamp_ms << 20) + _GID_COUNTER)
+    with _COUNTER_LOCK:
+        _GID_COUNTER = (_GID_COUNTER + 1) % (1 << 20)
+        counter = _GID_COUNTER
+    timestamp = int(time.time() * 1000) if created_at_ms is None else created_at_ms
+    return str(timestamp * (1 << 20) + counter)
 
 
-def resolve_service_payload(
-    service_id: str,
-    *,
-    seq: int | None,
-    from_uid: str | None = None,
-    to_uid: str | None = None,
-    gid: str | None = None,
-) -> PayloadParts:
-    service = SERVICE_ID_MAP.get(service_id)
-    if service is None:
-        raise ValueError(f"unknown MQTT service id: {service_id}")
-    if service["kind"] == "all-state":
-        return build_payload_parts(kind="all-state", seq=seq, from_uid=from_uid, to_uid=to_uid, gid=gid)
+def _allocate_sequence() -> int:
+    global _sequence
+    with _COUNTER_LOCK:
+        value = _sequence
+        _sequence = value % 32767 + 1
+    return value
+
+
+def build_payload_parts(
+    *, kind, op_mode=0, op_state=0, from_uid=None, to_uid=None,
+    seq=None, cid=None, gid=None, created_at_ms=None,
+) -> OutboundCommand:
+    if kind not in ("operation", "all-state"):
+        raise ValueError(f"unknown command kind: {kind}")
+    if (from_uid is not None or to_uid is not None) and not (from_uid and to_uid):
+        raise ValueError("a message requires both sender and recipient")
+    device = 2
+    operation = kind == "operation"
+    cmd = _OPERATION if operation else _STATE
+    body = _message(op_mode, op_state) if operation else b""
+    seq = _allocate_sequence() if seq is None else seq
+    frame = build_risp_frame(dev=device, cmd=cmd, attr=1, seq=seq, body=body)
+    command = _message(2, frame)
+    message = None
+    if from_uid:
+        now = int(time.time() * 1000)
+        cid = cid or f"{now}+{100000 + int(900000 * random.random())}"
+        created_at_ms = now if created_at_ms is None else created_at_ms
+        gid = gid or generate_gid(created_at_ms)
+        content = _message("custom", _message(ANY_BYTES_VALUE_TYPE_URL, _message(command)))
+        message = _message(cid, gid, created_at_ms, from_uid, to_uid, 0, content, MESSAGE_PROTOCOL_VERSION)
+    return OutboundCommand(
+        seq=seq, op_body=body, risp_frame=frame, command_proto=command, cid=cid, im_message=message,
+    )
+
+
+def resolve_service_payload(service_id: str, *, seq=None, from_uid=None, to_uid=None, gid=None) -> OutboundCommand:
+    if service_id == "request_state":
+        kind, mode, action = "all-state", 0, 0
+    else:
+        try:
+            mode, action = _OPERATIONS[service_id]
+        except KeyError:
+            raise ValueError(f"unknown MQTT service id: {service_id}") from None
+        kind = "operation"
     return build_payload_parts(
-        kind="operation",
-        op_mode=int(service["op_mode_value"]),
-        op_state=int(service["op_state_value"]),
-        seq=seq,
-        from_uid=from_uid,
-        to_uid=to_uid,
-        gid=gid,
+        kind=kind, op_mode=mode, op_state=action, seq=seq, from_uid=from_uid, to_uid=to_uid, gid=gid,
     )
 
 
 def mqtt_host_from_base_url(base_url: str) -> str:
-    parsed = urlparse(base_url)
-    if parsed.hostname:
-        return parsed.hostname
-    return base_url.replace("https://", "").replace("http://", "").strip("/")
+    url = urlsplit(base_url if "://" in base_url else "//" + base_url)
+    if not url.hostname:
+        raise ValueError("the regional API URL does not contain a broker hostname")
+    return url.hostname
 
 
-def mqtt_endpoint(
-    base_url: str, credentials: dict[str, Any], default_port: int = DEFAULT_MQTT_PORT
-) -> tuple[str, int, str]:
-    # The Android command path builds MQTT host from the regional API base URL.
-    # IM login may return a url field on newer servers, but the app's MqttInfoBean
-    # does not use it for the litterbox command connection.
+def mqtt_endpoint(base_url: str, credentials: dict, default_port: int = 21000) -> tuple[str, int, str]:
+    """The broker uses the API hostname even when credentials carry a different URL."""
     return mqtt_host_from_base_url(base_url), default_port, "base_url"
-
-
-def _first_text(payload: dict[str, Any], *keys: str) -> str:
-    value = _first_optional_text(payload, *keys)
-    if value is not None:
-        return value
-    raise RuntimeError(f"missing MQTT credential field: {'/'.join(keys)}")
-
-
-def _first_optional_text(payload: dict[str, Any], *keys: str) -> str | None:
-    for key in keys:
-        value = payload.get(key)
-        if value not in (None, ""):
-            return str(value)
-    return None
-
-
-def summarize_im_message(payload: bytes) -> dict[str, Any]:
-    fields = decode_proto_fields(payload)
-    message_content = first_proto_value(fields, 7, 2)
-    summary: dict[str, Any] = {
-        "cid": first_proto_string(fields, 1),
-        "gid": first_proto_string(fields, 2),
-        "created_at_ms": first_proto_value(fields, 3, 0),
-        "from_uid": first_proto_string(fields, 4),
-        "to_uid": first_proto_string(fields, 5),
-        "message_type": first_proto_value(fields, 6, 0),
-        "protocol_version": first_proto_string(fields, 8),
-    }
-    if isinstance(message_content, bytes):
-        summary.update(summarize_message_content(message_content))
-    return summary
-
-
-def decode_mqtt_payload_safely(payload: bytes) -> dict[str, Any]:
-    try:
-        return summarize_im_message(payload)
-    except (ValueError, RuntimeError) as err:
-        return {"decode_error": str(err)}
-
-
-def summarize_message_content(payload: bytes) -> dict[str, Any]:
-    fields = decode_proto_fields(payload)
-    content_any = first_proto_value(fields, 2, 2)
-    summary: dict[str, Any] = {"content_type": first_proto_string(fields, 1)}
-    if isinstance(content_any, bytes):
-        summary.update(summarize_any(content_any))
-    return summary
-
-
-def summarize_any(payload: bytes) -> dict[str, Any]:
-    fields = decode_proto_fields(payload)
-    type_url = first_proto_string(fields, 1)
-    value = first_proto_value(fields, 2, 2)
-    summary: dict[str, Any] = {"type_url": type_url}
-    if type_url == "type.googleapis.com/rosa.im.protobuf.OnlineStatusNotification" and isinstance(value, bytes):
-        status_fields = decode_proto_fields(value)
-        summary["online_status"] = first_proto_string(status_fields, 1)
-        summary["status_uid"] = first_proto_string(status_fields, 2)
-    elif type_url == ANY_RECEIPT_NOTIFICATION_TYPE_URL and isinstance(value, bytes):
-        receipt_fields = decode_proto_fields(value)
-        summary["receipt_status"] = first_proto_string(receipt_fields, 1)
-        summary["receipt_cause"] = first_proto_string(receipt_fields, 2)
-    elif type_url == ANY_BYTES_VALUE_TYPE_URL and isinstance(value, bytes):
-        bytes_fields = decode_proto_fields(value)
-        command_proto = first_proto_value(bytes_fields, 1, 2)
-        if isinstance(command_proto, bytes):
-            summary.update(summarize_command_proto(command_proto))
-    return summary
-
-
-def summarize_command_proto(payload: bytes) -> dict[str, Any]:
-    fields = decode_proto_fields(payload)
-    risp_frame = first_proto_value(fields, 2, 2)
-    summary: dict[str, Any] = {"command_protype": first_proto_value(fields, 1, 0)}
-    if isinstance(risp_frame, bytes):
-        summary.update(summarize_risp_frame(risp_frame))
-    return summary
-
-
-def summarize_risp_frame(frame: bytes) -> dict[str, Any]:
-    if len(frame) < 3 or frame[0] != RISP_START_BYTE:
-        raise ValueError("not a RISP frame")
-    header_len = frame[1]
-    header_start = 2
-    header_end = header_start + header_len
-    if header_end >= len(frame):
-        raise ValueError("truncated RISP frame")
-    if frame[header_end] != crc8_app(frame[header_start:header_end]):
-        raise ValueError("RISP header checksum mismatch")
-    header_fields = decode_proto_fields(frame[header_start:header_end])
-    values: dict[str, Any] = {}
-    for field in header_fields:
-        if field["wire_type"] == 0:
-            values[RISP_HEADER_FIELD_NAMES.get(field["field"], f"field_{field['field']}")] = field["value"]
-    data_len = int(values.get("dataLen", 0) or 0)
-    body_start = header_end + 1
-    if len(frame) < body_start + data_len + (1 if data_len else 0):
-        raise ValueError("Truncated RISP body")
-    body = frame[body_start : body_start + data_len]
-    if data_len and frame[body_start + data_len] != crc8_app(body):
-        raise ValueError("RISP body checksum mismatch")
-    summary = {
-        "risp_cmd": values.get("cmd"),
-        "risp_seq": values.get("seq"),
-        "risp_attr": values.get("attr"),
-        "risp_data_len": data_len,
-        "risp_body_hex": body.hex(),
-    }
-    if values.get("cmd") == RISP_CMD_OPERATION:
-        op_fields = decode_proto_fields(body) if body else []
-        summary["op_mode"] = first_proto_value(op_fields, 1, 0)
-        summary["op_state"] = first_proto_value(op_fields, 2, 0)
-    elif values.get("cmd") in (RISP_CMD_ALL_STATE_RESPONSE, 0x400):
-        summary.update(summarize_all_state_body(body))
-    return summary
-
-
-def summarize_all_state_body(body: bytes) -> dict[str, Any]:
-    fields = decode_proto_fields(body) if body else []
-    summary: dict[str, Any] = {}
-    for field in fields:
-        name = ALL_STATE_FIELD_NAMES.get(field["field"])
-        if name and field["wire_type"] == 0:
-            summary[name] = field["value"]
-    for name in ALL_STATE_FIELD_NAMES.values():
-        summary.setdefault(name, 0)
-    w_mode = summary.setdefault("w_mode", 0)
-    w_state = summary.setdefault("w_state", 0)
-    if isinstance(w_mode, int):
-        summary["w_mode_name"] = WORK_MODE_NAMES.get(w_mode, f"unknown_{w_mode}")
-        summary["w_mode_app_name"] = WORK_MODE_APP_NAMES.get(w_mode, f"UNKNOWN_{w_mode}")
-    if isinstance(w_state, int):
-        summary["w_state_name"] = WORK_STATE_NAMES.get(w_state, f"unknown_{w_state}")
-        summary["w_state_app_name"] = WORK_STATE_APP_NAMES.get(w_state, f"UNKNOWN_{w_state}")
-        summary["w_state_app_raw_name"] = summary["w_state_app_name"]
-        if w_mode == 0 and w_state == 1:
-            summary["w_state_app_name"] = "PENDING"
-    return summary
-
-
-def decode_varint(data: bytes, offset: int = 0) -> tuple[int, int]:
-    value = 0
-    shift = 0
-    while True:
-        if offset >= len(data):
-            raise ValueError("truncated protobuf varint")
-        byte = data[offset]
-        offset += 1
-        value |= (byte & 0x7F) << shift
-        if not (byte & 0x80):
-            return value, offset
-        shift += 7
-        if shift >= 64:
-            raise ValueError("protobuf varint is too long")
-
-
-def decode_proto_fields(data: bytes) -> list[dict[str, Any]]:
-    fields: list[dict[str, Any]] = []
-    offset = 0
-    while offset < len(data):
-        tag, offset = decode_varint(data, offset)
-        field_number = tag >> 3
-        wire_type = tag & 0x07
-        if wire_type == 0:
-            value, offset = decode_varint(data, offset)
-        elif wire_type == 2:
-            length, offset = decode_varint(data, offset)
-            end = offset + length
-            if end > len(data):
-                raise ValueError("truncated protobuf bytes field")
-            value = data[offset:end]
-            offset = end
-        elif wire_type == 1:
-            end = offset + 8
-            if end > len(data):
-                raise ValueError("truncated protobuf fixed64 field")
-            value = int.from_bytes(data[offset:end], "little")
-            offset = end
-        elif wire_type == 5:
-            end = offset + 4
-            if end > len(data):
-                raise ValueError("truncated protobuf fixed32 field")
-            value = int.from_bytes(data[offset:end], "little")
-            offset = end
-        else:
-            raise ValueError(f"unsupported protobuf wire type {wire_type}")
-        fields.append({"field": field_number, "wire_type": wire_type, "value": value})
-    return fields
-
-
-def proto_values(fields: list[dict[str, Any]], field_number: int, wire_type: int | None = None) -> list[Any]:
-    return [
-        field["value"]
-        for field in fields
-        if field["field"] == field_number and (wire_type is None or field["wire_type"] == wire_type)
-    ]
-
-
-def first_proto_value(fields: list[dict[str, Any]], field_number: int, wire_type: int | None = None) -> Any:
-    values = proto_values(fields, field_number, wire_type)
-    return values[0] if values else None
-
-
-def first_proto_string(fields: list[dict[str, Any]], field_number: int) -> str | None:
-    value = first_proto_value(fields, field_number, 2)
-    if not isinstance(value, bytes):
-        return None
-    return value.decode("utf-8", errors="replace")
