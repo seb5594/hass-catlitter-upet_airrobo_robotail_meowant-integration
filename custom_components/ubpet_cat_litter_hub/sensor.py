@@ -432,30 +432,26 @@ class UbpetCatSensor(UbpetCatEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
-        cat = self._cat_data
-        if cat is None:
+        profile = self._cat_data
+        if profile is None:
             return None
-        return {
-            "cat_info_id": cat.get("catInfoId"),
-            "nickname": cat.get("nickname"),
-            "picture": cat.get("icon"),
+
+        streams = self.coordinator.history.state["streams"]
+        cat_streams = (stream for key, stream in streams.items() if key.endswith(":cat_records"))
+        attributes = {
             "history_source": "observed_vendor_records",
-            "history_complete_24h": all(
-                stream.get("complete_24h", False)
-                for key, stream in self.coordinator.history.state["streams"].items()
-                if key.endswith(":cat_records")
-            )
-            and bool(self.coordinator.history.state["streams"]),
-            **(
-                {
-                    "classification": "duration_estimate",
-                    "threshold_seconds": self.coordinator.cat_poo_duration_threshold(self._cat_id),
-                }
-                if self.entity_description.key
-                in {"cat_last_pee", "cat_last_poo", "cat_pee_visits_24h", "cat_poo_visits_24h"}
-                else {}
+            "history_complete_24h": bool(streams) and all(
+                stream.get("complete_24h", False) for stream in cat_streams
             ),
         }
+        for attribute, app_field in (("cat_info_id", "catInfoId"), ("nickname", "nickname"), ("picture", "icon")):
+            attributes[attribute] = profile.get(app_field)
+
+        if self.entity_description.key in {"cat_last_pee", "cat_last_poo", "cat_pee_visits_24h", "cat_poo_visits_24h"}:
+            attributes["classification"] = "duration_estimate"
+            attributes["threshold_seconds"] = self.coordinator.cat_poo_duration_threshold(self._cat_id)
+        return attributes
+
 
 
 def _firmware_version(config: dict[str, Any]) -> str | None:

@@ -49,7 +49,7 @@
   "entity": {
     "sensor": {
       "box_status": {
-        "name": "Box status",
+        "name": "Litter box operation",
         "state": {
           "standby": "Standby",
           "running": "Running",
@@ -57,43 +57,43 @@
         }
       },
       "box_use_times": {
-        "name": "Box use times"
+        "name": "Recorded box visits"
       },
       "waste_bin_level": {
-        "name": "Waste bin level"
+        "name": "Waste drawer fill"
       },
       "waste_bin_last_reset": {
-        "name": "Waste bin last reset"
+        "name": "Last waste counter reset"
       },
       "box_full_max": {
-        "name": "Box full max"
+        "name": "Maximum cleans per bin cycle"
       },
       "box_full_alert": {
-        "name": "Box full alert"
+        "name": "Waste drawer warning state"
       },
       "deodorant_remaining_days": {
-        "name": "Deodorant remaining days"
+        "name": "Days left on deodorizer"
       },
       "cat_weight": {
-        "name": "Weight"
+        "name": "Cat weight"
       },
       "cat_visits": {
         "name": "Visits (legacy)"
       },
       "cat_cost_time": {
-        "name": "Average usage duration (legacy)"
+        "name": "Mean visit time (legacy)"
       },
       "firmware_version": {
-        "name": "Firmware version"
+        "name": "Installed firmware"
       },
       "auto_clean_delay_current": {
-        "name": "Auto clean delay"
+        "name": "Delay before automatic scooping"
       },
       "wifi_name": {
-        "name": "Wi-Fi name"
+        "name": "Connected Wi-Fi network"
       },
       "empty_waste_bin_reminder_days": {
-        "name": "Empty waste bin reminder days",
+        "name": "Bin reminder days in use",
         "state": {
           "off": "Off",
           "every_day": "Every day",
@@ -103,19 +103,19 @@
         }
       },
       "mqtt_work_mode": {
-        "name": "MQTT work mode"
+        "name": "Device operating mode (MQTT)"
       },
       "mqtt_work_state": {
-        "name": "MQTT work state"
+        "name": "Device operating state (MQTT)"
       },
       "mqtt_work_cause": {
-        "name": "MQTT work cause"
+        "name": "Reason for operation (MQTT)"
       },
       "last_rest_update": {
-        "name": "Last REST update"
+        "name": "Most recent HTTP refresh"
       },
       "last_mqtt_update": {
-        "name": "Last MQTT update"
+        "name": "Most recent MQTT message"
       },
       "remaining_bin_uses": {
         "name": "Uses until bin capacity"
@@ -127,7 +127,7 @@
         "name": "Pet position",
         "state": {
           "inside": "Inside litter box",
-          "away": "Away from litter box"
+          "away": "Outside the box"
         }
       },
       "cat_last_visit_duration": {
@@ -190,19 +190,19 @@
     },
     "binary_sensor": {
       "online": {
-        "name": "Online"
+        "name": "Connected"
       },
       "deodorant_expired": {
-        "name": "Deodorant expired"
+        "name": "Deodorizer life ended"
       },
       "sensor_switch": {
-        "name": "Sensor enabled"
+        "name": "Presence sensing active"
       },
       "camera_switch": {
-        "name": "Camera enabled"
+        "name": "Camera active"
       },
       "control_board_switch": {
-        "name": "Child lock"
+        "name": "Panel lock"
       },
       "cat_inside": {
         "name": "Cat inside"
@@ -214,7 +214,7 @@
         "name": "Cover open"
       },
       "drum_not_in_place": {
-        "name": "Drum not in place"
+        "name": "Drum out of position"
       },
       "drum_stuck": {
         "name": "Drum stuck"
@@ -243,30 +243,30 @@
     },
     "number": {
       "auto_clean_delay": {
-        "name": "Auto clean delay"
+        "name": "Wait before scooping"
       },
       "cat_poo_duration_threshold": {
         "name": "Poo duration threshold (estimate)"
       },
       "box_full_alert_threshold": {
-        "name": "Waste bin full after"
+        "name": "Clean cycles before bin warning"
       }
     },
     "switch": {
       "deodorant_alert": {
-        "name": "Deodorant alert"
+        "name": "Deodorizer replacement notice"
       },
       "do_not_disturb": {
-        "name": "Do not disturb"
+        "name": "Quiet hours"
       },
       "light_schedule": {
-        "name": "Light schedule"
+        "name": "Timed lighting"
       },
       "empty_waste_bin_reminder": {
-        "name": "Empty waste bin reminder"
+        "name": "Bin emptying notification"
       },
       "auto_clean": {
-        "name": "Auto clean"
+        "name": "Automatic scooping"
       },
       "child_lock": {
         "name": "Child lock"
@@ -275,7 +275,7 @@
         "name": "Shake mode"
       },
       "box_full_alert": {
-        "name": "Waste bin full alert"
+        "name": "Warn when bin is full"
       },
       "foreign_object_detection": {
         "name": "Foreign object detection"
@@ -304,24 +304,24 @@
     },
     "time": {
       "do_not_disturb_start": {
-        "name": "Do not disturb start"
+        "name": "Quiet hours begin"
       },
       "do_not_disturb_end": {
-        "name": "Do not disturb end"
+        "name": "Quiet hours finish"
       },
       "light_schedule_start": {
-        "name": "Light schedule start"
+        "name": "Scheduled lights on"
       },
       "light_schedule_end": {
-        "name": "Light schedule end"
+        "name": "Scheduled lights off"
       },
       "empty_waste_bin_reminder_time": {
-        "name": "Empty waste bin reminder time"
+        "name": "Bin notification time"
       }
     },
     "select": {
       "empty_waste_bin_reminder_days_select": {
-        "name": "Empty waste bin reminder days",
+        "name": "Bin notification schedule",
         "state": {
           "off": "Off",
           "every_day": "Every day",
@@ -332,37 +332,37 @@
     },
     "button": {
       "rest_request": {
-        "name": "REST request"
+        "name": "Refresh via HTTP"
       },
       "mqtt_request_state": {
-        "name": "Request state"
+        "name": "Refresh via MQTT"
       },
       "reset_waste_bin": {
-        "name": "Reset waste bin"
+        "name": "Zero the waste counter"
       },
       "mqtt_start_clean_up": {
-        "name": "Start clean"
+        "name": "Begin cleaning cycle"
       },
       "mqtt_pause_clean_up": {
-        "name": "Pause clean"
+        "name": "Hold cleaning cycle"
       },
       "mqtt_resume_clean_up": {
-        "name": "Resume clean"
+        "name": "Continue cleaning cycle"
       },
       "mqtt_start_flatten": {
-        "name": "Flatten"
+        "name": "Begin leveling litter"
       },
       "mqtt_pause_flatten": {
-        "name": "Pause flatten"
+        "name": "Hold litter leveling"
       },
       "mqtt_resume_flatten": {
-        "name": "Resume flatten"
+        "name": "Continue litter leveling"
       },
       "mqtt_start_rise": {
-        "name": "Raise litter rake"
+        "name": "Move rake upward"
       },
       "mqtt_start_drop": {
-        "name": "Lower litter rake"
+        "name": "Move rake downward"
       },
       "reset_deodorant": {
         "name": "Reset deodorant"

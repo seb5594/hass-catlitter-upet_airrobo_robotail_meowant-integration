@@ -136,9 +136,7 @@ Recommended topics:
 
 ## Origin and license status
 
-[Source review for an independent release](docs/PROVENANCE.md)
-
-The original and the examined forks contained no license file at the time of research. [Upstream issue #8](https://github.com/CrazzyBerg/upet-hass/issues/8) explicitly asks about redistribution. This project therefore does not assign an invented license to the third-party code. For a general release and for inclusion in the HACS default catalog, the license status has to be clarified with the rights holders. The upstream history and source references are preserved.
+Cat Litter Hub source and artwork from release 2026.11.09.1 are available under the [MIT License](LICENSE), copyright seb5594 (Sebastian Schmidt). Earlier upstream commits and release archives retain their respective rights status. The [source notes](docs/PROVENANCE.md) document the project’s origins and the provider requirements.
 
 <!-- support:begin (generated, shared text) -->
 ## Say thanks

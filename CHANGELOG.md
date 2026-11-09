@@ -4,6 +4,7 @@
 
 - Reimplement the HTTP client, MQTT codec and inherited entity logic while retaining existing entity IDs.
 - Supply app signing keys during setup. Existing accounts retain their locally saved keys.
+- Release the current source and new artwork under MIT.
 - Use the Pets Marketplace category and calendar version tags without a leading `v`.
 
 ## 2026.11.03.2

@@ -121,9 +121,7 @@ Empfohlene Topics:
 
 ## Herkunft und Lizenzstatus
 
-[Quellenprüfung für eine eigenständige Veröffentlichung](docs/PROVENANCE.md)
-
-Das Original und die untersuchten Forks enthalten zum Recherchezeitpunkt keine Lizenzdatei. [Upstream-Issue #8](https://github.com/CrazzyBerg/upet-hass/issues/8) fragt die Weitergabe ausdrücklich an. Dieses Projekt weist dem fremden Code deshalb keine erfundene Lizenz zu. Für eine allgemeine Veröffentlichung und eine Aufnahme in den HACS-Standardkatalog ist der Lizenzstatus mit den Rechteinhabern zu klären. Die bisherige Upstream-Historie und Quellenhinweise bleiben erhalten.
+Der Quellcode und die Grafiken von Cat Litter Hub stehen ab Release 2026.11.09.1 unter der [MIT-Lizenz](LICENSE), Copyright seb5594 (Sebastian Schmidt). Frühere Upstream-Commits und Release-Archive behalten ihren jeweiligen Rechtsstatus. Die [Quellenhinweise](docs/PROVENANCE.md) dokumentieren die Herkunft und die Voraussetzungen der Anbieter.
 
 ## Say thanks
 
