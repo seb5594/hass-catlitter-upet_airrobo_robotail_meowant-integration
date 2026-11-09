@@ -2,7 +2,7 @@
 
 ## Data flow
 
-`providers.json` is the only place that knows brands and regions: regions with host and countries, time zone rules for the pre-selection, and every provider with its app profile, allowed regions and optional per-region host/app overrides. `providers.py` only reads this data. `mobile_apps.json` contains only the already publicly documented identifiers of the vendor apps; no personal credentials.
+`providers.json` is the only place that knows brands and regions: regions with host and countries, time zone rules for the pre-selection, and every provider with its app profile, allowed regions and optional per-region host/app overrides. `providers.py` only reads this data. `mobile_apps.json` contains the vendor app identifiers and product names. App signing keys are supplied locally and stored with the account entry.
 
 **Adding a brand:** add the app profile to `mobile_apps.json`, the provider to `providers.json` (`label`, `app`, `regions`, and `hosts`/`region_apps` where it differs), one entry in `strings.json` (only if a new region appears) and a test in `.github/tests/test_derived_data.py`. No code has to change. Do not assume a working login just because product names look similar; documented app and server data is required.
 

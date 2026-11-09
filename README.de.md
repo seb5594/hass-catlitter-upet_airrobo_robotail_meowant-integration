@@ -28,6 +28,8 @@ Eine Home-Assistant-Integration für smarte Katzenklos, die dieselbe Cloud-API n
 
 ## Installation
 
+Für neue Konten brauchst du einen App-Signaturschlüssel, den du für die gewählte App und Region verwenden darfst. Gib ihn bei der Einrichtung ein. Bestehende Einträge behalten ihren in Home Assistant gespeicherten Schlüssel.
+
 Home Assistant Core **ab 2023.6.0**, siehe [hacs.json](hacs.json). Den Stand der tatsächlich geprüften Versionen beschreibt [TESTEN.md](docs/TESTING.md).
 
 1. In HACS unter **Benutzerdefinierte Repositories** `https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration` als **Integration** hinzufügen.

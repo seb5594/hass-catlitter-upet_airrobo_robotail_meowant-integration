@@ -333,7 +333,7 @@ async def test_duplicate_account_is_rejected_before_network_login(coordinator):
     flow._async_current_entries = MagicMock(return_value=[existing])
     with patch("custom_components.ubpet_cat_litter_hub.config_flow._validate") as validate:
         result = await flow.async_step_account(
-            {"country": "DE", "region": "eu", "username": " TEST@example.test ", "password": "x"}
+            {"country": "DE", "region": "eu", "username": " TEST@example.test ", "password": "x", "app_key": "test-key"}
         )
     assert result["reason"] == "already_configured"
     validate.assert_not_called()
@@ -352,11 +352,44 @@ async def test_same_email_at_different_providers_creates_independent_entry(coord
     flow._abort_if_unique_id_configured = MagicMock()
     with patch("custom_components.ubpet_cat_litter_hub.config_flow._validate", return_value=[]):
         result = await flow.async_step_account(
-            {"country": "DE", "region": "eu", "username": "test@example.test", "password": " x "}
+            {"country": "DE", "region": "eu", "username": "test@example.test", "password": " x ", "app_key": "test-key"}
         )
     assert result["type"] == "create_entry"
     assert result["data"]["provider"] == "robotail"
     assert result["data"]["password"] == " x "  # spaces can be part of a password
+
+
+async def test_new_app_setup_requires_a_signing_key_before_contacting_the_vendor(coordinator):
+    flow = UbpetConfigFlow()
+    flow.hass = coordinator.hass
+    with patch("custom_components.ubpet_cat_litter_hub.config_flow._validate") as validate:
+        result = await flow.async_step_account(
+            {"country": "DE", "region": "eu", "username": "test@example.test", "password": "pw"}
+        )
+    assert result["errors"] == {"app_key": "app_key_required"}
+    validate.assert_not_called()
+
+
+async def test_reconfiguration_keeps_saved_key_only_for_the_existing_app_region(coordinator):
+    flow = UbpetConfigFlow()
+    flow.hass = coordinator.hass
+    flow._async_current_entries = MagicMock(return_value=[])
+    old = {
+        "provider": "upet", "region": "eu", "app_key": "saved-key",
+        "app_id": "custom-app", "product": "custom-product",
+    }
+    fields = {"country": "DE", "region": "na", "username": "test@example.test", "password": "pw"}
+    with patch("custom_components.ubpet_cat_litter_hub.config_flow._validate") as validate:
+        result, errors = await flow._async_submit(fields, old)
+    assert result is None and errors == {"app_key": "app_key_required"}
+    validate.assert_not_called()
+    flow.async_set_unique_id = AsyncMock()
+    flow._abort_if_unique_id_configured = MagicMock()
+    with patch("custom_components.ubpet_cat_litter_hub.config_flow._validate", return_value=[]):
+        result, errors = await flow._async_submit({**fields, "region": "eu"}, old)
+    assert errors == {}
+    assert result["data"]["app_key"] == "saved-key"
+    assert result["data"]["app_id"] == "custom-app"
 
 
 async def test_migration_preserves_all_connection_fields_and_entry_id(coordinator):
@@ -369,6 +402,7 @@ async def test_migration_preserves_all_connection_fields_and_entry_id(coordinato
         "area_code": "RU",
         "device_id": "stable",
         **credentials("upet", "eu"),
+        "app_key": "local-test-signing-key",
     }
     old = SimpleNamespace(version=1, entry_id="stable_entry", data=data)
     coordinator.hass.config_entries = MagicMock()

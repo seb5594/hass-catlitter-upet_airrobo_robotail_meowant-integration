@@ -26,11 +26,13 @@
           "region": "Serverregio van het account",
           "country": "Accountland (app)",
           "username": "Account",
-          "password": "Wachtwoord"
+          "password": "Wachtwoord",
+          "app_key": "App signing key"
         }
       }
     },
     "error": {
+      "app_key_required": "Enter a signing key you are authorized to use for this app and region.",
       "invalid_input": "Voer een geldig land, account en wachtwoord in.",
       "invalid_auth": "Aanmelding geweigerd. Controleer app/aanbieder, accountregio, land en wachtwoord. Een verkeerde regio verschijnt ook als verkeerd wachtwoord.",
       "cannot_connect": "De aanbieder is niet bereikbaar. Probeer het later opnieuw.",

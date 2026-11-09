@@ -26,11 +26,13 @@
           "region": "Serverregion des Kontos",
           "country": "Kontoland (aus der App)",
           "username": "Konto",
-          "password": "Passwort"
+          "password": "Passwort",
+          "app_key": "App-Signaturschlüssel"
         }
       }
     },
     "error": {
+      "app_key_required": "Gib einen autorisierten App-Signaturschlüssel für diese App und Region ein.",
       "invalid_input": "Bitte ein gültiges Land, Konto und Passwort angeben.",
       "invalid_auth": "Anmeldung abgelehnt. App/Anbieter, Kontoregion, Land und Passwort prüfen. Eine falsche Region zeigt sich ebenfalls als falsches Passwort.",
       "cannot_connect": "Der Anbieter ist nicht erreichbar. Bitte später erneut versuchen.",

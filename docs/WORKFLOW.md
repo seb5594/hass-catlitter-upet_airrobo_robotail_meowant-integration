@@ -13,7 +13,7 @@ The shared engine measures tests and ZIP size and refreshes the generated README
 
 ## Scheme
 
-`2026.11.02.1` means: first build on 2 November 2026. The next ones are `.2`, `.3` and so on. The daily counter restarts at `.1` the next calendar day. The reference time zone is **Europe/Berlin**. The release tag looks like `v2026.11.02.1`.
+`2026.11.02.1` means: first build on 2 November 2026. The next ones are `.2`, `.3` and so on. The daily counter restarts at `.1` the next calendar day. The reference time zone is **Europe/Berlin**. New release tags and titles use `YYYY.MM.DD.BUILD` without a prefix. Older tags remain valid.
 
 The version source is `custom_components/ubpet_cat_litter_hub/manifest.json`. The scheme is recognised as valid calendar versioning and is supported by the existing ZIP/release engine.
 

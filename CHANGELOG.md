@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026.11.09.1
+
+- Reimplement the HTTP client, MQTT codec and inherited entity logic while retaining existing entity IDs.
+- Supply app signing keys during setup. Existing accounts retain their locally saved keys.
+- Use the Pets Marketplace category and calendar version tags without a leading `v`.
+
 ## 2026.11.03.2
 
 - **Dashboard cards**, registered automatically: `ubpet-litter-box-card` (status, cat presence, waste bin, info chips, actions, statistics) and `ubpet-cat-card` (weight and visit statistics). Sections, chips, actions and statistics are selectable and orderable in a visual editor.

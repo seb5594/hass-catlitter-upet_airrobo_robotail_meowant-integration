@@ -26,11 +26,13 @@
           "region": "Região do servidor da conta",
           "country": "País da conta (aplicativo)",
           "username": "Conta",
-          "password": "Senha"
+          "password": "Senha",
+          "app_key": "App signing key"
         }
       }
     },
     "error": {
+      "app_key_required": "Enter a signing key you are authorized to use for this app and region.",
       "invalid_input": "Informe um país, uma conta e uma senha válidos.",
       "invalid_auth": "Login recusado. Verifique o aplicativo/provedor, a região da conta, o país e a senha. Uma região errada também aparece como senha errada.",
       "cannot_connect": "Não foi possível entrar em contato com o provedor. Tente novamente mais tarde.",

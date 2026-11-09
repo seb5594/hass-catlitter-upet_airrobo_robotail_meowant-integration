@@ -26,11 +26,13 @@
           "region": "Account server region",
           "country": "Account country (app)",
           "username": "Account",
-          "password": "Password"
+          "password": "Password",
+          "app_key": "App signing key"
         }
       }
     },
     "error": {
+      "app_key_required": "Enter a signing key you are authorized to use for this app and region.",
       "invalid_input": "Enter a valid country, account and password.",
       "invalid_auth": "Login rejected. Check the app/provider, account region, country and password. A wrong region also shows up as a wrong password.",
       "cannot_connect": "The vendor could not be reached. Try again later.",

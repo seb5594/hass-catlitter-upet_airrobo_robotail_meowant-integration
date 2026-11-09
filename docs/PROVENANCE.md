@@ -32,8 +32,9 @@ that they control the rights to the SVG.
 
 `providers.json` describes regional hosts, routing and app identifiers. Those
 are interoperability facts, with related findings recorded in
-[SOURCES.md](SOURCES.md). `mobile_apps.json` also bundles four app signing
-keys. The HTTP client uses those keys to sign requests for the vendors' apps.
+[SOURCES.md](SOURCES.md). Earlier builds bundled four app signing keys. The release candidate
+removes them from `mobile_apps.json`. New setups require a key the user is
+authorized to use. Existing entries retain their locally stored key.
 The review did not find authorization to redistribute the keys or a public
 developer program offering them for third-party use. The published [UBPet
 website terms](https://www.ubpet.com/pages/terms-conditions) restrict some
@@ -41,8 +42,8 @@ automated use of its services. Their applicability to each app endpoint was
 not established by this review.
 
 Before publishing under MIT, confirm rights to the files that will ship.
-Obtain authorization for the bundled signing keys or leave them out of the
-release and accept only credentials users are authorized to supply. Start an
+The candidate leaves out the signing keys and accepts locally supplied
+credentials. Start an
 independent publication from the reviewed tree and retain the attribution in
 the README. The inherited commits and older release ZIPs are outside that
 review.

@@ -5,6 +5,9 @@
     "frontend",
     "http"
   ],
+  "categories": [
+    "pets"
+  ],
   "codeowners": [
     "@seb5594"
   ],
@@ -16,5 +19,5 @@
   "requirements": [
     "paho-mqtt>=2.1.0"
   ],
-  "version": "2026.11.03.2"
+  "version": "2026.11.09.1"
 }

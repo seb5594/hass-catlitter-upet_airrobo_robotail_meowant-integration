@@ -26,11 +26,13 @@
           "region": "账户服务器区域",
           "country": "账户国家/地区（应用）",
           "username": "账户",
-          "password": "密码"
+          "password": "密码",
+          "app_key": "App signing key"
         }
       }
     },
     "error": {
+      "app_key_required": "Enter a signing key you are authorized to use for this app and region.",
       "invalid_input": "请输入有效的国家/地区、账户和密码。",
       "invalid_auth": "登录被拒绝。请检查应用/提供商、账户区域、国家/地区和密码。区域错误同样会显示为密码错误。",
       "cannot_connect": "无法连接到提供商。请稍后再试。",

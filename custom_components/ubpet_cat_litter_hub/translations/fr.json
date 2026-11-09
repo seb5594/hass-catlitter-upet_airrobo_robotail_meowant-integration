@@ -26,11 +26,13 @@
           "region": "Région du serveur du compte",
           "country": "Pays du compte (application)",
           "username": "Compte",
-          "password": "Mot de passe"
+          "password": "Mot de passe",
+          "app_key": "App signing key"
         }
       }
     },
     "error": {
+      "app_key_required": "Enter a signing key you are authorized to use for this app and region.",
       "invalid_input": "Saisissez un pays, un compte et un mot de passe valides.",
       "invalid_auth": "Connexion refusée. Vérifiez l'application/le fournisseur, la région du compte, le pays et le mot de passe. Une mauvaise région apparaît aussi comme un mauvais mot de passe.",
       "cannot_connect": "Le fournisseur est injoignable. Réessayez plus tard.",

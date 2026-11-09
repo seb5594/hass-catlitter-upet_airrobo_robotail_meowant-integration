@@ -26,11 +26,13 @@
           "region": "Kontoens serverregion",
           "country": "Kontoens land (app)",
           "username": "Konto",
-          "password": "Adgangskode"
+          "password": "Adgangskode",
+          "app_key": "App signing key"
         }
       }
     },
     "error": {
+      "app_key_required": "Enter a signing key you are authorized to use for this app and region.",
       "invalid_input": "Angiv et gyldigt land, en konto og en adgangskode.",
       "invalid_auth": "Login afvist. Kontrollér app/udbyder, kontoregion, land og adgangskode. En forkert region ses også som en forkert adgangskode.",
       "cannot_connect": "Udbyderen kunne ikke kontaktes. Prøv igen senere.",

@@ -130,6 +130,9 @@ class UbpetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 **({"default": values.get(CONF_COUNTRY, country)} if values.get(CONF_COUNTRY, country) else {}),
             ): (selector.CountrySelector() if hasattr(selector, "CountrySelector") else selector.TextSelector()),
             vol.Required(CONF_USERNAME, default=values.get(CONF_USERNAME, old.get("account", ""))): str,
+            (vol.Optional if old.get("app_key") else vol.Required)("app_key"): selector.TextSelector(
+                selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
+            ),
             vol.Required(CONF_PASSWORD): selector.TextSelector(
                 selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
             ),
@@ -155,10 +158,20 @@ class UbpetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         selected_region = user_input[CONF_REGION]
         app = credentials(self._provider, selected_region)
         # Keep custom app credentials of migrated entries in their original tenant.
-        if old and self._provider == infer_provider(old) and selected_region == infer_region(old):
+        saved_region = old.get(CONF_REGION) or infer_region(old)
+        same_app = old and self._provider == old.get(CONF_PROVIDER, infer_provider(old)) and (
+            selected_region == saved_region
+        )
+        if same_app:
             app = {key: old.get(key, value) for key, value in app.items()}
+        signing_key = str(user_input.get("app_key") or "").strip()
+        if not signing_key and same_app:
+            signing_key = old.get("app_key")
+        if not signing_key:
+            return None, {"app_key": "app_key_required"}
         data = {
             **app,
+            "app_key": signing_key,
             CONF_PROVIDER: self._provider,
             CONF_REGION: selected_region,
             CONF_COUNTRY: country,

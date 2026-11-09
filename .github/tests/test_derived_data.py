@@ -42,7 +42,7 @@ def test_every_provider_region_resolves_to_a_host_and_app_profile():
         assert provider.regions, key
         for region in provider.regions:
             assert providers.endpoint(key, region).startswith("https://")
-            assert {"app_id", "app_key", "product"} <= set(providers.credentials(key, region))
+            assert {"app_id", "product"} == set(providers.credentials(key, region))
 
 
 def test_overrides_are_applied_per_region_only():

@@ -81,6 +81,7 @@ def _entry_data():
         "provider": "upet",
         "region": "eu",
         **credentials("upet", "eu"),
+        "app_key": "local-test-signing-key",
     }
 
 

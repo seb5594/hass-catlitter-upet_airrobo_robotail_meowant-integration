@@ -19,14 +19,14 @@ day = datetime.strptime(args.date, "%Y-%m-%d").date() if args.date else datetime
 prefix = day.strftime("%Y.%m.%d")
 path = ROOT / "custom_components/ubpet_cat_litter_hub/manifest.json"
 manifest = json.loads(path.read_text(encoding="utf-8"))
-tags = subprocess.check_output(["git", "tag", "--list", f"v{prefix}.*"], cwd=ROOT, text=True).splitlines()
+tags = subprocess.check_output(["git", "tag", "--list", f"{prefix}.*", f"v{prefix}.*"], cwd=ROOT, text=True).splitlines()
 pattern = re.compile(re.escape(prefix) + r"\.(\d+)")
 previous = [int(m[1]) for tag in [manifest["version"], *tags] if (m := pattern.fullmatch(tag.removeprefix("v")))]
 build = args.build if args.build is not None else max(previous, default=0) + 1
 if build < 1:
     parser.error("The build number must be at least 1")
 version = f"{prefix}.{build}"
-if f"v{version}" in tags:
+if version in tags or f"v{version}" in tags:
     parser.error("A Git tag for this version already exists")
 manifest["version"] = version
 path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

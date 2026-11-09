@@ -26,11 +26,13 @@
           "region": "Tilin palvelinalue",
           "country": "Tilin maa (sovellus)",
           "username": "Tili",
-          "password": "Salasana"
+          "password": "Salasana",
+          "app_key": "App signing key"
         }
       }
     },
     "error": {
+      "app_key_required": "Enter a signing key you are authorized to use for this app and region.",
       "invalid_input": "Anna kelvollinen maa, tili ja salasana.",
       "invalid_auth": "Kirjautuminen hylättiin. Tarkista sovellus/palveluntarjoaja, tilin alue, maa ja salasana. Väärä alue näkyy myös vääränä salasanana.",
       "cannot_connect": "Palveluntarjoajaan ei saatu yhteyttä. Yritä myöhemmin uudelleen.",

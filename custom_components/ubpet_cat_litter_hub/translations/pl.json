@@ -26,11 +26,13 @@
           "region": "Region serwera konta",
           "country": "Kraj konta (aplikacja)",
           "username": "Konto",
-          "password": "Hasło"
+          "password": "Hasło",
+          "app_key": "App signing key"
         }
       }
     },
     "error": {
+      "app_key_required": "Enter a signing key you are authorized to use for this app and region.",
       "invalid_input": "Podaj prawidłowy kraj, konto i hasło.",
       "invalid_auth": "Logowanie odrzucone. Sprawdź aplikację/dostawcę, region konta, kraj i hasło. Zły region objawia się także jako złe hasło.",
       "cannot_connect": "Nie można połączyć się z dostawcą. Spróbuj ponownie później.",

@@ -26,11 +26,13 @@
           "region": "アカウントのサーバーリージョン",
           "country": "アカウントの国（アプリ）",
           "username": "アカウント",
-          "password": "パスワード"
+          "password": "パスワード",
+          "app_key": "App signing key"
         }
       }
     },
     "error": {
+      "app_key_required": "Enter a signing key you are authorized to use for this app and region.",
       "invalid_input": "有効な国、アカウント、パスワードを入力してください。",
       "invalid_auth": "ログインが拒否されました。アプリ／プロバイダー、アカウントのリージョン、国、パスワードを確認してください。リージョンが違う場合もパスワード誤りとして表示されます。",
       "cannot_connect": "プロバイダーに接続できませんでした。後でもう一度お試しください。",

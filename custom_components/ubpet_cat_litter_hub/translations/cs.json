@@ -26,11 +26,13 @@
           "region": "Oblast serveru účtu",
           "country": "Země účtu (aplikace)",
           "username": "Účet",
-          "password": "Heslo"
+          "password": "Heslo",
+          "app_key": "App signing key"
         }
       }
     },
     "error": {
+      "app_key_required": "Enter a signing key you are authorized to use for this app and region.",
       "invalid_input": "Zadejte platnou zemi, účet a heslo.",
       "invalid_auth": "Přihlášení bylo odmítnuto. Zkontrolujte aplikaci/poskytovatele, oblast účtu, zemi a heslo. Špatná oblast se projeví i jako špatné heslo.",
       "cannot_connect": "Poskytovatele se nepodařilo kontaktovat. Zkuste to později.",

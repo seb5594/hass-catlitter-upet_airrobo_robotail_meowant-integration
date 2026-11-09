@@ -26,11 +26,13 @@
           "region": "帳號伺服器區域",
           "country": "帳號國家/地區（App）",
           "username": "帳號",
-          "password": "密碼"
+          "password": "密碼",
+          "app_key": "App signing key"
         }
       }
     },
     "error": {
+      "app_key_required": "Enter a signing key you are authorized to use for this app and region.",
       "invalid_input": "請輸入有效的國家/地區、帳號與密碼。",
       "invalid_auth": "登入遭拒。請檢查 App/供應商、帳號區域、國家/地區與密碼。區域錯誤同樣會顯示為密碼錯誤。",
       "cannot_connect": "無法連線至供應商。請稍後再試。",

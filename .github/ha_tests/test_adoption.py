@@ -28,6 +28,7 @@ LEGACY_DATA = {
     "area_code": "DE",
     "country": "DE",
     **credentials("upet", "eu"),
+    "app_key": "local-test-signing-key",
 }
 
 

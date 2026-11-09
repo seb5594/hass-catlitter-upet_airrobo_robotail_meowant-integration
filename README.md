@@ -43,6 +43,8 @@ A Home Assistant integration for smart cat litter boxes that share the UBPet / A
 
 ## Installation
 
+New accounts need a signing key you are authorized to use for the selected vendor app and region. Enter it in the account form. Existing entries retain the key already stored in Home Assistant.
+
 Home Assistant Core **2023.6.0 or newer**, see [hacs.json](hacs.json). The state of the versions actually tested is described in [TESTING.md](docs/TESTING.md).
 
 1. In HACS, add `https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration` under **Custom repositories** as an **Integration**.

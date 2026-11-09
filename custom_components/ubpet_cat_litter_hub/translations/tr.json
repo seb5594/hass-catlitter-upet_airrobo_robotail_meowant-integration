@@ -26,11 +26,13 @@
           "region": "Hesap sunucu bölgesi",
           "country": "Hesap ülkesi (uygulama)",
           "username": "Hesap",
-          "password": "Parola"
+          "password": "Parola",
+          "app_key": "App signing key"
         }
       }
     },
     "error": {
+      "app_key_required": "Enter a signing key you are authorized to use for this app and region.",
       "invalid_input": "Geçerli bir ülke, hesap ve parola girin.",
       "invalid_auth": "Giriş reddedildi. Uygulamayı/sağlayıcıyı, hesap bölgesini, ülkeyi ve parolayı kontrol edin. Yanlış bölge de yanlış parola olarak görünür.",
       "cannot_connect": "Sağlayıcıya ulaşılamadı. Daha sonra tekrar deneyin.",

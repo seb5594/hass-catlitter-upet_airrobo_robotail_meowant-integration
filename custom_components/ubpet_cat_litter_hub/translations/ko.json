@@ -26,11 +26,13 @@
           "region": "계정 서버 지역",
           "country": "계정 국가(앱)",
           "username": "계정",
-          "password": "비밀번호"
+          "password": "비밀번호",
+          "app_key": "App signing key"
         }
       }
     },
     "error": {
+      "app_key_required": "Enter a signing key you are authorized to use for this app and region.",
       "invalid_input": "올바른 국가, 계정, 비밀번호를 입력하세요.",
       "invalid_auth": "로그인이 거부되었습니다. 앱/제공업체, 계정 지역, 국가, 비밀번호를 확인하세요. 지역이 틀려도 비밀번호 오류로 표시됩니다.",
       "cannot_connect": "제공업체에 연결할 수 없습니다. 나중에 다시 시도하세요.",
