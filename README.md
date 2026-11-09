@@ -15,8 +15,9 @@
   <a href="https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration/releases/tag/v2026.11.03.2"><img src="https://img.shields.io/static/v1?label=version&amp;message=2026.11.03.2&amp;color=1877A5&amp;style=for-the-badge" alt="version" height="28"></a><br>
   <a href="https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration/releases"><img src="https://img.shields.io/github/downloads/seb5594/hass-ubpet_cat_litter_hub-integration/v2026.11.03.2/total?label=downloads&amp;color=1877A5&amp;style=flat" alt="downloads" height="20"></a>
   <a href="https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration/issues"><img src="https://img.shields.io/github/issues/seb5594/hass-ubpet_cat_litter_hub-integration?label=issues&amp;style=flat" alt="issues" height="20"></a>
-  <img src="https://img.shields.io/static/v1?label=tests&amp;message=78%20passed&amp;color=2F855A&amp;style=flat" alt="tests" height="20">
+  <img src="https://img.shields.io/static/v1?label=tests&amp;message=85%20passed&amp;color=2F855A&amp;style=flat" alt="tests" height="20">
   <a href="https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/seb5594/hass-ubpet_cat_litter_hub-integration/ci.yml?branch=main&amp;label=checks&amp;style=flat" alt="checks" height="20"></a>
+  <a href="https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration#license"><img src="https://img.shields.io/github/license/seb5594/hass-ubpet_cat_litter_hub-integration?label=license&amp;style=flat" alt="license" height="20"></a>
 </p>
 <!-- header:end -->
 
@@ -147,3 +148,11 @@ If my work helped you or turned out to be useful, show your appreciation with a 
 
 [![PayPal](https://img.shields.io/static/v1?label=Support&message=PayPal&color=0070BA&logo=paypal&logoColor=white&style=for-the-badge)](https://paypal.me/seb5594) [![Buy Me a Coffee](https://img.shields.io/static/v1?label=Support&message=Buy%20Me%20a%20Coffee&color=FFDD00&logo=buy-me-a-coffee&logoColor=black&style=for-the-badge)](https://buymeacoffee.com/seb5594)
 <!-- support:end -->
+
+<!-- license:begin (generated from the license file) -->
+## License
+
+[![license](https://img.shields.io/static/v1?label=license&message=MIT&color=5B6770&style=flat)](LICENSE)
+
+Published under the [MIT License](LICENSE).
+<!-- license:end -->
