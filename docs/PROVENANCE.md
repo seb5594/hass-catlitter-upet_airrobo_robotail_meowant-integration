@@ -21,13 +21,37 @@ declarations, registry keys and protocol fields. The comparison cannot detect
 every derivative passage. The implementation and review had access to the
 previous code, so this is not a clean-room certification.
 
-For a future MIT publication, review the exact tree that will ship, including
-non-code assets and protocol profiles, and confirm that the publisher can
-license every file. Start any independent publication from that reviewed tree.
-The inherited commits and older release ZIPs are separate from the candidate
-and are not covered by the source comparison. Keep the attribution to the
-original project in the new README.
+## Artwork and provider data
 
-Home Assistant 2023.6.3 and 2026.2.3 were checked with the existing shared
-workflow engine. The suites use simulated cloud traffic. A device run for each
-supported provider is still needed to verify live behavior.
+The editable SVG was added in commit `d123c82` by `seb5594`. It contains vector
+paths and shapes without embedded images or external references. Rendering it
+with `resvg-py` reproduced all four shipped brand PNGs byte for byte. No
+byte-identical artwork was found in the reviewed upstream trees. This
+establishes the source of the shipped PNGs. The publisher should still confirm
+that they control the rights to the SVG.
+
+`providers.json` describes regional hosts, routing and app identifiers. Those
+are interoperability facts, with related findings recorded in
+[SOURCES.md](SOURCES.md). `mobile_apps.json` also bundles four app signing
+keys. The HTTP client uses those keys to sign requests for the vendors' apps.
+The review did not find authorization to redistribute the keys or a public
+developer program offering them for third-party use. The published [UBPet
+website terms](https://www.ubpet.com/pages/terms-conditions) restrict some
+automated use of its services. Their applicability to each app endpoint was
+not established by this review.
+
+Before publishing under MIT, confirm rights to the files that will ship.
+Obtain authorization for the bundled signing keys or leave them out of the
+release and accept only credentials users are authorized to supply. Start an
+independent publication from the reviewed tree and retain the attribution in
+the README. The inherited commits and older release ZIPs are outside that
+review.
+
+## Compatibility
+
+The [shared Compatibility run](https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration/actions/runs/42700507404)
+tested implementation commit `8b9c10d` on all 12 targets, from Home Assistant
+`2023.6.3` through `2026.11.1`. On `2026.11.1`, 85 regular tests and 48
+tests against Home Assistant passed. The tests use simulated cloud traffic.
+A device run for each supported provider is still needed to verify live
+behavior.
