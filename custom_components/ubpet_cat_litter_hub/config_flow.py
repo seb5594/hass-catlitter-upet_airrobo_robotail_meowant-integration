@@ -32,6 +32,7 @@ from .providers import (
     BASIS_TIMEZONE,
     PROVIDERS,
     account_unique_id,
+    bundled_signing_key,
     credentials,
     endpoint,
     infer_provider,
@@ -130,13 +131,16 @@ class UbpetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 **({"default": values.get(CONF_COUNTRY, country)} if values.get(CONF_COUNTRY, country) else {}),
             ): (selector.CountrySelector() if hasattr(selector, "CountrySelector") else selector.TextSelector()),
             vol.Required(CONF_USERNAME, default=values.get(CONF_USERNAME, old.get("account", ""))): str,
-            (vol.Optional if old.get("app_key") else vol.Required)("app_key"): selector.TextSelector(
-                selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
-            ),
             vol.Required(CONF_PASSWORD): selector.TextSelector(
                 selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
             ),
         }
+        bundled_regions = {region for region in profile.regions if bundled_signing_key(self._provider, region)}
+        if len(bundled_regions) != len(profile.regions) or (old and not old.get("app_key")):
+            key_field = vol.Optional if old.get("app_key") or bundled_regions else vol.Required
+            fields[key_field("app_key")] = selector.TextSelector(
+                selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
+            )
         return self.async_show_form(
             step_id="account",
             data_schema=vol.Schema(fields),
@@ -156,7 +160,8 @@ class UbpetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if not account or not password:
             raise ValueError("Account and password are required")
         selected_region = user_input[CONF_REGION]
-        app = credentials(self._provider, selected_region)
+        default_app = credentials(self._provider, selected_region)
+        app = default_app
         # Keep custom app credentials of migrated entries in their original tenant.
         saved_region = old.get(CONF_REGION) or infer_region(old)
         same_app = old and self._provider == old.get(CONF_PROVIDER, infer_provider(old)) and (
@@ -167,6 +172,8 @@ class UbpetConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         signing_key = str(user_input.get("app_key") or "").strip()
         if not signing_key and same_app:
             signing_key = old.get("app_key")
+        if not signing_key and app == default_app:
+            signing_key = bundled_signing_key(self._provider, selected_region)
         if not signing_key:
             return None, {"app_key": "app_key_required"}
         data = {

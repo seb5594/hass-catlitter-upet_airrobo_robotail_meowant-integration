@@ -370,6 +370,37 @@ async def test_new_app_setup_requires_a_signing_key_before_contacting_the_vendor
     validate.assert_not_called()
 
 
+@pytest.mark.parametrize(
+    ("provider", "region", "app_profile"),
+    [
+        ("upet", "eu", "upet"),
+        ("upet", "na", "airpet"),
+        ("airpet", "eu", "airpet"),
+        ("robotail", "eu", "robotail"),
+        ("meowant", "na", "meowant"),
+    ],
+)
+async def test_bundled_profile_hides_key_field_and_supplies_the_selected_key(coordinator, provider, region, app_profile):
+    flow = UbpetConfigFlow()
+    flow.hass = coordinator.hass
+    flow._provider = provider
+    flow._async_current_entries = MagicMock(return_value=[])
+    flow.async_set_unique_id = AsyncMock()
+    flow._abort_if_unique_id_configured = MagicMock()
+    keys = {app: f"fixture-{app}" for app in ("upet", "airpet", "robotail", "meowant")}
+    with (
+        patch("custom_components.ubpet_cat_litter_hub.providers._BUNDLED_SIGNING_KEYS", keys),
+        patch("custom_components.ubpet_cat_litter_hub.config_flow._validate", return_value=[]),
+    ):
+        form = await flow.async_step_account()
+        assert "app_key" not in {field.schema for field in form["data_schema"].schema}
+        result = await flow.async_step_account(
+            {"country": "DE", "region": region, "username": "test@example.test", "password": "pw"}
+        )
+    assert result["type"] == "create_entry"
+    assert result["data"]["app_key"] == keys[app_profile]
+
+
 async def test_reconfiguration_keeps_saved_key_only_for_the_existing_app_region(coordinator):
     flow = UbpetConfigFlow()
     flow.hass = coordinator.hass
@@ -385,7 +416,10 @@ async def test_reconfiguration_keeps_saved_key_only_for_the_existing_app_region(
     validate.assert_not_called()
     flow.async_set_unique_id = AsyncMock()
     flow._abort_if_unique_id_configured = MagicMock()
-    with patch("custom_components.ubpet_cat_litter_hub.config_flow._validate", return_value=[]):
+    with (
+        patch("custom_components.ubpet_cat_litter_hub.providers._BUNDLED_SIGNING_KEYS", {"upet": "fixture-upet"}),
+        patch("custom_components.ubpet_cat_litter_hub.config_flow._validate", return_value=[]),
+    ):
         result, errors = await flow._async_submit({**fields, "region": "eu"}, old)
     assert errors == {}
     assert result["data"]["app_key"] == "saved-key"

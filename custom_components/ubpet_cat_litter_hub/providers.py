@@ -10,6 +10,12 @@ _DIRECTORY = Path(__file__).parent
 APPS: dict[str, dict[str, str]] = json.loads((_DIRECTORY / "mobile_apps.json").read_text(encoding="utf-8"))
 _REGISTRY = json.loads((_DIRECTORY / "providers.json").read_text(encoding="utf-8"))
 
+# This data file is optional and is supplied independently from the MIT-licensed source.
+try:
+    _BUNDLED_SIGNING_KEYS = json.loads((_DIRECTORY / "vendor_app_keys.json").read_text(encoding="utf-8"))
+except (OSError, ValueError):
+    _BUNDLED_SIGNING_KEYS = {}
+
 REGIONS: dict[str, str] = {name: region["host"] for name, region in _REGISTRY["regions"].items()}
 _COUNTRY_REGION = {
     country: name for name, region in _REGISTRY["regions"].items() for country in region.get("countries", ())
@@ -63,6 +69,14 @@ def credentials(provider: str, region: str) -> dict[str, str]:
     profile = PROVIDERS[provider]
     profile.endpoint(region)
     return dict(APPS[profile.app_for(region)])
+
+
+def bundled_signing_key(provider: str, region: str) -> str | None:
+    """Return the optional key for the configured app profile."""
+    if not isinstance(_BUNDLED_SIGNING_KEYS, dict):
+        return None
+    value = _BUNDLED_SIGNING_KEYS.get(PROVIDERS[provider].app_for(region))
+    return (value.strip() or None) if isinstance(value, str) else None
 
 
 def suggest_region_with_basis(country: str | None, time_zone: str | None = None) -> tuple[str, str]:

@@ -28,9 +28,12 @@ next to the component files.
 
 ## Provider access
 
-Profiles describe regional hosts, routing and app identifiers. The release
-ZIP includes no app signing keys. New entries require a key the user is
-authorized to use. Existing entries retain their locally stored key.
+Profiles describe regional hosts, routing and app identifiers. The public
+release ZIP includes no app signing keys. The setup flow can read an optional
+`vendor_app_keys.json` supplied in a separate local installation package.
+The file maps app profile names to signing keys and is outside the project's
+MIT license grant. Existing entries retain their locally stored key. A new
+entry can use the supplied key for its selected app profile automatically.
 
 A public third-party credential issuance path could not be verified. The
 published [UBPet terms](https://www.ubpet.com/pages/terms-conditions) describe
