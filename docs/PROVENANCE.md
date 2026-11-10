@@ -28,12 +28,13 @@ next to the component files.
 
 ## Provider access
 
-Profiles describe regional hosts, routing and app identifiers. The public
-release ZIP includes no app signing keys. The setup flow can read an optional
-`vendor_app_keys.json` supplied in a separate local installation package.
-The file maps app profile names to signing keys and is outside the project's
-MIT license grant. Existing entries retain their locally stored key. A new
-entry can use the supplied key for its selected app profile automatically.
+Profiles describe regional hosts, routing and app identifiers. The current
+source carries the four app profile values previously shipped in
+`v2026.11.03.2` in a separate `vendor_app_keys.json` file. The project's MIT
+license grant applies to the Cat Litter Hub code and artwork. See the
+[license scope notice](../custom_components/ubpet_cat_litter_hub/LICENSE-SCOPE.txt)
+for the separate vendor data. Existing entries retain their stored key. The
+setup flow selects the key for new entries using the app and region.
 
 A public third-party credential issuance path could not be verified. The
 published [UBPet terms](https://www.ubpet.com/pages/terms-conditions) describe

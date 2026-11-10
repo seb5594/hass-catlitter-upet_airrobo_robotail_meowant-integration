@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Select app signing keys automatically for new entries. The vendor data and its license scope notice ship as separate files.
+
 ## 2026.11.09.1
 
 - Reimplement the HTTP client, MQTT codec and inherited entity logic while retaining existing entity IDs.

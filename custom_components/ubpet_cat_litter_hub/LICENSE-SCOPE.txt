@@ -1,0 +1,4 @@
+Cat Litter Hub license scope
+
+The accompanying MIT LICENSE applies to the original Cat Litter Hub source and artwork.
+vendor_app_keys.json contains separate third-party app signing data. The Cat Litter Hub MIT license grant does not extend to that data.

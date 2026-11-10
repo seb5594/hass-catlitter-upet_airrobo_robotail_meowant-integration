@@ -362,7 +362,10 @@ async def test_same_email_at_different_providers_creates_independent_entry(coord
 async def test_new_app_setup_requires_a_signing_key_before_contacting_the_vendor(coordinator):
     flow = UbpetConfigFlow()
     flow.hass = coordinator.hass
-    with patch("custom_components.ubpet_cat_litter_hub.config_flow._validate") as validate:
+    with (
+        patch("custom_components.ubpet_cat_litter_hub.providers._BUNDLED_SIGNING_KEYS", {}),
+        patch("custom_components.ubpet_cat_litter_hub.config_flow._validate") as validate,
+    ):
         result = await flow.async_step_account(
             {"country": "DE", "region": "eu", "username": "test@example.test", "password": "pw"}
         )
@@ -410,7 +413,10 @@ async def test_reconfiguration_keeps_saved_key_only_for_the_existing_app_region(
         "app_id": "custom-app", "product": "custom-product",
     }
     fields = {"country": "DE", "region": "na", "username": "test@example.test", "password": "pw"}
-    with patch("custom_components.ubpet_cat_litter_hub.config_flow._validate") as validate:
+    with (
+        patch("custom_components.ubpet_cat_litter_hub.providers._BUNDLED_SIGNING_KEYS", {}),
+        patch("custom_components.ubpet_cat_litter_hub.config_flow._validate") as validate,
+    ):
         result, errors = await flow._async_submit(fields, old)
     assert result is None and errors == {"app_key": "app_key_required"}
     validate.assert_not_called()

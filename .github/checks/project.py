@@ -17,9 +17,10 @@ apps = json.loads((component / "mobile_apps.json").read_text(encoding="utf-8"))
 assert all(set(profile) == {"app_id", "product"} for profile in apps.values()), (
     "Release profiles must not bundle app signing keys"
 )
-assert not (component / "vendor_app_keys.json").exists(), (
-    "The public source tree must not contain the optional vendor key file"
-)
+vendor_keys = json.loads((component / "vendor_app_keys.json").read_text(encoding="utf-8"))
+assert set(vendor_keys) == set(apps), "Every app profile must have a vendor signing key"
+assert all(isinstance(key, str) and key.strip() for key in vendor_keys.values()), "Empty vendor signing key"
+assert "vendor_app_keys.json" in (component / "LICENSE-SCOPE.txt").read_text(encoding="utf-8")
 english = json.loads((component / "strings.json").read_text(encoding="utf-8"))
 assert english == json.loads((component / "translations/en.json").read_text(encoding="utf-8")), (
     "en.json != strings.json"

@@ -44,7 +44,7 @@ A Home Assistant integration for smart cat litter boxes that share the UBPet / A
 
 ## Installation
 
-When updating an existing Cat Litter Hub installation, keep your Home Assistant entries. They continue to use the signing key already stored for the account. New entries and switches to a different app or region require a signing key you are authorized to use for that profile.
+The current source selects the app signing key automatically for new entries based on the app and region. Existing entries keep using the key stored for the account. The published `2026.11.09.1` package still asks for a signing key when adding a new entry.
 
 Home Assistant Core **2023.6.0 or newer**, see [hacs.json](hacs.json). The state of the versions actually tested is described in [TESTING.md](docs/TESTING.md).
 
@@ -66,7 +66,7 @@ The former standalone `robotail` domain is not rewritten automatically; create a
 
 1. Select the **app of the account**. The print on the litter box is not decisive.
 2. Enter the **server region of the account** and the country used at registration. The pre-selection is a suggestion; the region in the app is what counts.
-3. Enter the account, password and app signing key. The password is taken over unchanged and hashed internally for the proprietary login.
+3. Enter your account and password. If you installed the published `2026.11.09.1` package, enter the app signing key as well.
 4. For another provider or account, choose **Add entry** again.
 
 | Choice | Backend | Notes |
@@ -137,7 +137,7 @@ Recommended topics:
 
 ## Origin and license status
 
-Cat Litter Hub source and artwork from release 2026.11.09.1 are available under the [MIT License](LICENSE), copyright seb5594 (Sebastian Schmidt). Earlier upstream commits and release archives retain their respective rights status. The [source notes](docs/PROVENANCE.md) document the project’s origins and the provider requirements.
+Cat Litter Hub source and artwork from release 2026.11.09.1 are available under the [MIT License](LICENSE), copyright seb5594 (Sebastian Schmidt). Earlier upstream commits and release archives retain their respective rights status. The [source notes](docs/PROVENANCE.md) document the project’s origins and the provider requirements. The separate [vendor data notice](custom_components/ubpet_cat_litter_hub/LICENSE-SCOPE.txt) describes the scope of the license.
 
 <!-- support:begin (generated, shared text) -->
 ## Say thanks

@@ -28,7 +28,7 @@ Eine Home-Assistant-Integration für smarte Katzenklos, die dieselbe Cloud-API n
 
 ## Installation
 
-Beim Update einer bestehenden Cat-Litter-Hub-Installation bleiben die Home-Assistant-Einträge erhalten und verwenden den bereits gespeicherten Schlüssel weiter. Für neue Einträge oder einen Wechsel der App oder Region brauchst du einen App-Signaturschlüssel, den du für dieses Profil verwenden darfst.
+Der aktuelle Quellstand wählt den App-Signaturschlüssel für neue Einträge anhand von App und Region automatisch aus. Bestehende Einträge verwenden den gespeicherten Schlüssel weiter. Das veröffentlichte Paket `2026.11.09.1` fragt den Schlüssel bei neuen Einträgen noch ab.
 
 Home Assistant Core **ab 2023.6.0**, siehe [hacs.json](hacs.json). Den Stand der tatsächlich geprüften Versionen beschreibt [TESTEN.md](docs/TESTING.md).
 
@@ -50,7 +50,7 @@ Die frühere eigenständige `robotail`-Domain wird nicht automatisch umgeschrieb
 
 1. Die **App des Kontos** auswählen. Der Aufdruck auf dem Katzenklo ist dafür nicht ausschlaggebend.
 2. Die **Serverregion des Kontos** und das bei der Registrierung verwendete Land angeben. Die Vorauswahl ist ein Vorschlag, maßgeblich ist die Region in der App.
-3. Konto, Passwort und App-Signaturschlüssel eingeben. Das Passwort wird unverändert übernommen und für den proprietären Login intern gehasht.
+3. Konto und Passwort eingeben. Beim veröffentlichten Paket `2026.11.09.1` zusätzlich den App-Signaturschlüssel eingeben.
 4. Für einen weiteren Anbieter oder ein weiteres Konto erneut **Eintrag hinzufügen** wählen.
 
 | Auswahl | Backend | Einordnung |
@@ -121,7 +121,7 @@ Empfohlene Topics:
 
 ## Herkunft und Lizenzstatus
 
-Der Quellcode und die Grafiken von Cat Litter Hub stehen ab Release 2026.11.09.1 unter der [MIT-Lizenz](LICENSE), Copyright seb5594 (Sebastian Schmidt). Frühere Upstream-Commits und Release-Archive behalten ihren jeweiligen Rechtsstatus. Die [Quellenhinweise](docs/PROVENANCE.md) dokumentieren die Herkunft und die Voraussetzungen der Anbieter.
+Der Quellcode und die Grafiken von Cat Litter Hub stehen ab Release 2026.11.09.1 unter der [MIT-Lizenz](LICENSE), Copyright seb5594 (Sebastian Schmidt). Frühere Upstream-Commits und Release-Archive behalten ihren jeweiligen Rechtsstatus. Die [Quellenhinweise](docs/PROVENANCE.md) dokumentieren die Herkunft und die Voraussetzungen der Anbieter. Der [Lizenzhinweis zu den Anbieterdaten](custom_components/ubpet_cat_litter_hub/LICENSE-SCOPE.txt) grenzt den Lizenzumfang ab.
 
 ## Say thanks
 
