@@ -4,6 +4,7 @@
 
 - Select app signing keys automatically for new entries. The vendor data and its license scope notice ship as separate files.
 - Derive the known app IDs from the shared product code and use the same app profile for AIR PET and Meowant.
+- Show the cat, weight and duration in the box’s last-visit sensor and dashboard statistic when the visit record contains them.
 
 ## 2026.11.09.1
 

@@ -201,6 +201,9 @@ As of 3 November 2026, read through GitHub search (title and description; commen
 
 ## Cloud and app cross-check
 
+- The Gladys integration highlights a combined last-visit summary per litter box. Cat Litter Hub uses its own stored visit records to show these details on its existing sensor and dashboard card. [Gladys UBPet features](https://github.com/StereoMuff/gladys-ubpet/blob/e75a25067b0927c2dae9d825cfb0520a19764660/docs/en.md#what-you-get)
+- VIVIDMOO PET names AIRROBO in its app listing. An independent Home Assistant integration reports testing its litter box on the EU AIRROBO endpoint. Its app credentials must be supplied by the user. [VIVIDMOO PET](https://play.google.com/store/apps/details?id=com.vividmoo.vividmoopet) · [Vividmoo integration](https://github.com/edied2002/vividmoo-ha/tree/9ddf4136606d7c6baac70199d3eacaaec67e5c38)
+
 - UBTECH publishes separate UPET and UPET-NA Android apps. Both listings describe AIRROBO litter boxes. [UPET](https://play.google.com/store/apps/details?id=com.ubtrobot.catlitterbox.overseaseu) · [UPET-NA](https://play.google.com/store/apps/details?id=com.ubtrobot.catlitterbox.overseasna)
 - The AIR PET listing names Meowant. Independent testing reports live login and MQTT verification for Meowant and identifies the AIR PET app ID and backend used by this provider. [AIR PET on Google Play](https://play.google.com/store/apps/details?id=com.yibainetwork.airpet) · [Meowant protocol notes](https://github.com/Abbondanzo/ha-meowant/blob/38338bc7bd63c7f11f46f3f1640054b5f34e8eb8/API.md#tenants)
 - Robotail publishes its own app. The Robotail integration documents the shared cloud protocol. [Robotail app](https://robotailpets.com/pages/app) · [Robotail integration](https://github.com/hermeneanc/robotail-hass)

@@ -26,7 +26,7 @@ from custom_components.ubpet_cat_litter_hub.history import History, presence, re
 from custom_components.ubpet_cat_litter_hub.mqtt import build_risp_frame, field_varint, summarize_risp_frame
 from custom_components.ubpet_cat_litter_hub.privacy import redact
 from custom_components.ubpet_cat_litter_hub.providers import account_unique_id, credentials, endpoint, suggest_region
-from custom_components.ubpet_cat_litter_hub.sensor import CAT_SENSORS, UbpetCatSensor
+from custom_components.ubpet_cat_litter_hub.sensor import CAT_SENSORS, DEVICE_SENSORS, UbpetCatSensor, UbpetDeviceSensor
 
 UTC = timezone.utc
 COMPONENT = Path(__file__).resolve().parents[2] / "custom_components/ubpet_cat_litter_hub"
@@ -309,6 +309,31 @@ def test_diagnostics_recursively_redact_secrets_and_identifiers():
     assert value["cats"][0]["nickname"] == "REDACTED"
     assert value["firmwareVersion"] == "v1"
     assert original["wifiName"] == "home"
+
+
+async def test_box_last_visit_keeps_timestamp_and_exposes_recorded_details(coordinator):
+    coordinator.client.get_dashboard = MagicMock(
+        return_value={
+            "cats": [{"catInfoId": 7, "nickname": "Milo"}],
+            "devices": {"SN": {"fresh": {"cat_records": True}, "cat_records": [visit("visit-1")]}},
+        }
+    )
+    coordinator.data = await coordinator._async_update_data()
+    description = next(sensor for sensor in DEVICE_SENSORS if sensor.key == "last_visit")
+    sensor = UbpetDeviceSensor(coordinator, coordinator.namespace, "SN", description)
+
+    assert sensor.native_value == NOW
+    assert sensor.extra_state_attributes == {
+        "cat_name": "Milo",
+        "weight_kg": 4.2,
+        "duration_seconds": 57,
+        "serial_number": "SN",
+    }
+
+    coordinator.data["devices"]["SN"]["last_visit"] = None
+    coordinator.data["devices"]["SN"]["box_analytics"] = {}
+    assert sensor.native_value is None
+    assert sensor.extra_state_attributes == {"serial_number": "SN"}
 
 
 async def test_config_flow_preselects_region_but_does_not_login(coordinator):

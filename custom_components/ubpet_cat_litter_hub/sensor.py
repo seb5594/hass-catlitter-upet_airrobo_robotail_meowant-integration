@@ -387,6 +387,14 @@ class UbpetDeviceSensor(UbpetDeviceEntity, SensorEntity):
         return None
 
     def _extra_status_attributes(self, item: dict[str, Any]) -> dict[str, Any]:
+        if self.entity_description.key == "last_visit":
+            visit = item.get("last_visit") or {}
+            details = {
+                "cat_name": box_value(item, "box_analytics", "last_used_by"),
+                "weight_kg": visit.get("weight"),
+                "duration_seconds": visit.get("duration_seconds"),
+            }
+            return {key: value for key, value in details.items() if value is not None}
         if self.entity_description.key == "box_status":
             return {
                 "device_status_code": item.get("device", {}).get("deviceStatus"),

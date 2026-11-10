@@ -385,7 +385,19 @@ class UbpetLitterBoxCard extends UbpetCardBase {
     const rows = (this._config.stats || [])
       .map((k) => {
         const [domain, key, icon] = BOX_STATS[k] || [];
-        return key ? this._row(ctx, ctx.entity(domain, key), icon) : "";
+        const state = key && ctx.entity(domain, key);
+        if (key !== "last_visit" || !isUsable(state)) return this._row(ctx, state, icon);
+        const { cat_name, weight_kg, duration_seconds } = state.attributes || {};
+        const number = new Intl.NumberFormat(ctx.hass.language);
+        const details = [
+          cat_name,
+          Number.isFinite(weight_kg) && weight_kg > 0 ? `${number.format(weight_kg)} kg` : null,
+          Number.isFinite(duration_seconds) ? `${number.format(duration_seconds)} s` : null,
+        ].filter(Boolean);
+        const value = details.length
+          ? `${esc(formatState(ctx.hass, state))}<span class="cap">${esc(details.join(" · "))}</span>`
+          : undefined;
+        return this._row(ctx, state, icon, value);
       })
       .join("");
     return rows ? `<div class="stats">${rows}</div>` : "";
