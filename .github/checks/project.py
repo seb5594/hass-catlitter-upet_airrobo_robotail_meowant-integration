@@ -14,11 +14,13 @@ assert re.fullmatch(r"\d{4}\.\d{2}\.\d{2}\.[1-9]\d*", manifest["version"]), "Ver
 assert manifest["domain"] == component.name == "ubpet_cat_litter_hub"
 assert manifest["requirements"] == ["paho-mqtt>=2.1.0"]
 apps = json.loads((component / "mobile_apps.json").read_text(encoding="utf-8"))
-assert all(set(profile) == {"app_id", "product"} for profile in apps.values()), (
-    "Release profiles must not bundle app signing keys"
-)
+assert set(apps) == {"product", "app_codes"}, "App metadata and vendor signing keys are separate"
+assert re.fullmatch(r"[0-9]{5}", apps["product"]), "Expected a five-digit product code"
+codes = apps["app_codes"]
+assert all(re.fullmatch(r"[0-9]", code) for code in codes.values()), "Expected one digit per app profile"
+assert len(set(codes.values())) == len(codes), "App profile codes must be unique"
 vendor_keys = json.loads((component / "vendor_app_keys.json").read_text(encoding="utf-8"))
-assert set(vendor_keys) == set(apps), "Every app profile must have a vendor signing key"
+assert set(vendor_keys) == set(codes), "Every app profile must have a vendor signing key"
 assert all(isinstance(key, str) and key.strip() for key in vendor_keys.values()), "Empty vendor signing key"
 assert "vendor_app_keys.json" in (component / "LICENSE-SCOPE.txt").read_text(encoding="utf-8")
 english = json.loads((component / "strings.json").read_text(encoding="utf-8"))

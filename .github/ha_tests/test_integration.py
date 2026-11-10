@@ -380,7 +380,8 @@ async def test_new_app_setup_requires_a_signing_key_before_contacting_the_vendor
         ("upet", "na", "airpet"),
         ("airpet", "eu", "airpet"),
         ("robotail", "eu", "robotail"),
-        ("meowant", "na", "meowant"),
+        ("meowant", "na", "airpet"),
+        ("airpet_ubtrobot", "global", "airpet"),
     ],
 )
 async def test_bundled_profile_hides_key_field_and_supplies_the_selected_key(coordinator, provider, region, app_profile):
@@ -390,7 +391,7 @@ async def test_bundled_profile_hides_key_field_and_supplies_the_selected_key(coo
     flow._async_current_entries = MagicMock(return_value=[])
     flow.async_set_unique_id = AsyncMock()
     flow._abort_if_unique_id_configured = MagicMock()
-    keys = {app: f"fixture-{app}" for app in ("upet", "airpet", "robotail", "meowant")}
+    keys = {app: f"fixture-{app}" for app in ("upet", "airpet", "robotail")}
     with (
         patch("custom_components.ubpet_cat_litter_hub.providers._BUNDLED_SIGNING_KEYS", keys),
         patch("custom_components.ubpet_cat_litter_hub.config_flow._validate", return_value=[]),

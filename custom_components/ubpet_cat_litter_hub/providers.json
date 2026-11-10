@@ -72,7 +72,7 @@
     },
     "meowant": {
       "label": "Meowant",
-      "app": "meowant",
+      "app": "airpet",
       "regions": ["na"]
     },
     "airpet_ubtrobot": {

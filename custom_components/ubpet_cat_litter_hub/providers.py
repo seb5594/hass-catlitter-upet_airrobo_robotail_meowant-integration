@@ -7,7 +7,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 _DIRECTORY = Path(__file__).parent
-APPS: dict[str, dict[str, str]] = json.loads((_DIRECTORY / "mobile_apps.json").read_text(encoding="utf-8"))
+_MOBILE_APPS = json.loads((_DIRECTORY / "mobile_apps.json").read_text(encoding="utf-8"))
+_PRODUCT = _MOBILE_APPS["product"]
+# The verified app profiles use a single digit between "00" and "6".
+APPS: dict[str, dict[str, str]] = {
+    name: {"app_id": f"{_PRODUCT}00{code}6", "product": _PRODUCT}
+    for name, code in _MOBILE_APPS["app_codes"].items()
+}
 _REGISTRY = json.loads((_DIRECTORY / "providers.json").read_text(encoding="utf-8"))
 
 # This data file is optional and is supplied independently from the MIT-licensed source.
@@ -75,7 +81,9 @@ def bundled_signing_key(provider: str, region: str) -> str | None:
     """Return the optional key for the configured app profile."""
     if not isinstance(_BUNDLED_SIGNING_KEYS, dict):
         return None
-    value = _BUNDLED_SIGNING_KEYS.get(PROVIDERS[provider].app_for(region))
+    profile = PROVIDERS[provider]
+    profile.endpoint(region)
+    value = _BUNDLED_SIGNING_KEYS.get(profile.app_for(region))
     return (value.strip() or None) if isinstance(value, str) else None
 
 

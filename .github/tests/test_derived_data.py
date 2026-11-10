@@ -45,11 +45,18 @@ def test_every_provider_region_resolves_to_a_host_and_app_profile():
             assert {"app_id", "product"} == set(providers.credentials(key, region))
 
 
-def test_overrides_are_applied_per_region_only():
+def test_app_id_derivation_and_provider_aliases_match_existing_accounts():
+    assert providers.APPS == {
+        "airpet": {"app_id": "970010016", "product": "97001"},
+        "upet": {"app_id": "970010026", "product": "97001"},
+        "robotail": {"app_id": "970010096", "product": "97001"},
+    }
     assert providers.credentials("upet", "na") == providers.APPS["airpet"]
     assert providers.credentials("upet", "eu") == providers.APPS["upet"]
+    assert providers.credentials("meowant", "na") == providers.APPS["airpet"]
     assert providers.endpoint("airpet_ubtrobot", "global") == "https://apis.ubtrobot.com"
     assert providers.endpoint("meowant", "na") == providers.REGIONS["na"]
+    assert providers.infer_provider({"app_id": "970010016"}) == "meowant"
 
 
 def test_weekday_presets_and_custom_masks():

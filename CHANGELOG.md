@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Select app signing keys automatically for new entries. The vendor data and its license scope notice ship as separate files.
+- Derive the known app IDs from the shared product code and use the same app profile for AIR PET and Meowant.
 
 ## 2026.11.09.1
 

@@ -1,18 +1,8 @@
 {
-  "upet": {
-    "app_id": "970010026",
-    "product": "97001"
-  },
-  "robotail": {
-    "app_id": "970010096",
-    "product": "97001"
-  },
-  "meowant": {
-    "app_id": "970010016",
-    "product": "97001"
-  },
-  "airpet": {
-    "app_id": "970010016",
-    "product": "97001"
+  "product": "97001",
+  "app_codes": {
+    "upet": "2",
+    "robotail": "9",
+    "airpet": "1"
   }
 }

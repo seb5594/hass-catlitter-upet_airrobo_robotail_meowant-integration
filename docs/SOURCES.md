@@ -199,6 +199,13 @@ As of 3 November 2026, read through GitHub search (title and description; commen
 - Visits appear as `ubpet_visit`/`ubpet_box_event` on the event bus. A dedicated logbook presentation and extended device triggers have not been added yet.
 - The original code and the researched forks contain no license file. Upstream issue #8 asks for permission; no answer exists in the examined snapshot.
 
+## Cloud and app cross-check
+
+- UBTECH publishes separate UPET and UPET-NA Android apps. Both listings describe AIRROBO litter boxes. [UPET](https://play.google.com/store/apps/details?id=com.ubtrobot.catlitterbox.overseaseu) · [UPET-NA](https://play.google.com/store/apps/details?id=com.ubtrobot.catlitterbox.overseasna)
+- The AIR PET listing names Meowant. Independent testing reports live login and MQTT verification for Meowant and identifies the AIR PET app ID and backend used by this provider. [AIR PET on Google Play](https://play.google.com/store/apps/details?id=com.yibainetwork.airpet) · [Meowant protocol notes](https://github.com/Abbondanzo/ha-meowant/blob/38338bc7bd63c7f11f46f3f1640054b5f34e8eb8/API.md#tenants)
+- Robotail publishes its own app. The Robotail integration documents the shared cloud protocol. [Robotail app](https://robotailpets.com/pages/app) · [Robotail integration](https://github.com/hermeneanc/robotail-hass)
+- One UPET-NA review mentions a Dyersburg C31 that the app discovers but cannot pair. The cloud account and login remain unverified for that device. [UPET-NA store review](https://play.google.com/store/apps/details?hl=en_ZA&id=com.ubtrobot.catlitterbox.overseasna)
+
 ## Brand relationship
 
 [UBPet](https://www.ubpet.com/pages/about-us) and [AIRROBO](https://air-robo.com/pages/about-airrobo) name UBTECH as trademark owner. The old [airrobo-home site](https://www.airrobo-home.com/) points to UBPet. Robotail and Meowant are named here because of their documented technical profiles; no higher-level trademark ownership is derived from that.

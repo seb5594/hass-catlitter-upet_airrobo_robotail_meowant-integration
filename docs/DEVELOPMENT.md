@@ -2,9 +2,9 @@
 
 ## Data flow
 
-`providers.json` is the only place that knows brands and regions: regions with host and countries, time zone rules for the pre-selection, and every provider with its app profile, allowed regions and optional per-region host/app overrides. `providers.py` only reads this data. `mobile_apps.json` contains the vendor app identifiers and product names. App signing keys are supplied locally and stored with the account entry.
+`providers.json` is the only place that knows brands and regions: regions with host and countries, time zone rules for the pre-selection, and every provider with its app profile, allowed regions and optional per-region host/app overrides. `providers.py` only reads this data. `mobile_apps.json` stores the shared product and each verified app code. The current profiles form the app ID as `product + "00" + app code + "6"`. The selected profile determines the app code and the signing key from `vendor_app_keys.json`. Account entries store the resolved app ID, product and key.
 
-**Adding a brand:** add the app profile to `mobile_apps.json`, the provider to `providers.json` (`label`, `app`, `regions`, and `hosts`/`region_apps` where it differs), one entry in `strings.json` (only if a new region appears) and a test in `.github/tests/test_derived_data.py`. No code has to change. Do not assume a working login just because product names look similar; documented app and server data is required.
+**Adding a brand:** add the provider to `providers.json` with its verified app profile and regions. Use `hosts` or `region_apps` for regional differences. A new app profile requires a verified code in `mobile_apps.json` and its corresponding key in `vendor_app_keys.json`. Add a test in `.github/tests/test_derived_data.py` and update translations if the provider introduces a new region.
 
 **Region pre-selection:** country from the Home Assistant configuration, then time zone, then EU. The basis (`EU · DE`, `NA · America/Chicago`) is shown in the form so that a guess is recognisable as one. The integration deliberately does not try several servers: a wrong region returns the same answer as a wrong password and would pile up failed attempts.
 

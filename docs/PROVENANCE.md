@@ -29,8 +29,9 @@ next to the component files.
 ## Provider access
 
 Profiles describe regional hosts, routing and app identifiers. The current
-source carries the four app profile values previously shipped in
-`v2026.11.03.2` in a separate `vendor_app_keys.json` file. The project's MIT
+source carries the three distinct signing values previously shipped in
+`v2026.11.03.2` in a separate `vendor_app_keys.json` file. AIR PET and
+Meowant use the same app ID and signing value. The project's MIT
 license grant applies to the Cat Litter Hub code and artwork. See the
 [license scope notice](../custom_components/ubpet_cat_litter_hub/LICENSE-SCOPE.txt)
 for the separate vendor data. Existing entries retain their stored key. The
