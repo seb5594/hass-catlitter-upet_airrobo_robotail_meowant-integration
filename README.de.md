@@ -9,7 +9,7 @@
 
 Eine Home-Assistant-Integration für smarte Katzenklos, die dieselbe Cloud-API nutzen: **UPET, UBPet, AIR PET, AIRROBO, Robotail und Meowant**. Mehrere Konten, Anbieter und Kontoregionen laufen nebeneinander in einer Integration, jedes mit eigener Verbindung.
 
-**Am UBPet C20 getestet:** Der Maintainer hat [`v2026.11.03.2`](https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration/releases/tag/v2026.11.03.2) erfolgreich an einem echten Gerät getestet. Für `2026.11.09.1` sind die automatisierten Home-Assistant-Kompatibilitätstests mit simulierter Cloud-Verbindung bestanden. Ein erneuter Gerätetest steht aus. Details stehen in der [Testdokumentation](docs/TESTING.md).
+**Am UBPet C20 getestet:** Der Maintainer hat [`v2026.11.03.2`](https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration/releases/tag/v2026.11.03.2) erfolgreich an einem echten Gerät getestet. Die automatisierten Kompatibilitätstests verwenden simulierten Cloud-Verkehr. Ein Gerätetest für `2026.11.10.1` steht aus. Details stehen in der [Testdokumentation](docs/TESTING.md).
 
 ## Was die Integration kann
 
@@ -28,7 +28,7 @@ Eine Home-Assistant-Integration für smarte Katzenklos, die dieselbe Cloud-API n
 
 ## Installation
 
-Der aktuelle Quellstand wählt den App-Signaturschlüssel für neue Einträge anhand von App und Region automatisch aus. Bestehende Einträge verwenden den gespeicherten Schlüssel weiter. Das veröffentlichte Paket `2026.11.09.1` fragt den Schlüssel bei neuen Einträgen noch ab.
+Ab `2026.11.10.1` wählt die Einrichtung den App-Signaturschlüssel anhand von App und Region automatisch aus. Bestehende Einträge verwenden den gespeicherten Schlüssel weiter.
 
 Home Assistant Core **ab 2023.6.0**, siehe [hacs.json](hacs.json). Den Stand der tatsächlich geprüften Versionen beschreibt [TESTEN.md](docs/TESTING.md).
 
@@ -50,7 +50,7 @@ Die frühere eigenständige `robotail`-Domain wird nicht automatisch umgeschrieb
 
 1. Die **App des Kontos** auswählen. Der Aufdruck auf dem Katzenklo ist dafür nicht ausschlaggebend.
 2. Die **Serverregion des Kontos** und das bei der Registrierung verwendete Land angeben. Die Vorauswahl ist ein Vorschlag, maßgeblich ist die Region in der App.
-3. Konto und Passwort eingeben. Beim veröffentlichten Paket `2026.11.09.1` zusätzlich den App-Signaturschlüssel eingeben.
+3. Konto und Passwort eingeben.
 4. Für einen weiteren Anbieter oder ein weiteres Konto erneut **Eintrag hinzufügen** wählen.
 
 | Auswahl | Backend | Einordnung |

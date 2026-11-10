@@ -1,6 +1,6 @@
 # Device testing
 
-The maintainer successfully tested [`v2026.11.03.2`](https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration/releases/tag/v2026.11.03.2) on a UBPet C20. A hardware test of `2026.11.09.1` is pending. The exact model of the Robotail test device still has to be checked on its label or in the app.
+The maintainer successfully tested [`v2026.11.03.2`](https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration/releases/tag/v2026.11.03.2) on a UBPet C20. A hardware test of `2026.11.10.1` is pending. The exact model of the Robotail test device still has to be checked on its label or in the app.
 
 ## Switching over on the UBPet C20
 
@@ -38,7 +38,7 @@ Please provide model, firmware, app name, chosen provider, server region, accoun
 
 ## Automated checks
 
-The regular suite is in `.github/tests`, and the tests with real Home Assistant classes are in `.github/ha_tests`. The [compatibility run for `2026.11.09.1`](https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration/actions/runs/42708199856) passed on 12 stable Home Assistant Core versions from `2023.6.3` to `2026.11.1`. The tests cover entity setup and adoption of old entries with real registries, using simulated cloud traffic. The adoption tests need the plugin `pytest-homeassistant-custom-component` and are skipped without it. The minimum declared version is `2023.6.0`.
+The regular suite is in `.github/tests`, and the tests with real Home Assistant classes are in `.github/ha_tests`. The [Compatibility workflow](https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration/actions/workflows/compat.yml) records the Home Assistant Core versions tested for each commit. The tests cover entity setup and adoption of old entries with real registries, using simulated cloud traffic. The adoption tests need the plugin `pytest-homeassistant-custom-component` and are skipped without it. The minimum declared version is `2023.6.0`.
 
 ```bash
 python -m pytest -c .github/dev/pyproject.toml --rootdir . .github/tests .github/ha_tests

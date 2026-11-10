@@ -25,7 +25,7 @@
 
 A Home Assistant integration for smart cat litter boxes that share the UBPet / AIRROBO cloud API: **UPET, UBPet, AIR PET, AIRROBO, Robotail and Meowant**. Several accounts, providers and account regions run side by side in one integration, each with its own connection.
 
-**Tested on a UBPet C20:** the maintainer successfully tested [`v2026.11.03.2`](https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration/releases/tag/v2026.11.03.2) on real hardware. Release `2026.11.09.1` passed the automated Home Assistant compatibility checks with simulated cloud traffic. A new hardware test of this release is pending. See [TESTING.md](docs/TESTING.md).
+**Tested on a UBPet C20:** the maintainer successfully tested [`v2026.11.03.2`](https://github.com/seb5594/hass-ubpet_cat_litter_hub-integration/releases/tag/v2026.11.03.2) on real hardware. The automated compatibility checks use simulated cloud traffic. A hardware test of `2026.11.10.1` is pending. See [TESTING.md](docs/TESTING.md).
 
 ## What it does
 
@@ -44,7 +44,7 @@ A Home Assistant integration for smart cat litter boxes that share the UBPet / A
 
 ## Installation
 
-The current source selects the app signing key automatically for new entries based on the app and region. Existing entries keep using the key stored for the account. The published `2026.11.09.1` package still asks for a signing key when adding a new entry.
+From `2026.11.10.1`, setup selects the app signing key automatically based on the app and region. Existing entries keep using the key stored for the account.
 
 Home Assistant Core **2023.6.0 or newer**, see [hacs.json](hacs.json). The state of the versions actually tested is described in [TESTING.md](docs/TESTING.md).
 
@@ -66,7 +66,7 @@ The former standalone `robotail` domain is not rewritten automatically; create a
 
 1. Select the **app of the account**. The print on the litter box is not decisive.
 2. Enter the **server region of the account** and the country used at registration. The pre-selection is a suggestion; the region in the app is what counts.
-3. Enter your account and password. If you installed the published `2026.11.09.1` package, enter the app signing key as well.
+3. Enter your account and password.
 4. For another provider or account, choose **Add entry** again.
 
 | Choice | Backend | Notes |
